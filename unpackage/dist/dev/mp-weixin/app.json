@@ -1,5 +1,6 @@
 {
   "pages": [
+    "login.vue",
     "pages/index/index"
   ],
   "window": {

@@ -1,5 +1,5 @@
 import App from './App'
-
+import router from './utils/route'
 // #ifndef VUE3
 import Vue from 'vue'
 import './uni.promisify.adaptor'
@@ -8,6 +8,7 @@ App.mpType = 'app'
 const app = new Vue({
   ...App
 })
+app.use(router)
 app.mount()
 // #endif
 
