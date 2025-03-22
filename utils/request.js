@@ -1,11 +1,6 @@
-import axios from "axios";
-import { Message } from "@element-plus";
-const service = axios.create({
-    baseURL: process.env.VUE_APP_BASE_API, // api 的 base_url
-    // baseURL:
-    timeout: 60000 // request timeout
-});
+// 判断字符串是否为合法 JSON
 function isJSON(str) {
+    if (typeof str !== "string") return false;
     try {
         JSON.parse(str);
         return true;
@@ -13,124 +8,81 @@ function isJSON(str) {
         return false;
     }
 }
-service.defaults.withCredentials = true;
 
-// request interceptor
-service.interceptors.request.use(
-    (config) => {
+// 全局请求封装
+const base_url = 'http://localhost:996'
+// 请求超出时间
+const timeout = 5000
 
-        if(!config.data){
-            config.data = userInfo
-        }
-        if(config.data&&isJSON(config.data)){
-            config.data=JSON.parse(config.data)
-        }
-        if(config.data){
-            config.data = Object.assign(config.data,userInfo)
-        }
-        if(config.data&&config.data.dwrParam){
-            config.data.dwrParam = Object.assign(config.data.dwrParam,userInfo)
+// 需要修改token，和根据实际修改请求头
+// 全局请求封装，返回一个 Promise
+const service = (options) => {
+    return new Promise((resolve, reject) => {
+        store.commit("loading"); // 开启全局 loading 状态
+
+        // 特殊处理：如果是登录验证码接口，清除本地缓存的 token
+        if (options.url === "/login/captcha/captcha") {
+            uni.removeStorageSync("token");
         }
 
-        config.headers = {
-            //Authorization: getToken(),
-            requestId: uuidv4(),
-            "Content-Type": config.headers["Content-Type"] !== undefined ? config.headers["Content-Type"] : "application/json"
-        };
-        return config;
-    },
-    (error) => {
-        // Do something with request error
-        Promise.reject(error);
-    }
-);
-// response interceptor
-service.interceptors.response.use(
-    // response => response,
-    /**
-     * 下面的注释为通过在response里，自定义code来标示请求状态
-     * 当code返回如下情况则说明权限有问题，登出并返回到登录页
-     * 如想通过 xmlhttprequest 来状态码标识 逻辑可写在下面error中
-     * 以下代码均为样例，请结合自生需求加以修改，若不需要，则可删除
-     */
-    (response) => {
+        uni.request({
+            url: base_url + options.url, // 拼接基础地址和接口地址
+            method: options.method || "GET", // 默认请求方法为 GET
+            data: options.data || options.params || {}, // 传递的参数
+            dataType: options.dataType || "json", // 请求的数据类型，默认为 JSON
+            responseType: options.responseType || "text", // 响应的数据类型
+            timeout: timeout,
+            header: {
+                devtype: "app", // 自定义请求头
+                rid: "tempTokenId-" + md5DigestAsHex(uni.getStorageSync("token")), // 加密 token
+                token: uni.getStorageSync("token"), // 从本地缓存中获取 token
+                ...getContentType(options) // 动态获取 Content-Type
+            },
+            // 请求成功回调
+            success: (res) => {
+                const code = res.data.code || 200; // 服务器返回的状态码，默认为 200
+                const msg = errorCode[code] || res.data.msg || errorCode["default"]; // 错误信息提示
 
-
-
-        if (response.headers.status === '0') {
-            if (response.headers.newJwt) {
-                // window.sessionStorage.token = response.headers.newJwt;
-                setJwtToken(response.headers.newJwt);
-                setToken(response.headers.newJwt);
+                if (code == 401) {
+                    // 处理未授权的情况，弹出提示框并跳转到登录页
+                    uni.showModal({
+                        title: "提示",
+                        content: msg,
+                        showCancel: false,
+                        success: (res) => {
+                            if (res.confirm) {
+                                uni.reLaunch({url: "/pages/login/index"});
+                            }
+                        }
+                    });
+                } else if (code == 500) {
+                    // 处理服务器错误
+                    uni.showToast({
+                        title: msg,
+                        icon: "none",
+                        mask: true,
+                        duration: 2000
+                    });
+                } else {
+                    // 特殊处理：如果是登录接口，保存返回的 token
+                    if (options.url === "/login/captcha/captcha") {
+                        uni.setStorageSync("token", res.header.token);
+                    }
+                    // 根据响应类型返回数据
+                    resolve(options.responseType === "arraybuffer" ? res : res.data);
+                }
+            },
+            // 请求失败回调
+            fail: (err) => {
+                console.log(baseURL + options.url, err); // 打印错误日志
+                reject(err); // 返回错误信息
+            },
+            // 请求完成后关闭 loading
+            complete() {
+                store.commit("loaded");
             }
-        }
-        // 返回状态码为16，清除token，退出登陆
-        if (response.headers.status === '16') {
-            if (getOtherCookie('isSSO')) {
-                new Vue().$confirm("登录用户已失效，请重新登录！", "友情提示", {
-                    dangerouslyUseHTMLString: true, // 必填
-                    confirmButtonText: '确定',
-                    cancelButtonText: '取消',
-                    roundButton: true, // 必填
-                    type: 'error', // 必填
-                    customClass: 'picc-message-box', // 必填
-                    center: true,
-                    showClose: false
-                }).then(() => {
-                    clearCookies();
-                    window.location.href = getOtherCookie('redirectUrl');
-                    return true;
-                }).catch(() => {
-                    clearCookies();
-                    window.location.href = getOtherCookie('redirectUrl');
-                    return false;
-                });
-            } else {
-                new Vue().$confirm("登录用户已失效，请重新登录！", "友情提示", {
-                    dangerouslyUseHTMLString: true, // 必填
-                    confirmButtonText: '确定',
-                    cancelButtonText: '取消',
-                    roundButton: true, // 必填
-                    type: 'error', // 必填
-                    customClass: 'picc-message-box', // 必填
-                    center: true,
-                    showClose: false
-                }).then(() => {
-                    clearCookies();
-                    window.location.href = getOtherCookie('redirectUrl');
-                    return true;
-                }).catch(() => {
-                    clearCookies();
-                    window.location.href = getOtherCookie('redirectUrl');
-                    return false;
-                });
-            }
-        }
-        // 统一门户jwt认证 结束
-        const res = response.data;
-        // 灰度接口
-        const { code, data } = response.data;
-        if (code === "0" && data) {
-            return data;
-        }
-        if (res.status !== 0) {
-            return Promise.reject(res);
-        }
-        if (res.data) {
-            return res;
-        } else {
-            return response.data;
-        }
-    },
-    (error) => {
-        Message({
-            message: error.message,
-            type: "error",
-            duration: 5 * 1000
         });
-
-        return Promise.reject(error);
-    }
-);
+    });
+};
 
 export default service;

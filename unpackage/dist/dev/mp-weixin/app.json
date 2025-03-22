@@ -1,6 +1,6 @@
 {
   "pages": [
-    "login.vue",
+    "pages/user/view",
     "pages/index/index"
   ],
   "window": {

@@ -4,7 +4,7 @@
 		{
 			"path": "pages/user/user",
 			"style": {
-				"navigationBarTitleText": "用户页面",
+				"navigationBarTitleText": "用户信息",
 				"enablePullDownRefresh": true
 			}
 		},

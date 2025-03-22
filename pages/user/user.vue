@@ -1,212 +1,281 @@
 <template>
-  <view class="header text-white">
-    <view class="padding-xl flex align-start bg" style="background-image: url({{system.user_bg}});">
-      <view class="flex align-center flex-sub">
-        <image class="round" mode="aspectFill" src="{{userInfo.is_law!=0?userInfo.avatarUrl:'/static/icon/user_none.png'}}" style="width: 100rpx;height: 100rpx;background:#f3f3f3"></image>
-        <view class="flex justify-between align-center flex-sub">
-          <view class="padding-left-sm">
-            <view bind:tap="login" class="text-df">{{userInfo.gender.length?userInfo.nickName:'立即登录'}}</view>
-            <view class="text-sm padding-top-sm" wx:if="{{userInfo.gender.length}}">{{userInfo.phone||'未绑定手机号'}}</view>
-            <view class="text-sm padding-top-sm" wx:else>当前身份: {{userInfo.nickName||'游客'}}</view>
+  <view class="content">
+    <view class='member-top'>
+      <image class='bg-img' src='/static/image/member-bg.png'></image>
+      <view class='member-top-c'>
+        <template v-if="hasLogin">
+          <image class='user-head-img' mode="aspectFill" :src='userInfo.avatar'></image>
+          <view class='user-name'>{{ userInfo.nickname }}</view>
+          <view class="fz12 grade" v-if="userInfo.grade_name">
+            {{ userInfo.grade_name }}
           </view>
-          <view @click="updeta" class="text-xl padding-right" wx:if="{{userInfo.gender}}">
-            <view class="{{updeta&&'updeta'}}">
-              <text class="yzd-gengxin"></text>
-            </view>
+        </template>
+        <template v-else>
+          <!-- #ifdef H5 || APP-PLUS -->
+          <!--
+                    <image class='user-head-img' mode="aspectFill" :src='$store.state.config.shop_logo'></image>
+          -->
+          <view class="login-btn" @click="toLogin">
+            登录/注册
           </view>
+          <!-- #endif -->
+          <!-- #ifdef MP-WEIXIN -->
+          <view class="user-head-img">
+            <open-data type="userAvatarUrl"></open-data>
+          </view>
+          <view>
+            <button class="login-btn" hover-class="btn-hover" @click="goLogin()">授权登录</button>
+          </view>
+          <!-- #endif -->
+          <!-- #ifdef MP-ALIPAY -->
+          <view class="user-head-img"></view>
+          <view>
+            <button class="login-btn" open-type="getAuthorize" @click="getALICode" hover-class="btn-hover">授权登录
+            </button>
+          </view>
+          <!-- #endif -->
+        </template>
+      </view>
+    </view>
+
+    <!-- 订单列表信息 -->
+    <view class='cell-group'>
+      <view class='cell-item right-img' @click="router.push('/order/orderlist')">
+        <view class='cell-item-hd'>
+          <view class='cell-hd-title'>我的订单</view>
+        </view>
+        <view class='cell-item-ft'>
+          <image class='cell-ft-next icon' src='/static/image/right.png'></image>
         </view>
       </view>
     </view>
-    <view class="nav bg-white padding-lr-xl grid col-5">
-      <view @click="toPage" class="flex flex-direction align-center justify-center padding-sm" data-key="index" data-page="lawyer_orders" data-value="{{index+1}}" wx:for="{{nav}}">
-        <text class="nav_text {{item.icon}}" ></text>
-        <view class="text-sm padding-top-xs">{{item.title}}</view>
-      </view>
-    </view>
-  </view>
-  <form bindsubmit="submitFromId">
-    <view class="padding-top" style="padding-left: 25rpx;padding-right: 25rpx;">
-      <view class="bg-white padding-lr-sm" style="border-radius: 15rpx;">
-        <button @click="toPage" class="item flex align-center text-lg" data-page="lawyer_orders" formType="submit">
-          <text class="yzd-order" ></text>
-          <view class="padding-left-sm flex-sub text-df">服务订单
-          </view>
-          <text class="cuIcon-right text-gray"></text>
-        </button>
-        <button @click="toPage" class="item flex align-center text-lg" data-page="orders" formType="submit">
-          <text class="yzd-activity" ></text>
-          <view class="padding-left-sm flex-sub text-df">商城订单
-          </view>
-          <text class="cuIcon-right text-gray"></text>
-        </button>
-        <button @click="toPage" class="item flex align-center text-lg" data-page="collect" formType="submit">
-          <text class="yzd-select" ></text>
-          <view class="padding-left-sm flex-sub text-df">我的收藏
-          </view>
-          <text class="cuIcon-right text-gray"></text>
-        </button>
-        <button @click="toPage" class="item flex align-center text-lg" data-page="fenxiao_settling_in" formType="submit" wx:if="{{fx_title&&system.fx_state}}">
-          <text class="yzd-fenxiao" ></text>
-          <view class="padding-left-sm flex-sub text-df">{{fx_title}}
-          </view>
-          <text class="cuIcon-right text-gray"></text>
-        </button>
-        <button @click="toPage" class="item flex align-center text-lg" data-page="wenda_wode" formType="submit" wx:if="{{system.wenda&&system.wenda.state=='1'}}">
-          <text class="cuIcon-discover" ></text>
-          <view class="padding-left-sm flex-sub text-df">我的{{system.wenda.title||'问答'}}
-          </view>
-          <text class="cuIcon-right text-gray"></text>
-        </button>
-        <button bindgetphonenumber="getPhoneNumber" class="item flex align-center text-lg" formType="submit" openType="getPhoneNumber" wx:if="{{userInfo.gender}}">
-          <text class="yzd-mobilephone" ></text>
-          <view class="padding-left-sm flex-sub text-df">更新手机号
-            <view class="cu-tag round bg-red sm margin-left" wx:if="{{userInfo&&!userInfo.phone}}">未绑定</view>
-          </view>
-          <text class="cuIcon-right text-gray"></text>
-        </button>
-      </view>
-    </view>
-    <view class="padding-top" style="padding-left: 25rpx;padding-right: 25rpx;">
-      <view class="bg-white padding-lr-sm" style="border-radius: 15rpx;">
-        <button @click="toPage" class="item flex align-center text-lg" data-page="helper" formType="submit">
-          <view class="padding-left-sm flex-sub text-df">帮助中心
-          </view>
-          <text class="cuIcon-right text-gray"></text>
-        </button>
-        <button @click="toPage" class="item flex align-center text-lg" data-page="about" formType="submit">
-          <view class="padding-left-sm flex-sub text-df">关于我们
-          </view>
-          <text class="cuIcon-right text-gray"></text>
-        </button>
-        <button class="item flex align-center text-lg" formType="submit" openType="contact">
-          <view class="padding-left-sm flex-sub text-df">联系客服
-          </view>
-          <text class="cuIcon-right text-gray"></text>
-        </button>
-        <button @click="toPage" class="item flex align-center text-lg" data-page="feedback" formType="submit">
-          <view class="padding-left-sm flex-sub text-df">意见反馈
-          </view>
-          <text class="cuIcon-right text-gray"></text>
-        </button>
-        <button @click="toPage" class="item flex align-center text-lg" data-page="clearCache" formType="submit">
-          <view class="padding-left-sm flex-sub text-df">清除缓存
-          </view>
-        </button>
-      </view>
-    </view>
-    <view class="padding-top" style="padding-left: 25rpx;padding-right: 25rpx;">
-      <view class="bg-white padding-lr-sm" style="border-radius: 15rpx;">
-        <button @click="toPage" class="item flex align-center text-lg" data-page="{{law_item}}" formType="submit" openType="{{i.openType}}" wx:if="{{law_item.page=='l_index'||system.law_is_inset==2}}">
-          <text class="{{law_item.icon}}" ></text>
-          <view class="padding-left-sm flex-sub text-df">{{law_item.title}}
-          </view>
-          <text class="cuIcon-right text-gray"></text>
-        </button>
-      </view>
-    </view>
-  </form>
-  <login isShow="{{isLogin}}" ></login>
-  <view @click="call" class="flex flex-direction align-center justify-center padding-tb">
-    <image mode="widthFix" src="{{}}" style="width: 80rpx;" wx:if="{{}}"></image>
-    <view class="padding-left-xs text-xs text-grey">{{}}</view>
-  </view>
-  <tabbar show="{{show_tabbar}}"></tabbar>
-  <blacklist isShow="{{userInfo.state==1}}"></blacklist>
 
+    <view class='member-grid'>
+      <view class='member-item' v-for="(item, index) in ORDER_ITEMS" :key="index"
+            @click="orderNavigateHandle('../order/orderlist', index + 1)">
+        <view class="badge color-f" v-if="item.nums">{{ item.nums }}</view>
+        <image class='member-item-icon' :src='item.icon'></image>
+        <text class='member-item-text'>{{ item.name }}</text>
+      </view>
+      <view class='member-item' @click="goAfterSaleList">
+        <view class="badge color-f" v-if="afterSaleNums != 0">{{ afterSaleNums }}</view>
+        <image class='member-item-icon' src='/static/image/me-ic-evaluate.png'></image>
+        <text class='member-item-text'>退换货</text>
+      </view>
+    </view>
+    <!-- 订单列表end -->
+
+    <!-- 其他功能菜单 -->
+    <view class='cell-group margin-cell-group right-img'>
+
+      <view class='cell-item' v-for="(item, index) in UTILITY_MENUS" :key="index" v-show="item.unShowItem">
+        <view class='cell-item-hd' @click="navigateToHandle(item.router)">
+          <image class='cell-hd-icon' :src='item.icon'></image>
+          <view class='cell-hd-title'>{{ item.name }}</view>
+        </view>
+        <view class='cell-item-ft'>
+          <image class='cell-ft-next icon' src='/static/image/right.png'></image>
+        </view>
+      </view>
+      <!-- #ifdef H5 || APP-PLUS -->
+      <view class='cell-item'>
+        <view class='cell-item-hd' @click="showChat()">
+          <image class='cell-hd-icon' src='/static/image/me-ic-phone.png'></image>
+          <view class='cell-hd-title'>联系客服</view>
+        </view>
+        <view class='cell-item-ft'>
+          <image class='cell-ft-next icon' src='/static/image/right.png'></image>
+        </view>
+      </view>
+      <!-- #endif -->
+      <!-- #ifdef MP-WEIXIN -->
+      <view class='cell-item'>
+        <button class="cell-item-hd " hover-class="none" open-type="contact" bindcontact="showChat"
+                :session-from="kefupara">
+          <image src='/static/image/me-ic-phone.png' class='cell-hd-icon'></image>
+          <view class='cell-hd-title'>联系客服</view>
+        </button>
+        <view class='cell-item-ft'>
+          <image class='cell-ft-next icon' src='/static/image/right.png'></image>
+        </view>
+      </view>
+      <!-- #endif -->
+      <!-- #ifdef MP-ALIPAY -->
+      <view class='cell-item'>
+        <contact-button icon="/static/image/kefu2.png" size="170rpx*76rpx" tnt-inst-id="WKPKUZXG" scene="SCE00040186"
+                        class="cell-item-hd " hover-class="none"/>
+        <view class='cell-item-ft'>
+          <image class='cell-ft-next icon' src='/static/image/right.png'></image>
+        </view>
+      </view>
+      <!-- #endif -->
+    </view>
+
+    <view class='cell-group margin-cell-group right-img' v-if="isLawyer">
+      <view class='cell-item' v-for="(item, index) in CLERK_MENUS" :key="index">
+        <view class='cell-item-hd' @click="navigateToHandle(item.router)">
+          <image class='cell-hd-icon' :src='item.icon'></image>
+          <view class='cell-hd-title'>{{ item.name }}</view>
+        </view>
+        <view class='cell-item-ft'>
+          <image class='cell-ft-next icon' src='/static/image/right.png'></image>
+        </view>
+      </view>
+    </view>
+    <!-- 其他功能菜单end -->
+    <lawfirm></lawfirm>
+
+  </view>
 </template>
+<script setup>
+import {ref} from 'vue';
+import lawfirm from '@/componpents/lawfirm';
+import router from "@/pages/user/router";
 
-<script setup >
-import userservice from "./userservice";
+let hasLogin = false;
+let userInfo = {}; // 用户信息
+let isLawyer = true;   // 律师身份标识，如果是律师的话，展示该页面
+let ORDER_ITEMS = [
+  {name: '待付款', icon: '/static/image/me-ic-obligation.png', nums: 0},
+  {name: '待发货', icon: '/static/image/me-ic-sendout.png', nums: 0},
+  {name: '待收货', icon: '/static/image/me-ic-receiving.png', nums: 0},
+  {name: '待评价', icon: '/static/image/me-ic-evaluate.png', nums: 0}
+];
+let UTILITY_MENUS = {
+  distribution: {
+    name: '分销中心',
+    icon: '/static/image/distribution.png',
+    router: '../distribution/user',
+    unShowItem: true
+  },
+  coupon: {name: '我的优惠券', icon: '/static/image/ic-me-coupon.png', router: '../coupon/index', unShowItem: true},
+  balance: {name: '我的余额', icon: '/static/image/ic-me-balance.png', router: '../balance/index', unShowItem: true},
+  integral: {name: '我的积分', icon: '/static/image/integral.png', router: '../integral/index', unShowItem: true},
+  address: {name: '地址管理', icon: '/static/image/me-ic-site.png', router: '../address/list', unShowItem: true},
+  collection: {
+    name: '我的收藏',
+    icon: '/static/image/ic-me-collect.png',
+    router: '../collection/index',
+    unShowItem: true
+  },
+  history: {name: '我的足迹', icon: '/static/image/ic-me-track.png', router: '../history/index', unShowItem: true},
+  invite: {name: '邀请好友', icon: '/static/image/ic-me-invite.png', router: '../invite/index', unShowItem: true},
+  setting: {name: '系统设置', icon: '/static/image/me-ic-set.png', router: '../setting/index', unShowItem: true}
+};
 
+let CLERK_MENUS = [
+  {name: '提货单列表', icon: '/static/image/me-ic-phone.png', router: '../take_delivery/list'},
+  {name: '提货单核销', icon: '/static/image/me-ic-about.png', router: '../take_delivery/index'}
+];
 function initUserInfo(){
-  let  params = {};
-  userservice.getUserInfo(params).then(res=>{
-    if (res.status == '0'){
-      //赋值
-    }
-  }).catch(rej=>{
-    if(rej.statusText?.message){
-      this.$alert(rej.statusText?.message)
-      // this.$message.error(rej.statusText?.message)
-    }
-  });
 
 }
 
+
+</script>
+
+
+<script >
 export default {
-  name : "User"
-}
-
-function toPage(){
+  name: "user",
+  onShow: function() {
+  },
 
 }
 </script>
 
-
-<style scoped lang="css">
-.header {
-  height: 377rpx;
+<style lang="css">
+.cell-item {
+  padding: 20upx 26upx 20upx 0;
+  width: 724upx;
+  margin-left: 26upx;
+  border-bottom: 2upx solid #f3f3f3;
   position: relative;
+  overflow: hidden;
+  background-color: #fff;
+  color: #333;
+  display: table;
+  min-height: 90upx;
 }
 
-.bg {
-  height: 342rpx;
-  padding-top: 60rpx;
-  background-size: 100% 100%;
+.right-img {
+  border-bottom: 0;
 }
 
-.header .nav {
+.member-top {
+  position: relative;
+  width: 100%;
+  height: 340upx;
+}
+
+.bg-img {
   position: absolute;
-  width: 706rpx;
-  height: 168rpx;
-  border-radius: 15rpx;
-  left: 25rpx;
-  bottom: 0rpx;
-  font-size: 400rpx;
+  width: 100%;
+  height: 100%;
 }
 
-.header .nav text {
-  font-size: 55rpx;
-  color: #2363fc;
+.member-top-c {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
 }
 
-.item {
-  min-height: 100rpx;
-  border-bottom: 1rpx solid rgba(0,0,0,0.05);
+.user-head-img {
+  display: block;
+  width: 160upx;
+  height: 160upx;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.7);
+  margin: 0 auto 16upx;
 }
 
-.item text:first-child {
-  font-size: 45rpx;
-  color: #2363fc;
+.user-name {
+  font-size: 30upx;
+  color: #fff;
+  margin-bottom: 16upx;
 }
 
-.item:last-child {
-  border-width: 0;
+.grade {
+  color: #FFF;
 }
 
-.updeta {
-  -webkit-animation: rotate .8s linear infinite;
+.member-grid {
+  background-color: #fff;
+  border-top: 2upx solid #eee;
+  padding: 20upx 0;
 }
 
-@-webkit-keyframes rotate {
-  0% {
-    -webkit-transform: rotate(0deg);
-  }
+.margin-cell-group {
+  margin: 20upx 0;
+  color: #666666;
+}
 
-  25% {
-    -webkit-transform: rotate(-90deg);
-  }
+.badge {
+  left: 80upx;
+  top: -6upx;
+}
 
-  50% {
-    -webkit-transform: rotate(-180deg);
-  }
+button.cell-item-hd {
+  background-color: #fff;
+  padding: 0;
+  line-height: 1.4;
+  color: #333;
+}
 
-  75% {
-    -webkit-transform: rotate(-270deg);
-  }
+button.cell-item-hd:after {
+  border: none;
+}
 
-  100% {
-    -webkit-transform: rotate(-360deg);
-  }
+.login-btn {
+  color: #fff;
+  width: 180upx;
+  height: 50upx;
+  line-height: 50upx;
+  border-radius: 25upx;
+  background: #ff7159;
+  font-size: 12px;
 }
 </style>

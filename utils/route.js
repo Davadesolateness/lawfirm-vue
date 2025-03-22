@@ -1,12 +1,17 @@
-import { createMemoryHistory, createRouter } from 'vue-router'
+import {createMemoryHistory, createRouter} from 'vue-router';
+import * as VueRouter from 'vue-router';
 
+
+import userRouter from "@/pages/user/router";
 
 export const constantRoutes = [
-
+    ...userRouter
 ]
 
 // 创建路由
-const router = createRouter({
+const route = createRouter({
     history: createMemoryHistory(),
-    constantRoutes,
+    routes: constantRoutes
 })
+
+export default route;
