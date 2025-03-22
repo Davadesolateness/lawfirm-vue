@@ -11,8 +11,7 @@ export default [
             {
                 path: "userInfo",
                 name: "userInfo",
-                component: () => import("./user"),
-                props: (route) => route.params,
+                component: () => import("@/pages/user/user"),
                 meta: { title: "用户信息", icon: "dashboard", affix: true, parentTitle: "用户信息", parentPath: "" }
             },
     ]

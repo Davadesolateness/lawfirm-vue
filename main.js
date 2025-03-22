@@ -8,6 +8,10 @@ const app = new Vue({
 })
 app.use(router)
 app.mount()
+
+Vue.prototype.$router = router;
+
+
 // #endif
 
 // #ifdef VUE3

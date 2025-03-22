@@ -1,17 +1,24 @@
-import {createMemoryHistory, createRouter} from 'vue-router';
-import * as VueRouter from 'vue-router';
+import {createRouter, createWebHashHistory} from 'vue-router';
 
 
 import userRouter from "@/pages/user/router";
+import orderRouter from "@/pages/order/router";
 
 export const constantRoutes = [
-    ...userRouter
+    ...userRouter,
+    ...orderRouter,
+    {
+        path: '/:catchAll(.*)',
+        name: '404',
+        component: () => import('@/pages/order/orderlist')
+    }
 ]
 
 // 创建路由
 const route = createRouter({
-    history: createMemoryHistory(),
+    history: createWebHashHistory,
     routes: constantRoutes
 })
 
+console.log(route.options.routes)
 export default route;

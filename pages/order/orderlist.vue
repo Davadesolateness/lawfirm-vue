@@ -111,7 +111,7 @@ export default {
 }
 </script>
 
-<script setup lang="ts">
+<script setup >
 let list = [];
 let loadStatus = '';
 let items =

@@ -69,7 +69,7 @@
     <view class='cell-group margin-cell-group right-img'>
 
       <view class='cell-item' v-for="(item, index) in UTILITY_MENUS" :key="index" v-show="item.unShowItem">
-        <view class='cell-item-hd' @click="navigateToHandle(item.router)">
+        <view class='cell-item-hd' @click="this.$router.push(item.router)">
           <image class='cell-hd-icon' :src='item.icon'></image>
           <view class='cell-hd-title'>{{ item.name }}</view>
         </view>
@@ -130,7 +130,6 @@
 <script setup>
 import {ref} from 'vue';
 import lawfirm from '@/componpents/lawfirm';
-import router from "@/pages/user/router";
 
 let hasLogin = false;
 let userInfo = {}; // 用户信息
@@ -148,10 +147,10 @@ let UTILITY_MENUS = {
     router: '../distribution/user',
     unShowItem: true
   },
-  coupon: {name: '我的优惠券', icon: '/static/image/ic-me-coupon.png', router: '../coupon/index', unShowItem: true},
-  balance: {name: '我的余额', icon: '/static/image/ic-me-balance.png', router: '../balance/index', unShowItem: true},
-  integral: {name: '我的积分', icon: '/static/image/integral.png', router: '../integral/index', unShowItem: true},
-  address: {name: '地址管理', icon: '/static/image/me-ic-site.png', router: '../address/list', unShowItem: true},
+  coupon: {name: '我的优惠券', icon: '/static/image/ic-me-coupon.png', router: '/user/userInfo', unShowItem: true},
+  balance: {name: '我的余额', icon: '/static/image/ic-me-balance.png', router: '/order/orderList', unShowItem: true},
+  integral: {name: '我的积分', icon: '/static/image/integral.png', router: '/order/orderList', unShowItem: true},
+  address: {name: '地址管理', icon: '/static/image/me-ic-site.png', router: '/order/orderList', unShowItem: true},
   collection: {
     name: '我的收藏',
     icon: '/static/image/ic-me-collect.png',
@@ -179,6 +178,7 @@ function initUserInfo(){
 export default {
   name: "user",
   onShow: function() {
+    console.log("this is user")
   },
 
 }
