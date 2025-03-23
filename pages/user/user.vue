@@ -69,7 +69,7 @@
     <view class='cell-group margin-cell-group right-img'>
 
       <view class='cell-item' v-for="(item, index) in UTILITY_MENUS" :key="index" v-show="item.unShowItem">
-        <view class='cell-item-hd' @click="this.$router.push(item.router)">
+        <view class='cell-item-hd' @click="navigateToUrl(item.router)">
           <image class='cell-hd-icon' :src='item.icon'></image>
           <view class='cell-hd-title'>{{ item.name }}</view>
         </view>
@@ -113,7 +113,7 @@
 
     <view class='cell-group margin-cell-group right-img' v-if="isLawyer">
       <view class='cell-item' v-for="(item, index) in CLERK_MENUS" :key="index">
-        <view class='cell-item-hd' @click="navigateToHandle(item.router)">
+        <view class='cell-item-hd' @click="navigateToUrl(item.router)">
           <image class='cell-hd-icon' :src='item.icon'></image>
           <view class='cell-hd-title'>{{ item.name }}</view>
         </view>
@@ -128,8 +128,10 @@
   </view>
 </template>
 <script setup>
-import {ref} from 'vue';
-import lawfirm from '@/componpents/lawfirm';
+import {getCurrentInstance, ref} from 'vue';
+import {navigateToUrl} from "@/utils/navigateTo";
+import {getUserInfo} from "@/api/userapi";
+import {onShow} from "@dcloudio/uni-app";
 
 let hasLogin = false;
 let userInfo = {}; // 用户信息
@@ -147,10 +149,10 @@ let UTILITY_MENUS = {
     router: '../distribution/user',
     unShowItem: true
   },
-  coupon: {name: '我的优惠券', icon: '/static/image/ic-me-coupon.png', router: '/user/userInfo', unShowItem: true},
-  balance: {name: '我的余额', icon: '/static/image/ic-me-balance.png', router: '/order/orderList', unShowItem: true},
-  integral: {name: '我的积分', icon: '/static/image/integral.png', router: '/order/orderList', unShowItem: true},
-  address: {name: '地址管理', icon: '/static/image/me-ic-site.png', router: '/order/orderList', unShowItem: true},
+  coupon: {name: '我的优惠券', icon: '/static/image/ic-me-coupon.png', router: '/pages/user/user', unShowItem: true},
+  balance: {name: '我的余额', icon: '/static/image/ic-me-balance.png', router: '/pages/order/orderlist', unShowItem: true},
+  integral: {name: '我的积分', icon: '/static/image/integral.png', router: '/pages/order/orderlist', unShowItem: true},
+  address: {name: '地址管理', icon: '/static/image/me-ic-site.png', router: '/order/orderlist', unShowItem: true},
   collection: {
     name: '我的收藏',
     icon: '/static/image/ic-me-collect.png',
@@ -166,21 +168,35 @@ let CLERK_MENUS = [
   {name: '提货单列表', icon: '/static/image/me-ic-phone.png', router: '../take_delivery/list'},
   {name: '提货单核销', icon: '/static/image/me-ic-about.png', router: '../take_delivery/index'}
 ];
-function initUserInfo(){
+
+onShow(() => {
+  debugger
+  initUserInfo();
+});
+
+function initUserInfo() {
+  getUserInfo("111")
+}
+
+function toPage(url) {
+  this.navigate.navigateToUrl("2020-01-01");
 
 }
 
 
 </script>
 
-
-<script >
+<script>
 export default {
-  name: "user",
-  onShow: function() {
-    console.log("this is user")
+  onLaunch: function() {
+    console.log('App Launch')
   },
-
+  onShow: function() {
+    this.initUserInfo
+  },
+  onHide: function() {
+    console.log('App Hide')
+  }
 }
 </script>
 

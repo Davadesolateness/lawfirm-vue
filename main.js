@@ -1,25 +1,35 @@
 import App from './App'
-import router from './utils/route'
+import { http } from '@/utils/http'
+import { setupMockInterceptor } from '@/mock/mock-interceptor'
+
+
 // #ifndef VUE3
 import Vue from 'vue'
 App.mpType = 'app'
 const app = new Vue({
     ...App
 })
-app.use(router)
-app.mount()
 
-Vue.prototype.$router = router;
+// 开发环境启用 Mock
+if (process.env.NODE_ENV === 'development') {
+    import('/mock/mock').then(() => {
+        setupMockInterceptor()
+    })
+}
 
+app.config.globalProperties.$http = http
 
+app.mount("#app")
 // #endif
 
 // #ifdef VUE3
-import { createSSRApp } from 'vue'
+import {createSSRApp} from 'vue'
+
 export function createApp() {
     const app = createSSRApp(App)
     return {
         app
     }
 }
+
 // #endif

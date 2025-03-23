@@ -14,11 +14,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@dcloudio/uni-ui": "github:dcloudio/uni-ui",
     "axios": "^1.8.4",
+    "better-mock": "^0.3.7",
     "element-plus": "^2.9.6",
+    "mockjs": "^1.1.0",
     "uuid": "^11.1.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0",
     "websocket-heartbeat-miniprogram": "1.0.3"
+  },
+  "devDependencies": {
+    "@dcloudio/uni-automator": "^2.0.2-4050620250311002"
   }
 }

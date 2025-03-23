@@ -1,9 +1,8 @@
-import request from "@/utils/request";
+import {http} from "@/utils/http";
 
-export function getUserInfo(data){
-    return request({
-        url: "/getUserInof",
-        method: "POST",
+export function getUserInfo(data) {
+    return http.get({
+        url: "/getUserInfo",
         data: data,
         headers: {
             "Content-Type": "application/json"
