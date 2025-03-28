@@ -147,21 +147,21 @@ let UTILITY_MENUS = {
     name: '分销中心',
     icon: '/static/image/distribution.png',
     router: '../distribution/user',
-    unShowItem: true
+    unShowItem: false
   },
   coupon: {name: '我的优惠券', icon: '/static/image/ic-me-coupon.png', router: '/pages/user/user', unShowItem: true},
   balance: {name: '我的余额', icon: '/static/image/ic-me-balance.png', router: '/pages/order/orderlist', unShowItem: true},
-  integral: {name: '我的积分', icon: '/static/image/integral.png', router: '/pages/order/orderlist', unShowItem: true},
-  address: {name: '地址管理', icon: '/static/image/me-ic-site.png', router: '/order/orderlist', unShowItem: true},
+  integral: {name: '我的积分', icon: '/static/image/integral.png', router: '/pages/order/orderlist', unShowItem: false},
+  address: {name: '地址管理', icon: '/static/image/me-ic-site.png', router: '/order/orderlist', unShowItem: false},
   collection: {
     name: '我的收藏',
     icon: '/static/image/ic-me-collect.png',
     router: '../collection/index',
     unShowItem: true
   },
-  history: {name: '我的足迹', icon: '/static/image/ic-me-track.png', router: '../history/index', unShowItem: true},
-  invite: {name: '邀请好友', icon: '/static/image/ic-me-invite.png', router: '../invite/index', unShowItem: true},
-  setting: {name: '系统设置', icon: '/static/image/me-ic-set.png', router: '../setting/index', unShowItem: true}
+  history: {name: '我的足迹', icon: '/static/image/ic-me-track.png', router: '../history/index', unShowItem: false},
+  invite: {name: '邀请好友', icon: '/static/image/ic-me-invite.png', router: '../invite/index', unShowItem: false},
+  setting: {name: '系统设置', icon: '/static/image/me-ic-set.png', router: '../setting/index', unShowItem: false}
 };
 
 let CLERK_MENUS = [
@@ -170,7 +170,6 @@ let CLERK_MENUS = [
 ];
 
 onShow(() => {
-  debugger
   initUserInfo();
 });
 
