@@ -4,7 +4,7 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "uni-app"
+        "navigationBarTitleText": "用户信息"
       }
     },
     {
@@ -15,7 +15,7 @@
       }
     },
     {
-      "path": "pages/order/orderlist",
+      "path": "pages/lawyer/lawyerinfo",
       "style": {
         "navigationBarTitleText": "订单信息",
         "enablePullDownRefresh": true
@@ -41,6 +41,20 @@
         "navigationBarTitleText": "律师列表",
         "enablePullDownRefresh": true
       }
+    },
+    {
+      "path": "components/service/servicetype",
+      "style": {
+        "navigationBarTitleText": "服务类型",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/order/orderlist",
+      "style": {
+        "navigationBarTitleText": "订单列表",
+        "enablePullDownRefresh": false
+      }
     }
   ],
   "tabBar": {
@@ -64,13 +78,13 @@
         // 选中图标
       },
       {
-        "pagePath": "pages/index/index2",
+        "pagePath": "pages/lawyer/lawyerinfo",
         "text": "免费咨询",
         "iconPath": "static/images/home.png",
         "selectedIconPath": "static/images/home_active.png"
       },
       {
-        "pagePath": "pages/user/user",
+        "pagePath": "pages/order/orderlist",
         "text": "订单",
         "iconPath": "static/images/user.png",
         "selectedIconPath": "static/images/user_active.png"

@@ -1,11 +1,10 @@
-import {http} from "@/utils/http";
+import http from "@/utils/http/index";
 
 export function getUserInfo(data) {
-    return http.get({
-        url: "/getUserInfo",
+    return http.get("/getUserInfo",data,({
         data: data,
-        headers: {
-            "Content-Type": "application/json"
+        options : {
+            showLoading: false
         }
-    });
+    }));
 }

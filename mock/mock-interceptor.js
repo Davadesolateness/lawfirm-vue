@@ -7,10 +7,11 @@ const originalRequest = uni.request
 // 创建 Mock 拦截器
 export function setupMockInterceptor() {
     // 覆盖 uni.request
+
     uni.request = function(config) {
         return new Promise((resolve, reject) => {
             // 匹配 Mock 规则
-            const matchResult = Mock.mock(config.url, config.method, config.data)
+            const matchResult = Mock.mock(config.url, config.method,config.data)
 
             if (matchResult) {
                 // 模拟网络延迟
@@ -21,7 +22,7 @@ export function setupMockInterceptor() {
                         header: {},
                         cookies: []
                     })
-                }, Mock.Random.integer(200, 500))
+                }, Mock.Random.integer(200, 599))
             } else {
                 // 未匹配的请求走真实接口
                 originalRequest({

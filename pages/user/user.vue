@@ -1,174 +1,74 @@
 <template>
-  <view class="content">
-    <view class='member-top'>
-      <image class='bg-img' src='/static/image/member-bg.png'></image>
-      <view class='member-top-c'>
-        <template v-if="hasLogin">
-          <image class='user-head-img' mode="aspectFill" :src='userInfo.avatar'></image>
-          <view class='user-name'>{{ userInfo.nickname }}</view>
-          <view class="fz12 grade" v-if="userInfo.grade_name">
-            {{ userInfo.grade_name }}
-          </view>
-        </template>
-        <template v-else>
-          <!-- #ifdef H5 || APP-PLUS -->
-          <!--
-                    <image class='user-head-img' mode="aspectFill" :src='$store.state.config.shop_logo'></image>
-          -->
-          <view class="login-btn" @click="toLogin">
-            登录/注册
-          </view>
-          <!-- #endif -->
-          <!-- #ifdef MP-WEIXIN -->
-          <view class="user-head-img">
-            <open-data type="userAvatarUrl"></open-data>
-          </view>
-          <view>
-            <button class="login-btn" hover-class="btn-hover" @click="goLogin()">授权登录</button>
-          </view>
-          <!-- #endif -->
-          <!-- #ifdef MP-ALIPAY -->
-          <view class="user-head-img"></view>
-          <view>
-            <button class="login-btn" open-type="getAuthorize" @click="getALICode" hover-class="btn-hover">授权登录
-            </button>
-          </view>
-          <!-- #endif -->
-        </template>
-      </view>
-    </view>
-
-    <!-- 订单列表信息 -->
-    <view class='cell-group'>
-      <view class='cell-item right-img' @click="router.push('/order/orderlist')">
-        <view class='cell-item-hd'>
-          <view class='cell-hd-title'>我的订单</view>
-        </view>
-        <view class='cell-item-ft'>
-          <image class='cell-ft-next icon' src='/static/image/right.png'></image>
+  <view class="container">
+    <!-- 用户信息区 -->
+    <view class="user-header">
+      <view class="user-info">
+        <image class="avatar" src="/static/avatar.png" mode="aspectFill"/>
+        <view class="user-meta">
+          <text class="username">微信用户</text>
+          <view class="user-tag">普通用户</view>
         </view>
       </view>
     </view>
 
-    <view class='member-grid'>
-      <view class='member-item' v-for="(item, index) in ORDER_ITEMS" :key="index"
-            @click="orderNavigateHandle('../order/orderlist', index + 1)">
-        <view class="badge color-f" v-if="item.nums">{{ item.nums }}</view>
-        <image class='member-item-icon' :src='item.icon'></image>
-        <text class='member-item-text'>{{ item.name }}</text>
+    <!-- 主要内容区 -->
+    <view class="main-content">
+      <!-- 免费咨询卡片 -->
+      <view class="service-card">
+        <view class="card-header">
+          <text class="card-title">11111111111</text>
+          <view class="decorative-line"></view>
+        </view>
+        <view class="features">
+          <view v-for="(item, index) in features" :key="index" class="feature-item">
+            <text class="feature-icon">✓</text>
+            <text class="feature-text">{{ item }}</text>
+          </view>
+        </view>
+        <button class="consult-btn" @tap="navigateToConsult">进入咨询</button>
       </view>
-      <view class='member-item' @click="goAfterSaleList">
-        <view class="badge color-f" v-if="afterSaleNums != 0">{{ afterSaleNums }}</view>
-        <image class='member-item-icon' src='/static/image/me-ic-evaluate.png'></image>
-        <text class='member-item-text'>退换货</text>
-      </view>
-    </view>
-    <!-- 订单列表end -->
 
-    <!-- 其他功能菜单 -->
-    <view class='cell-group margin-cell-group right-img'>
+      <!-- 功能列表 -->
+      <view class="func-list">
+        <view class="func-item" @tap="navigateTo('/pages/share/index')">
+          <text class="func-icon">👀</text>
+          <text class="func-text">推荐给好友</text>
+          <text class="arrow">›</text>
+        </view>
+        <view class="func-item" @tap="navigateTo('/pages/about/index')">
+          <text class="func-icon">💁</text>
+          <text class="func-text">关于</text>
+          <text class="arrow">›</text>
+        </view>
+        <view class="func-item" @tap="navigateTo('/pages/feedback/index')">
+          <text class="func-icon">📧</text>
+          <text class="func-text">意见反馈</text>
+          <text class="arrow">›</text>
+        </view>
+      </view>
 
-      <view class='cell-item' v-for="(item, index) in UTILITY_MENUS" :key="index" v-show="item.unShowItem">
-        <view class='cell-item-hd' @click="navigateToUrl(item.router)">
-          <image class='cell-hd-icon' :src='item.icon'></image>
-          <view class='cell-hd-title'>{{ item.name }}</view>
-        </view>
-        <view class='cell-item-ft'>
-          <image class='cell-ft-next icon' src='/static/image/right.png'></image>
-        </view>
-      </view>
-      <!-- #ifdef H5 || APP-PLUS -->
-      <view class='cell-item'>
-        <view class='cell-item-hd' @click="showChat()">
-          <image class='cell-hd-icon' src='/static/image/me-ic-phone.png'></image>
-          <view class='cell-hd-title'>联系客服</view>
-        </view>
-        <view class='cell-item-ft'>
-          <image class='cell-ft-next icon' src='/static/image/right.png'></image>
-        </view>
-      </view>
-      <!-- #endif -->
-      <!-- #ifdef MP-WEIXIN -->
-      <view class='cell-item'>
-        <button class="cell-item-hd " hover-class="none" open-type="contact" bindcontact="showChat"
-                :session-from="kefupara">
-          <image src='/static/image/me-ic-phone.png' class='cell-hd-icon'></image>
-          <view class='cell-hd-title'>联系客服</view>
-        </button>
-        <view class='cell-item-ft'>
-          <image class='cell-ft-next icon' src='/static/image/right.png'></image>
-        </view>
-      </view>
-      <!-- #endif -->
-      <!-- #ifdef MP-ALIPAY -->
-      <view class='cell-item'>
-        <contact-button icon="/static/image/kefu2.png" size="170rpx*76rpx" tnt-inst-id="WKPKUZXG" scene="SCE00040186"
-                        class="cell-item-hd " hover-class="none"/>
-        <view class='cell-item-ft'>
-          <image class='cell-ft-next icon' src='/static/image/right.png'></image>
-        </view>
-      </view>
-      <!-- #endif -->
+      <!-- 版本信息 -->
+      <!--
+            <view class="version">版本号：1.9.3</view>
+      -->
     </view>
 
-    <view class='cell-group margin-cell-group right-img' v-if="isLawyer">
-      <view class='cell-item' v-for="(item, index) in CLERK_MENUS" :key="index">
-        <view class='cell-item-hd' @click="navigateToUrl(item.router)">
-          <image class='cell-hd-icon' :src='item.icon'></image>
-          <view class='cell-hd-title'>{{ item.name }}</view>
-        </view>
-        <view class='cell-item-ft'>
-          <image class='cell-ft-next icon' src='/static/image/right.png'></image>
-        </view>
-      </view>
-    </view>
-    <!-- 其他功能菜单end -->
-    <lawfirm></lawfirm>
 
   </view>
 </template>
+
 <script setup>
-import {getCurrentInstance, ref} from 'vue';
 import {navigateToUrl} from "@/utils/navigateTo";
 import {getUserInfo} from "@/api/userapi";
 import {onShow} from "@dcloudio/uni-app";
 
+const features = [
+  '111',
+  '111',
+  '1'
+]
 let hasLogin = false;
 let userInfo = {}; // 用户信息
-let isLawyer = true;   // 律师身份标识，如果是律师的话，展示该页面
-let ORDER_ITEMS = [
-  {name: '待付款', icon: '/static/image/me-ic-obligation.png', nums: 0},
-  {name: '待发货', icon: '/static/image/me-ic-sendout.png', nums: 0},
-  {name: '待收货', icon: '/static/image/me-ic-receiving.png', nums: 0},
-  {name: '待评价', icon: '/static/image/me-ic-evaluate.png', nums: 0}
-];
-let UTILITY_MENUS = {
-  distribution: {
-    name: '分销中心',
-    icon: '/static/image/distribution.png',
-    router: '../distribution/user',
-    unShowItem: false
-  },
-  coupon: {name: '我的优惠券', icon: '/static/image/ic-me-coupon.png', router: '/pages/user/user', unShowItem: true},
-  balance: {name: '我的余额', icon: '/static/image/ic-me-balance.png', router: '/pages/order/orderlist', unShowItem: true},
-  integral: {name: '我的积分', icon: '/static/image/integral.png', router: '/pages/order/orderlist', unShowItem: false},
-  address: {name: '地址管理', icon: '/static/image/me-ic-site.png', router: '/order/orderlist', unShowItem: false},
-  collection: {
-    name: '我的收藏',
-    icon: '/static/image/ic-me-collect.png',
-    router: '../collection/index',
-    unShowItem: true
-  },
-  history: {name: '我的足迹', icon: '/static/image/ic-me-track.png', router: '../history/index', unShowItem: false},
-  invite: {name: '邀请好友', icon: '/static/image/ic-me-invite.png', router: '../invite/index', unShowItem: false},
-  setting: {name: '系统设置', icon: '/static/image/me-ic-set.png', router: '../setting/index', unShowItem: false}
-};
-
-let CLERK_MENUS = [
-  {name: '提货单列表', icon: '/static/image/me-ic-phone.png', router: '../take_delivery/list'},
-  {name: '提货单核销', icon: '/static/image/me-ic-about.png', router: '../take_delivery/index'}
-];
-
 onShow(() => {
   initUserInfo();
 });
@@ -182,115 +82,203 @@ function toPage(url) {
 
 }
 
-
 </script>
 
-<script>
-export default {
-  onLaunch: function() {
-    console.log('App Launch')
-  },
-  onShow: function() {
-    this.initUserInfo
-  },
-  onHide: function() {
-    console.log('App Hide')
+<style lang="scss" scoped>
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5faf7;
+}
+
+.user-header {
+  background: linear-gradient(135deg, #d5c6ff 0%, #8176a5 100%);
+  padding: 40rpx 32rpx 80rpx;
+
+  .user-info {
+    display: flex;
+    align-items: center;
+
+    .avatar {
+      width: 120rpx;
+      height: 120rpx;
+      border-radius: 50%;
+      border: 4rpx solid rgba(255, 255, 255, 0.3);
+      margin-right: 32rpx;
+      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
+    }
+
+    .user-meta {
+      .username {
+        color: #fff;
+        font-size: 40rpx;
+        font-weight: 600;
+        line-height: 1.4;
+      }
+
+      .user-tag {
+        display: inline-block;
+        padding: 8rpx 24rpx;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 32rpx;
+        color: #fff;
+        font-size: 28rpx;
+        font-weight: 500;
+      }
+    }
   }
 }
-</script>
 
-<style lang="css">
-.cell-item {
-  padding: 20upx 26upx 20upx 0;
-  width: 724upx;
-  margin-left: 26upx;
-  border-bottom: 2upx solid #f3f3f3;
-  position: relative;
+.main-content {
+  flex: 1;
+  padding: 0 32rpx;
+  transform: translateY(-60rpx);
+}
+
+.service-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
+
+  .card-header {
+    margin-bottom: 32rpx;
+
+    .card-title {
+      font-size: 38rpx;
+      font-weight: 600;
+      color: #2d3436;
+    }
+
+    .decorative-line {
+      width: 80rpx;
+      height: 8rpx;
+      background: #6B5BFF;
+      border-radius: 4rpx;
+      margin-top: 16rpx;
+    }
+  }
+
+  .features {
+    .feature-item {
+      display: flex;
+      align-items: center;
+      padding: 24rpx 0;
+
+      .feature-icon {
+        color: #6B5BFF;
+        margin-right: 16rpx;
+        font-weight: bold;
+      }
+
+      .feature-text {
+        color: #666;
+        font-size: 30rpx;
+      }
+    }
+  }
+
+  .consult-btn {
+    width: 100%;
+    height: 96rpx;
+    line-height: 96rpx;
+    background: #6B5BFF;
+    color: #fff;
+    font-size: 34rpx;
+    border-radius: 16rpx;
+    margin-top: 32rpx;
+    transition: all 0.2s;
+
+    &:active {
+      opacity: 0.9;
+      transform: scale(0.98);
+    }
+  }
+}
+
+.func-list {
+  background: #fff;
+  border-radius: 24rpx;
   overflow: hidden;
-  background-color: #fff;
-  color: #333;
-  display: table;
-  min-height: 90upx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
+
+  .func-item {
+    display: flex;
+    align-items: center;
+    padding: 32rpx;
+    border-bottom: 2rpx solid #eee;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .func-icon {
+      font-size: 44rpx;
+      margin-right: 24rpx;
+    }
+
+    .func-text {
+      flex: 1;
+      font-size: 32rpx;
+      color: #333;
+    }
+
+    .arrow {
+      color: #6B5BFF;
+      font-size: 48rpx;
+    }
+
+    &:active {
+      background-color: #f8f9fa;
+    }
+  }
 }
 
-.right-img {
-  border-bottom: 0;
-}
-
-.member-top {
-  position: relative;
-  width: 100%;
-  height: 340upx;
-}
-
-.bg-img {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-}
-
-.member-top-c {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+.version {
   text-align: center;
+  color: #999;
+  font-size: 26rpx;
+  padding: 48rpx 0;
 }
 
-.user-head-img {
-  display: block;
-  width: 160upx;
-  height: 160upx;
-  border-radius: 50%;
-  overflow: hidden;
-  background-color: rgba(255, 255, 255, 0.7);
-  margin: 0 auto 16upx;
+.tab-bar {
+  display: flex;
+  height: 100rpx;
+  background: #fff;
+  box-shadow: 0 -8rpx 24rpx rgba(0, 0, 0, 0.04);
+
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin: 0 16rpx;
+
+    .tab-text {
+      font-size: 28rpx;
+      color: #666;
+    }
+
+    &.active {
+      .tab-text {
+        color: #6B5BFF;
+        font-weight: 600;
+      }
+
+      .tab-indicator {
+        width: 48rpx;
+        height: 8rpx;
+        background: #6B5BFF;
+        border-radius: 4rpx;
+        position: absolute;
+        bottom: 16rpx;
+      }
+    }
+  }
 }
 
-.user-name {
-  font-size: 30upx;
-  color: #fff;
-  margin-bottom: 16upx;
-}
-
-.grade {
-  color: #FFF;
-}
-
-.member-grid {
-  background-color: #fff;
-  border-top: 2upx solid #eee;
-  padding: 20upx 0;
-}
-
-.margin-cell-group {
-  margin: 20upx 0;
-  color: #666666;
-}
-
-.badge {
-  left: 80upx;
-  top: -6upx;
-}
-
-button.cell-item-hd {
-  background-color: #fff;
-  padding: 0;
-  line-height: 1.4;
-  color: #333;
-}
-
-button.cell-item-hd:after {
-  border: none;
-}
-
-.login-btn {
-  color: #fff;
-  width: 180upx;
-  height: 50upx;
-  line-height: 50upx;
-  border-radius: 25upx;
-  background: #ff7159;
-  font-size: 12px;
-}
 </style>
