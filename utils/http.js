@@ -1,119 +1,166 @@
-// utils/http.js
-let BASE_URL = 'https://api.example.com' // 根据环境变量动态切换更佳
+import { mock } from 'better-mock'
 
-class Http {
-    constructor() {
-        this.config = {
-            baseURL: BASE_URL,
-            header: { 'Content-Type': 'application/json' },
-            timeout: 10000
-        }
-    }
+// 基础配置
+const config = {
+    baseURL: 'http://localhost:5173', // 基础请求地址
+    header: { 'Content-Type': 'application/json' }, // 默认请求头
+    timeout: 10000, // 超时时间（毫秒）
+    withCredentials: false // 跨域请求时是否需要凭证
+}
 
-    // 核心请求方法
-    async request(options) {
-        // 合并配置
-        const mergedOptions = {
-            ...this.config,
-            ...options,
-            header: { ...this.config.header, ...(options.header || {}) }
-        }
+// 请求拦截器
+const requestInterceptor = {
+    invoke(options) {
+        // 显示加载提示
+        !options.hideLoading && uni.showLoading({ title: '加载中...', mask: true })
 
-        // 请求拦截
-        this.interceptors.request(mergedOptions)
-
-        // 发起请求
-        return new Promise((resolve, reject) => {
-            mergedOptions.success = (res) => {
-                // 响应拦截
-                const handledRes = this.interceptors.response(res)
-                resolve(handledRes)
+        // 设置自定义请求头（如 token）
+        const token = uni.getStorageSync('token')
+        if (token) {
+            options.header = {
+                ...options.header,
+                'Authorization': `Bearer ${token}`
             }
-
-            mergedOptions.fail = (err) => {
-                this.handleError(err)
-                reject(err)
-            }
-
-            uni.request(mergedOptions)
-        })
-    }
-
-    // 快捷方法
-    get(url, data, options = {}) {
-        return this.request({ url, data, method: 'GET', ...options })
-    }
-
-    post(url, data, options = {}) {
-        return this.request({ url, data, method: 'POST', ...options })
-    }
-
-    // 拦截器配置
-    interceptors = {
-        request: (config) => {
-            // 添加全局请求头（如 token）
-            const token = uni.getStorageSync('token')
-            if (token) config.header.Authorization = `Bearer ${token}`
-
-            // 显示加载状态（可配置是否显示）
-            if (config.showLoading !== false) {
-                uni.showLoading({ title: '加载中...', mask: true })
-            }
-
-            return config
-        },
-
-        response: (response) => {
-            // 关闭加载状态
-            uni.hideLoading()
-
-            // 处理 HTTP 状态码
-            if (response.statusCode !== 200) {
-                this.handleHttpError(response)
-                return Promise.reject(response)
-            }
-
-            // 处理业务状态码（假设业务 code 0 为成功）
-            const resData = response.data
-            if (resData.code !== 0) {
-                this.handleBusinessError(resData)
-                return Promise.reject(resData)
-            }
-
-            return resData.data // 返回核心数据
         }
-    }
 
-    // 错误处理
-    handleError(err) {
-        uni.hideLoading()
-        console.error('Request Error:', err)
-        uni.showToast({ title: '网络请求失败，请检查网络', icon: 'none' })
-    }
-
-    handleHttpError(response) {
-        const errorMap = {
-            401: () => {
-                uni.navigateTo({ url: '/pages/login/login' })
-                uni.showToast({ title: '登录已过期', icon: 'none' })
-            },
-            404: '请求资源不存在',
-            500: '服务器错误'
+        // 处理请求地址
+        if (!options.url.startsWith('http')) {
+            options.url = config.baseURL + options.url
         }
-        const message = errorMap[response.statusCode] || `请求错误：${response.statusCode}`
-        uni.showToast({ title: message, icon: 'none' })
-    }
 
-    handleBusinessError(resData) {
-        const errorMap = {
-            1001: '参数错误',
-            1002: '权限不足',
-            // ...其他业务错误码
-        }
-        const message = errorMap[resData.code] || resData.message || '请求失败'
-        uni.showToast({ title: message, icon: 'none' })
+        return options
     }
 }
 
-// 导出实例
-export const http = new Http()
+// 响应拦截器
+const responseInterceptor = {
+    succeed(response) {
+        // 隐藏加载提示
+        uni.hideLoading()
+
+        const { data: res, statusCode } = response
+
+        // HTTP 状态码判断
+        if (statusCode !== 200) {
+            return Promise.reject(new Error(`请求失败，状态码：${statusCode}`))
+        }
+
+        // 业务状态码判断（根据后端约定修改）
+        if (res.code !== 200) {
+            handleBusinessError(res.code, res.message)
+            return Promise.reject(res)
+        }
+
+        return res.data
+    },
+    fail(error) {
+        // 隐藏加载提示
+        uni.hideLoading()
+
+        // 处理网络错误
+        handleNetworkError(error)
+        return Promise.reject(error)
+    }
+}
+
+// 处理业务错误
+function handleBusinessError(code, message) {
+    const errorMap = {
+        401: () => {
+            uni.navigateTo({ url: '/pages/login/login' })
+            uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
+        },
+        403: () => {
+            uni.showToast({ title: '没有权限访问', icon: 'none' })
+        },
+        // 添加更多业务错误处理...
+    }
+
+    errorMap[code] ? errorMap[code]() : uni.showToast({ title: message || '请求失败', icon: 'none' })
+}
+
+// 处理网络错误
+function handleNetworkError(error) {
+    const errorMessage = {
+        0: '网络连接失败，请检查网络',
+        1: '请求超时，请稍后重试',
+        // 添加更多错误码...
+    }[error.errno] || '请求失败，请稍后重试'
+
+    uni.showToast({ title: errorMessage, icon: 'none' })
+}
+
+// 创建请求方法
+function createRequest(options) {
+    options = { ...config, ...options }
+    options = requestInterceptor.invoke(options)
+
+    return new Promise((resolve, reject) => {
+        uni.request({
+            ...options,
+            success: (res) => {
+                responseInterceptor.succeed(res)
+                    .then(resolve)
+                    .catch(reject)
+            },
+            fail: (err) => {
+                responseInterceptor.fail(err)
+                    .catch(reject)
+            }
+        })
+    })
+}
+
+// 封装常用方法
+const http = {
+    get(url, data, options = {}) {
+        return createRequest({
+            url,
+            data,
+            method: 'GET',
+            ...options
+        })
+    },
+
+    post(url, data, options = {}) {
+        return createRequest({
+            url,
+            data,
+            method: 'POST',
+            ...options
+        })
+    },
+
+    put(url, data, options = {}) {
+        return createRequest({
+            url,
+            data,
+            method: 'PUT',
+            ...options
+        })
+    },
+
+    delete(url, data, options = {}) {
+        return createRequest({
+            url,
+            data,
+            method: 'DELETE',
+            ...options
+        })
+    },
+
+    upload(url, filePath, name = 'file', options = {}) {
+        return createRequest({
+            url,
+            method: 'POST',
+            header: {
+                'Content-Type': 'multipart/form-data'
+            },
+            filePath,
+            name,
+            ...options
+        })
+    }
+}
+
+export default http
