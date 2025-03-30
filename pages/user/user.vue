@@ -3,7 +3,7 @@
     <!-- 用户信息区 -->
     <view class="user-header">
       <view class="user-info">
-        <image class="avatar" :src="avatarImg" mode="aspectFill"/>
+        <image class="avatar" :src="userInfo.avatar" mode="aspectFill"/>
         <view class="user-meta">
           <text class="username" >{{userInfo.username}}</text>
           <view class="user-tag" v-if="corporateuser">法人用户</view>
@@ -88,11 +88,13 @@ function judgeUserType(){
 // 初始化用户信息
 function initUserInfo(){
   getUserInfoById()
-  avatarImg = 'data:image/png;base64,' + uni.arrayBufferToBase64(userInfo.avatar);
+
 }
 
 const getUserInfoById = async ()=>{
   userInfo.value  =await apiGetUserInfoById("444");
+  avatarImg = userInfo.value.avatar;
+  console.log(avatarImg)
   console.log(userInfo.value);
 }
 
