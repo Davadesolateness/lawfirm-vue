@@ -3,10 +3,12 @@
     <!-- 用户信息区 -->
     <view class="user-header">
       <view class="user-info">
-        <image class="avatar" src="/static/avatar.png" mode="aspectFill"/>
+        <image class="avatar" :src="avatarImg" mode="aspectFill"/>
         <view class="user-meta">
-          <text class="username">微信用户</text>
-          <view class="user-tag">普通用户</view>
+          <text class="username" >{{userInfo.username}}</text>
+          <view class="user-tag" v-if="corporateuser">法人用户</view>
+          <view class="user-tag" v-else>普通用户</view>
+
         </view>
       </view>
     </view>
@@ -25,22 +27,22 @@
             <text class="feature-text">{{ item }}</text>
           </view>
         </view>
-        <button class="consult-btn" @tap="navigateToConsult">进入咨询</button>
+        <button class="consult-btn" >进入咨询</button>
       </view>
 
       <!-- 功能列表 -->
       <view class="func-list">
-        <view class="func-item" @tap="navigateTo('/pages/share/index')">
+        <view class="func-item" @click="toPage('/pages/share/index')">
           <text class="func-icon">👀</text>
           <text class="func-text">推荐给好友</text>
           <text class="arrow">›</text>
         </view>
-        <view class="func-item" @tap="navigateTo('/pages/about/index')">
+        <view class="func-item" @click="toPage('/pages/about/index')">
           <text class="func-icon">💁</text>
           <text class="func-text">关于</text>
           <text class="arrow">›</text>
         </view>
-        <view class="func-item" @tap="navigateTo('/pages/feedback/index')">
+        <view class="func-item" @click="toPage('/pages/feedback/index')">
           <text class="func-icon">📧</text>
           <text class="func-text">意见反馈</text>
           <text class="arrow">›</text>
@@ -58,8 +60,9 @@
 </template>
 
 <script setup>
+import {ref} from "vue"
 import {navigateToUrl} from "@/utils/navigateTo";
-import {getUserInfo} from "@/api/userapi";
+import {apiGetUserInfoById  } from "@/api/userapi";
 import {onShow} from "@dcloudio/uni-app";
 
 const features = [
@@ -67,14 +70,30 @@ const features = [
   '111',
   '1'
 ]
-let hasLogin = false;
-let userInfo = {}; // 用户信息
+let corporateuser = true;
+let avatarImg = '';  // 头像
+const userInfo = ref(null); // 用户信息
 onShow(() => {
   initUserInfo();
 });
 
-function initUserInfo() {
-  getUserInfo("111")
+function judgeUserType(){
+  if(userInfo.usertype == "corporate"){
+    corporateuser = true;
+  }else{
+    corporateuser = false;
+  }
+}
+
+// 初始化用户信息
+function initUserInfo(){
+  getUserInfoById()
+  avatarImg = 'data:image/png;base64,' + uni.arrayBufferToBase64(userInfo.avatar);
+}
+
+const getUserInfoById = async ()=>{
+  userInfo.value  =await apiGetUserInfoById("444");
+  console.log(userInfo.value);
 }
 
 function toPage(url) {

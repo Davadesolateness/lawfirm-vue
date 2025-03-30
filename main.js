@@ -1,7 +1,5 @@
 import App from './App'
 import http from '@/utils/http'
-import {setupMockInterceptor} from '@/mock/mock-interceptor'
-
 
 // #ifndef VUE3
 import Vue from 'vue'
@@ -12,17 +10,19 @@ const app = new Vue({
 })
 debugger
 console.log("--------------" + process.env.NODE_ENV)
-// 开发环境启用 Mock
-if (process.env.NODE_ENV === 'development') {
-
-    import('/mock/mock').then(() => {
-        setupMockInterceptor()
-    })
-}
-
 app.config.globalProperties.$http = http
 
 app.mount("#app")
+// #endif
+
+// #ifdef H5 || APP
+import { initMock } from '@/mock';
+initMock();
+// #endif
+
+// #ifdef MP-WEIXIN
+import { wxRequestInterceptor } from '@/mock/mp-adapter';
+wxRequestInterceptor();
 // #endif
 
 // #ifdef VUE3
@@ -33,12 +33,6 @@ export function createApp() {
     return {
         app
     }
-}
-console.log("--------------" + process.env.NODE_ENV)
-// 开发环境启用 Mock
-if (process.env.NODE_ENV === 'development') {
-
-    import('/mock/mock')
 }
 
 // #endif

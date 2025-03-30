@@ -1,16 +1,34 @@
-import BetterMock from 'better-mock'
+import BetterMock from 'better-mock';
+import { mockXHR } from 'better-mock/dist/mock.mp'; // 小程序专用模块
 
-// 仅在开发环境启用
-if (process.env.NODE_ENV === 'development') {
-    // 初始化配置
-    BetterMock.setup({
-        timeout: '200-600ms', // 请求延迟
-        debug: true,          // 开启调试模式
-        log: true             // 显示请求日志
-    })
+// 初始化配置
+BetterMock.setup({
+    timeout: '10-50', // 模拟网络延迟
+    log: process.env.NODE_ENV === 'development' // 开发环境打印日志
+});
 
-    // 动态加载所有接口模块
-    const context = require.context('./api', true, /\.js$/)
-    context.keys().forEach(key => context(key))
-    console.log('[Better-Mock] 数据模拟已启用')
-}
+// 覆盖 uni-app 各平台请求方法
+const overrideRequest = () => {
+    // #ifdef MP-WEIXIN
+    BetterMock.mock(new mockXHR()); // 小程序专用拦截
+    // #endif
+
+    // #ifdef H5 || APP
+   /* const originalRequest = uni.request;
+    uni.request = function(config) {
+        return BetterMock.mock(config, originalRequest);
+    };*/
+    // #endif
+};
+
+// 加载 Mock 规则
+const loadMocks = () => {
+    import("./modules/user");
+};
+
+export const initMock = () => {
+    overrideRequest();
+    loadMocks();
+};
+
+
