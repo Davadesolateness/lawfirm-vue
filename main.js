@@ -8,8 +8,7 @@ App.mpType = 'app'
 const app = new Vue({
     ...App
 })
-debugger
-console.log("--------------" + process.env.NODE_ENV)
+
 app.config.globalProperties.$http = http
 
 app.mount("#app")

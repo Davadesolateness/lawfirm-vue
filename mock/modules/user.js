@@ -1,4 +1,5 @@
 import BetterMock from 'better-mock';
+import {parseQueryParams} from "@/mock/utils/mock-utils";
 
 // 提取 URL 到配置
 const BASE_URL = 'http://localhost:5173'
@@ -98,14 +99,3 @@ BetterMock.mock(BASE_URL + '/getUserInfoById', 'GET', (options) => {
     return MOCK_USER_INFO;
 });
 
-function parseQueryParams(url) {
-    const query = url.split('?')[1] || '';
-    const params = {};
-    query.split('&').forEach((pair) => {
-        const [key, value] = pair.split('=');
-        if (key) {
-            params[decodeURIComponent(key)] = decodeURIComponent(value || '');
-        }
-    });
-    return params;
-}

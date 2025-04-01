@@ -17,7 +17,7 @@
     {
       "path": "pages/lawyer/lawyerinfo",
       "style": {
-        "navigationBarTitleText": "订单信息",
+        "navigationBarTitleText": "律师详情",
         "enablePullDownRefresh": true
       }
     },
@@ -54,6 +54,20 @@
       "style": {
         "navigationBarTitleText": "订单列表",
         "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/lawyer/addlawyerinfo",
+      "style": {
+        "navigationBarTitleText": "增加律师信息",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/lawyer/modifylawyerinfo",
+      "style": {
+        "navigationBarTitleText": "修改律师信息",
+        "enablePullDownRefresh": true
       }
     }
   ],

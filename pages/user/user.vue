@@ -94,8 +94,7 @@ function initUserInfo(){
 const getUserInfoById = async ()=>{
   userInfo.value  =await apiGetUserInfoById("444");
   avatarImg = userInfo.value.avatar;
-  console.log(avatarImg)
-  console.log(userInfo.value);
+
 }
 
 function toPage(url) {

@@ -2,40 +2,56 @@
   <view class="container">
     <!-- 律师信息头部 -->
     <view class="profile-header">
-      <view class="lawyer-info">
-        <text class="name">孟繁光律师</text>
-        <text class="verify-tag">律师认证</text>
+      <view class="user-info">
+        <image class="avatar" src="/static/default-avatar.png" mode="aspectFill"/>
+        <view class="user-meta">
+          <text class="username">{{ lawyerInfo.lawyername }}</text>
+          <view class="verify-tag">律师认证</view>
+        </view>
       </view>
-      <text class="license">执业证号：11101202210486101</text>
-      <text class="location">所在地区：北京丰台区</text>
+      <view class="meta-info">
+        <text class="license">执业证号：{{ lawyerInfo.lawyerlicensenumber }}</text>
+        <text class="location">{{ lawyerInfo.address }}</text>
+      </view>
     </view>
 
     <!-- 服务类型 -->
     <view class="service-card">
-      <view class="service-header">
-        <text class="title">电话咨询</text>
-        <text class="price">¥38<text class="duration">/30分钟</text></text>
+      <view class="card-header">
+        <text class="card-title">电话咨询服务</text>
+        <view class="decorative-line"></view>
+      </view>
+      <view class="price-section">
+        <text class="price">¥38</text>
+        <text class="duration">/30分钟</text>
       </view>
       <text class="service-desc">下单后直接拨号，1分钟快速接通律师</text>
+
       <view class="guarantee-tags">
         <view class="tag-item" v-for="(tag,index) in guaranteeTags" :key="index">
-          <uni-icons type="checkmark" size="16" color="#4CAF50" />
-          <text>{{ tag }}</text>
+          <text class="tag-icon">✓</text>
+          <text class="tag-text">{{ tag }}</text>
         </view>
       </view>
     </view>
 
     <!-- 律师简介 -->
-    <view class="intro-card">
-      <text class="section-title">律师简介</text>
-      <text class="intro-content">
-        本人主要业务领域为劳动争议、刑事辩护以及民事诉讼。曾帮助几百名劳动者争取经济补偿、赔偿等。刑事辩护中也曾多次为犯罪嫌疑人、被告人争取到前定不起诉、无罪的良好结果。
+    <view class="info-card">
+      <view class="card-header">
+        <text class="card-title">律师简介</text>
+        <view class="decorative-line"></view>
+      </view>
+      <text class="content-text">
+        {{ lawyerInfo.introduction }}
       </text>
     </view>
 
     <!-- 专长经验 -->
-    <view class="expertise-card">
-      <text class="section-title">专长经验（根据法院大数据整理）</text>
+    <view class="info-card">
+      <view class="card-header">
+        <text class="card-title">专长经验</text>
+        <view class="decorative-line"></view>
+      </view>
       <view class="expertise-item">
         <text class="expertise-type">劳动纠纷</text>
         <text class="case-count">办理了5个案件</text>
@@ -43,11 +59,14 @@
     </view>
 
     <!-- 用户评价 -->
-    <view class="review-card">
-      <text class="section-title">用户评分</text>
+    <view class="info-card">
+      <view class="card-header">
+        <text class="card-title">用户评价</text>
+        <view class="decorative-line"></view>
+      </view>
       <view class="review-list">
         <view class="review-item" v-for="(review,index) in reviews" :key="index">
-          <view class="user-header">
+          <view class="review-header">
             <text class="username">{{ review.user }}</text>
             <text class="rating-tag" :class="review.ratingClass">{{ review.ratingText }}</text>
           </view>
@@ -61,234 +80,282 @@
 
     <!-- 固定咨询按钮 -->
     <view class="fixed-consult-btn" @click="handleConsult">
-      <text>立即咨询孟繁光律师</text>
+      <text>立即咨询</text>
+    </view>
+    <view>
+      <button class="el-button--text" @click="modifyLawyerInfo">修改律师</button>
+    </view>
+    <view>
+      <button class="el-button--text" @click="addLawyerInfo">增加律师</button>
     </view>
   </view>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      guaranteeTags: ['平台保障', '严选真实律师', '1对1私密咨询', '未服务自动退款'],
-      reviews: [
-        {
-          user: '15****',
-          tags: ['解答很清晰', '态度很好', '回复很快'],
-          ratingText: '好',
-          ratingClass: 'rating-good',
-          time: '2024-04-07 12:17:14'
-        },
-        {
-          user: '13****',
-          tags: ['解答很清晰', '态度很好', '回复很快'],
-          ratingText: '很好',
-          ratingClass: 'rating-great',
-          time: '2024-03-01 09:21:11'
-        },
-        {
-          user: '那****',
-          tags: ['解答很清晰', '态度很好', '回复很快'],
-          ratingText: '满意',
-          ratingClass: 'rating-satisfied',
-          time: '2024-01-03 06:57:51'
-        }
-      ]
-    }
+<script setup>
+import {ref} from "vue"
+import {navigateTo} from "@/utils/navigateTo";
+import {onShow} from "@dcloudio/uni-app";
+import {apiGetLawyerInfoById} from "@/api/lawyerapi";
+
+const lawyerInfo = ref();
+const guaranteeTags = ['平台保障', '严选真实律师', '1对1私密咨询', '未服务自动退款'];
+const reviews = [
+  {
+    user: '15****',
+    tags: ['解答很清晰', '态度很好', '回复很快'],
+    ratingText: '好',
+    ratingClass: 'rating-good',
+    time: '2024-04-07 12:17:14'
   },
-  methods: {
-    handleConsult() {
-      uni.navigateTo({url: '/pages/consult/confirm'})
-    }
-  }
+  // ...其他评价数据
+];
+
+function handleConsult() {
+  uni.navigateTo({url: '/pages/consult/confirm'})
 }
+
+// 增加律师
+function addLawyerInfo() {
+  navigateTo({
+    url: "/pages/lawyer/addlawyerinfo",
+    params: {
+      isEditMode: false
+    }
+  })
+}
+
+// 修改律师
+function modifyLawyerInfo() {
+  navigateTo({
+    url: "/pages/lawyer/addlawyerinfo",
+    params: {
+      isEditMode: true,
+      lawyerInfo: lawyerInfo
+    }
+  })
+}
+
+// 展示页面时调用此方法
+onShow(() => {
+  initLawyerInfo();
+});
+
+// 初始化律师信息
+function initLawyerInfo() {
+  getLawyerInfoById()
+
+}
+
+// 根据id获取律师信息
+const getLawyerInfoById = async () => {
+  lawyerInfo.value = await apiGetLawyerInfoById("444");
+  console.log("------"+lawyerInfo);
+}
+
+
 </script>
 
 <style lang="scss" scoped>
 .container {
   background: #f8fafd;
   min-height: 100vh;
-  padding: 32rpx;
+  padding: 0 32rpx 120rpx;
 }
 
 .profile-header {
-  background: white;
+  background: linear-gradient(135deg, #6B5BFF 0%, #8176a5 100%);
   border-radius: 24rpx;
   padding: 32rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 90, 173, 0.08);
+  margin: 32rpx 0;
+  box-shadow: 0 8rpx 24rpx rgba(107, 91, 255, 0.1);
 
-  .lawyer-info {
+  .user-info {
     display: flex;
     align-items: center;
-    margin-bottom: 16rpx;
+    margin-bottom: 40rpx;
 
-    .name {
-      font-size: 40rpx;
-      color: #1a237e;
-      font-weight: 600;
-      margin-right: 24rpx;
+    .avatar {
+      width: 120rpx;
+      height: 120rpx;
+      border-radius: 50%;
+      border: 4rpx solid rgba(255, 255, 255, 0.3);
+      margin-right: 32rpx;
     }
 
-    .verify-tag {
-      background: #4CAF50;
-      color: white;
-      font-size: 24rpx;
-      padding: 8rpx 24rpx;
-      border-radius: 32rpx;
+    .user-meta {
+      .username {
+        color: #fff;
+        font-size: 40rpx;
+        font-weight: 600;
+        margin-bottom: 8rpx;
+      }
+
+      .verify-tag {
+        display: inline-block;
+        padding: 8rpx 24rpx;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 32rpx;
+        color: #fff;
+        font-size: 28rpx;
+      }
     }
   }
 
-  .license, .location {
-    display: block;
-    font-size: 28rpx;
-    color: #616161;
-    line-height: 1.6;
+  .meta-info {
+    border-top: 2rpx solid rgba(255, 255, 255, 0.2);
+    padding-top: 24rpx;
+
+    .license, .location {
+      display: block;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 28rpx;
+      line-height: 1.6;
+    }
+  }
+}
+
+.service-card, .info-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
+
+  .card-header {
+    margin-bottom: 32rpx;
+
+    .card-title {
+      font-size: 36rpx;
+      font-weight: 600;
+      color: #2d3436;
+    }
+
+    .decorative-line {
+      width: 80rpx;
+      height: 8rpx;
+      background: #6B5BFF;
+      border-radius: 4rpx;
+      margin-top: 16rpx;
+    }
   }
 }
 
 .service-card {
-  background: white;
-  border-radius: 24rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 90, 173, 0.08);
-
-  .service-header {
+  .price-section {
     display: flex;
-    justify-content: space-between;
     align-items: baseline;
     margin-bottom: 24rpx;
-
-    .title {
-      font-size: 36rpx;
-      color: #1a237e;
-      font-weight: 500;
-    }
 
     .price {
       color: #f44336;
       font-size: 48rpx;
       font-weight: 700;
+      margin-right: 16rpx;
+    }
 
-      .duration {
-        font-size: 28rpx;
-        color: #757575;
-        margin-left: 8rpx;
-      }
+    .duration {
+      color: #757575;
+      font-size: 28rpx;
     }
   }
 
   .service-desc {
-    color: #616161;
+    color: #666;
     font-size: 28rpx;
     margin-bottom: 32rpx;
-    display: block;
   }
 
   .guarantee-tags {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 16rpx;
 
     .tag-item {
-      background: #f5faff;
-      border-radius: 32rpx;
-      padding: 12rpx 24rpx;
+      background: #f8f9ff;
+      border-radius: 16rpx;
+      padding: 16rpx;
       display: flex;
       align-items: center;
 
-      text {
+      .tag-icon {
+        color: #6B5BFF;
+        margin-right: 12rpx;
+        font-weight: bold;
+      }
+
+      .tag-text {
+        color: #444;
         font-size: 26rpx;
-        color: #2196F3;
-        margin-left: 8rpx;
       }
     }
   }
 }
 
-.intro-card, .expertise-card, .review-card {
-  background: white;
-  border-radius: 24rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 90, 173, 0.08);
-
-  .section-title {
-    display: block;
-    font-size: 32rpx;
-    color: #1a237e;
-    font-weight: 500;
-    margin-bottom: 24rpx;
-    padding-bottom: 24rpx;
-    border-bottom: 2rpx solid #e3f2fd;
-  }
-}
-
-.intro-content {
-  font-size: 28rpx;
-  color: #616161;
-  line-height: 1.8;
-}
-
-.expertise-item {
-  background: #f5faff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-top: 24rpx;
-
-  .expertise-type {
-    font-size: 30rpx;
-    color: #2196F3;
-    font-weight: 500;
+.info-card {
+  .content-text {
+    color: #666;
+    font-size: 28rpx;
+    line-height: 1.8;
   }
 
-  .case-count {
-    font-size: 26rpx;
-    color: #757575;
-    margin-top: 12rpx;
-    display: block;
+  .expertise-item {
+    background: #f8f9ff;
+    border-radius: 16rpx;
+    padding: 24rpx;
+    margin-top: 24rpx;
+
+    .expertise-type {
+      color: #6B5BFF;
+      font-size: 30rpx;
+      font-weight: 500;
+    }
+
+    .case-count {
+      color: #888;
+      font-size: 26rpx;
+      margin-top: 12rpx;
+    }
   }
 }
 
 .review-list {
   .review-item {
     padding: 32rpx 0;
-    border-bottom: 2rpx solid #e3f2fd;
+    border-bottom: 2rpx solid #eee;
 
     &:last-child {
       border-bottom: none;
     }
 
-    .user-header {
+    .review-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16rpx;
 
       .username {
-        color: #424242;
+        color: #444;
         font-size: 28rpx;
       }
 
       .rating-tag {
         font-size: 24rpx;
-        padding: 6rpx 20rpx;
+        padding: 8rpx 24rpx;
         border-radius: 32rpx;
 
         &.rating-good {
-          background: #C8E6C9;
-          color: #2E7D32;
+          background: #e8f5e9;
+          color: #2e7d32;
         }
 
         &.rating-great {
-          background: #B3E5FC;
-          color: #0277BD;
+          background: #e3f2fd;
+          color: #0277bd;
         }
 
         &.rating-satisfied {
-          background: #F0F4C3;
-          color: #9E9D24;
+          background: #fff9c4;
+          color: #9e9d24;
         }
       }
     }
@@ -301,32 +368,35 @@ export default {
 
       .feature-tag {
         background: #f5f5f5;
-        color: #757575;
+        color: #666;
         font-size: 24rpx;
-        padding: 8rpx 16rpx;
+        padding: 8rpx 24rpx;
         border-radius: 32rpx;
       }
     }
 
     .review-time {
-      color: #bdbdbd;
+      color: #999;
       font-size: 24rpx;
-      display: block;
     }
   }
 }
 
 .fixed-consult-btn {
   position: fixed;
-  bottom: 108rpx;
+  bottom: 64rpx;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  width: 70%;
+  height: 96rpx;
+  background: linear-gradient(135deg, #6B5BFF 0%, #8176a5 100%);
   color: white;
-  padding: 24rpx 96rpx;
-  border-radius: 48rpx;
-  font-size: 28rpx;
-  box-shadow: 0 8rpx 24rpx rgba(33, 150, 243, 0.3);
+  border-radius: 64rpx;
+  font-size: 34rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(107, 91, 255, 0.3);
   transition: all 0.2s;
 
   &:active {
