@@ -1,5 +1,8 @@
-import * as api from "@/api/lawyerapi";
+import {apiGetLawyerInfoById} from "@/api/lawyerapi";
 
-export default {
-    getUserInfo: api.getUserInfo
+// 根据id查询数据
+export const getLawyerInfoById = (id) => {
+    return apiGetLawyerInfoById(id);
 }
+
+export default {getLawyerInfoById}

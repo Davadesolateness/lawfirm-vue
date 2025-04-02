@@ -95,6 +95,7 @@
 import {ref} from "vue"
 import {navigateTo} from "@/utils/navigateTo";
 import {onShow} from "@dcloudio/uni-app";
+import {getLawyerInfoById} from "./lawyerservice";
 import {apiGetLawyerInfoById} from "@/api/lawyerapi";
 
 const lawyerInfo = ref();
@@ -130,7 +131,7 @@ function modifyLawyerInfo() {
     url: "/pages/lawyer/addlawyerinfo",
     params: {
       isEditMode: true,
-      lawyerInfo: lawyerInfo
+      lawyerId: "444"
     }
   })
 }
@@ -142,16 +143,18 @@ onShow(() => {
 
 // 初始化律师信息
 function initLawyerInfo() {
-  getLawyerInfoById()
-
+  apiGetLawyerInfoById("444").then((data) =>{
+    lawyerInfo.value = data;
+  })
+  debugger
 }
+
 
 // 根据id获取律师信息
-const getLawyerInfoById = async () => {
+/*const getLawyerInfoById = async () => {
   lawyerInfo.value = await apiGetLawyerInfoById("444");
   console.log("------"+lawyerInfo);
-}
-
+}*/
 
 </script>
 

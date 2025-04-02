@@ -6,16 +6,16 @@
       <text class="form-title">律师基本信息</text>
       <view class="form-item">
         <text class="label">姓名</text>
-        <input class="input" placeholder="请输入律师姓名" v-model="formData.name"/>
+        <input class="input" placeholder="请输入律师姓名" v-model="formData.lawyername"/>
       </view>
       <view class="form-item">
         <text class="label">执业证号</text>
-        <input class="input" placeholder="请输入执业证号" v-model="formData.license"/>
+        <input class="input" placeholder="请输入执业证号" v-model="formData.lawyerlicensenumber"/>
       </view>
       <view class="form-item">
         <text class="label">所在地区</text>
         <picker class="picker" mode="region" @change="bindRegionChange">
-          <view class="picker-content">{{ formData.region || '请选择地区' }}</view>
+          <view class="picker-content">{{ formData.address || '请选择地区' }}</view>
         </picker>
       </view>
     </view>
@@ -53,57 +53,58 @@
     </view>
 
     <!-- 提交按钮 -->
-<!--    <view class="submit-btn" @click="handleSubmit">
-      <view v-show="isEditMode.value">
-        <text>保存修改</text>
-      </view>
-      <view v-show="!isEditMode.value">
-        <text>提交信息</text>
-      </view>
-    </view>-->
     <view class="submit-btn" @click="handleSubmit">
-      <text>{{ isEditMode ? '保存修改' : '提交信息' }}</text>
+      <text>{{ buttonText }}</text>
     </view>
   </view>
 </template>
 
-
 <script setup>
-import {ref} from "vue"
-import {onLoad,onShow} from "@dcloudio/uni-app";
+import {computed, ref} from "vue"
+import {onLoad} from "@dcloudio/uni-app";
+import {apiGetLawyerInfoById} from "@/api/lawyerapi";
 
-let isEditMode = ref(false); // 根据路由参数判断是否编辑模式
-let formData = {
-  name: '',
-  license: '',
-  region: '',
+const isEditMode = ref(false); // 根据路由参数判断是否编辑模式
+let formData = ref({
+  lawyername: '',
+  lawyerlicensenumber: '',
+  address: '',
   serviceType: '电话咨询',
   price: 38,
   expertise: '',
   introduction: ''
-}
+})
+
+let buttonText = computed(() => {
+  return isEditMode.value ? '保存修改' : '提交信息';
+})
+
 
 function bindRegionChange(e) {
-  this.formData.region = e.detail.value.join(' ')
+  formData.value.region = e.detail.value.join(' ')
 }
 
 function handleSubmit() {
   // 提交逻辑
   uni.showToast({
-    title: this.isEditMode ? '修改成功' : '新增成功',
+    title: isEditMode.value ? '修改成功' : '新增成功',
     icon: 'success'
   })
 }
 
 // 加载时更改数据
-onShow((data) => {
-  isEditMode.value = data.isEditMode;
+onLoad((data) => {
+  if (data && data.isEditMode == "true") {
+    isEditMode.value = true;
+    apiGetLawyerInfoById("444").then((data) => {
+      formData.value = {...data}; // 填充表单数据
+    })
+  }
   console.log("----------" + isEditMode.value)
 });
 </script>
 
-<style lang="scss" scoped>
-.container {
+<style lang="scss" scoped>.container {
   background: #f8fafd;
   min-height: 100vh;
   padding: 32rpx;
