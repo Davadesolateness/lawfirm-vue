@@ -34,7 +34,7 @@ function handleConsult() {
 }
 </script>
 
-<style>
+<style lang="scss">
 .service-card {
   background: white;
   border-radius: 24rpx;

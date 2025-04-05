@@ -5,71 +5,98 @@
       <view class="user-info">
         <image class="avatar" :src="userInfo.avatar" mode="aspectFill"/>
         <view class="user-meta">
-          <text class="username" >{{userInfo.username}}</text>
+          <text class="username">{{ userInfo.username }}</text>
           <view class="user-tag" v-if="corporateuser">法人用户</view>
           <view class="user-tag" v-else>普通用户</view>
 
         </view>
-      </view>
-    </view>
 
-    <!-- 主要内容区 -->
-    <view class="main-content">
-      <!-- 免费咨询卡片 -->
-      <view class="service-card">
+      </view>
+      <view class="membership-card">
+        <text class="membership-level">黄金会员</text>
+        <text class="expire-date">有效期至：2024-12-31</text>
+
+        <view class="privilege-tags">
+          <text class="tag">专属律师</text>
+          <text class="tag">双倍积分</text>
+          <text class="tag">优先服务</text>
+        </view>
+      </view>
+
+      <!-- 修改后的优惠券卡片 -->
+      <view class="coupon-card">
         <view class="card-header">
-          <text class="card-title">11111111111</text>
+          <text class="card-title">我的使用次数</text>
           <view class="decorative-line"></view>
         </view>
-        <view class="features">
-          <view v-for="(item, index) in features" :key="index" class="feature-item">
-            <text class="feature-icon">✓</text>
-            <text class="feature-text">{{ item }}</text>
+        <view class="coupon-list">
+          <view v-for="(coupon, index) in coupons" :key="index" class="coupon-item">
+            <text class="times">{{ coupon.times }}次</text>
+            <view class="coupon-info">
+              <text class="name">{{ coupon.name }}</text>
+              <text class="condition">可用{{ coupon.times }}次</text>
+              <text class="expire">{{ coupon.expire }}</text>
+            </view>
           </view>
         </view>
-        <button class="consult-btn" >进入咨询</button>
       </view>
-
-      <!-- 功能列表 -->
-      <view class="func-list">
-        <view class="func-item" @click="toPage('/pages/share/index')">
-          <text class="func-icon">👀</text>
-          <text class="func-text">推荐给好友</text>
-          <text class="arrow">›</text>
-        </view>
-        <view class="func-item" @click="toPage('/pages/about/index')">
-          <text class="func-icon">💁</text>
-          <text class="func-text">关于</text>
-          <text class="arrow">›</text>
-        </view>
-        <view class="func-item" @click="toPage('/pages/feedback/index')">
-          <text class="func-icon">📧</text>
-          <text class="func-text">意见反馈</text>
-          <text class="arrow">›</text>
-        </view>
-      </view>
-
-      <!-- 版本信息 -->
-      <!--
-            <view class="version">版本号：1.9.3</view>
-      -->
     </view>
-
-
+    <!-- 功能列表 -->
+    <view class="func-list">
+      <view class="func-item" @click="toPage('/pages/share/index')">
+        <text class="func-icon">👀</text>
+        <text class="func-text">推荐给好友</text>
+        <text class="arrow">›</text>
+      </view>
+      <view class="func-item" @click="toPage('/pages/about/index')">
+        <text class="func-icon">💁</text>
+        <text class="func-text">关于</text>
+        <text class="arrow">›</text>
+      </view>
+      <view class="func-item" @click="toPage('/pages/feedback/index')">
+        <text class="func-icon">📧</text>
+        <text class="func-text">意见反馈</text>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+    <view>
+      <button class="el-button--text" @click="modifyUserInfo">修改用户</button>
+    </view>
+    <view>
+      <button class="el-button--text" @click="adminPage">管理员</button>
+    </view>
   </view>
+
+
 </template>
 
 <script setup>
 import {ref} from "vue"
-import {navigateToUrl} from "@/utils/navigateTo";
-import {apiGetUserInfoById  } from "@/api/userapi";
+import {navigateTo, navigateToUrl} from "@/utils/navigateTo";
+import {apiGetUserInfoById} from "@/api/userapi";
 import {onShow} from "@dcloudio/uni-app";
+import {apiGetLawyerInfoById} from "@/api/lawyerapi";
 
 const features = [
   '111',
   '111',
   '1'
 ]
+
+
+// 修改后的响应式数据
+const coupons = ref([
+  {times: 3, name: '优惠券', expire: '2023-12-31'},
+  /* {times: 5, name: '会员专属券', expire: '2024-01-31'},
+   {times: 1, name: '新人礼券', expire: '2024-02-28'}*/
+]);
+
+const membership = ref({
+  level: '黄金会员',
+  progress: 60,
+  expire: '2024-12-31'
+});
+
 let corporateuser = true;
 let avatarImg = '';  // 头像
 const userInfo = ref(null); // 用户信息
@@ -77,22 +104,22 @@ onShow(() => {
   initUserInfo();
 });
 
-function judgeUserType(){
-  if(userInfo.usertype == "corporate"){
+function judgeUserType() {
+  if (userInfo.usertype == "corporate") {
     corporateuser = true;
-  }else{
+  } else {
     corporateuser = false;
   }
 }
 
 // 初始化用户信息
-function initUserInfo(){
+function initUserInfo() {
   getUserInfoById()
 
 }
 
-const getUserInfoById = async ()=>{
-  userInfo.value  =await apiGetUserInfoById("444");
+const getUserInfoById = async () => {
+  userInfo.value = await apiGetUserInfoById("444");
   avatarImg = userInfo.value.avatar;
 
 }
@@ -102,203 +129,215 @@ function toPage(url) {
 
 }
 
+// 修改用户信息
+function modifyUserInfo() {
+  navigateTo({
+    url: "/pages/user/modifyuserinfo",
+    params: {
+      username: userInfo.value.username,
+      avatarImg: avatarImg,
+      phone: userInfo.value.phone_number
+    }
+  })
+}
+
+function adminPage() {
+  navigateToUrl("/pages/admin/admin");
+}
+
 </script>
 
 <style lang="scss" scoped>
+/* 基础容器 */
 .container {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5faf7;
+  background: #f8fafb;
 }
 
+/* 用户信息区优化 */
 .user-header {
-  background: linear-gradient(135deg, #d5c6ff 0%, #8176a5 100%);
-  padding: 40rpx 32rpx 80rpx;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e6ecfa 100%);
+  padding: 48rpx 32rpx 10rpx;
+  position: relative;
 
   .user-info {
     display: flex;
     align-items: center;
+    margin-bottom: 40rpx;
 
     .avatar {
-      width: 120rpx;
-      height: 120rpx;
+      width: 128rpx;
+      height: 128rpx;
       border-radius: 50%;
-      border: 4rpx solid rgba(255, 255, 255, 0.3);
+      border: 2rpx solid rgba(255, 255, 255, 0.8);
       margin-right: 32rpx;
-      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
     }
 
     .user-meta {
       .username {
-        color: #fff;
+        color: #2d3436;
         font-size: 40rpx;
         font-weight: 600;
-        line-height: 1.4;
+        letter-spacing: 0.5rpx;
       }
 
       .user-tag {
         display: inline-block;
-        padding: 8rpx 24rpx;
-        background: rgba(255, 255, 255, 0.3);
+        padding: 6rpx 24rpx;
+        background: rgba(127, 127, 213, 0.1);
         border-radius: 32rpx;
-        color: #fff;
-        font-size: 28rpx;
-        font-weight: 500;
+        color: #7F7FD5;
+        font-size: 26rpx;
+        margin-top: 12rpx;
+        border: 1rpx solid rgba(127, 127, 213, 0.2);
       }
     }
   }
 }
 
-.main-content {
-  flex: 1;
-  padding: 0 32rpx;
-  transform: translateY(-60rpx);
+/* 会员卡片优化 */
+.membership-card {
+  background: linear-gradient(135deg, #f0f5ff 0%, #e8efff 100%);
+  border-radius: 20rpx;
+  padding: 28rpx;
+  margin: 0 0 24rpx;
+  border: 1rpx solid rgba(127, 127, 213, 0.1);
+
+  .membership-level {
+    color: #4A67FF;
+    font-size: 36rpx;
+    font-weight: 600;
+    margin-bottom: 12rpx;
+  }
+
+  .expire-date {
+    color: #666;
+    font-size: 26rpx;
+
+    &::before {
+      content: "📅 ";
+    }
+  }
+
+  .privilege-tags {
+    margin-top: 24rpx;
+    display: flex;
+    gap: 16rpx;
+
+    .tag {
+      background: rgba(127, 127, 213, 0.08);
+      color: #4A67FF;
+      padding: 6rpx 20rpx;
+      border-radius: 32rpx;
+      font-size: 24rpx;
+      border: 1rpx solid rgba(127, 127, 213, 0.15);
+    }
+  }
 }
 
-.service-card {
+/* 使用次数卡片优化 */
+.coupon-card {
   background: #fff;
-  border-radius: 24rpx;
-  padding: 32rpx;
-  margin-bottom: 32rpx;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin: 24rpx 0;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 
   .card-header {
-    margin-bottom: 32rpx;
+    margin-bottom: 24rpx;
 
     .card-title {
-      font-size: 38rpx;
-      font-weight: 600;
-      color: #2d3436;
+      color: #444;
+      font-size: 32rpx;
+      font-weight: 500;
     }
 
     .decorative-line {
-      width: 80rpx;
-      height: 8rpx;
-      background: #6B5BFF;
-      border-radius: 4rpx;
-      margin-top: 16rpx;
+      width: 48rpx;
+      height: 4rpx;
+      background: #7F7FD5;
+      margin-top: 12rpx;
     }
   }
 
-  .features {
-    .feature-item {
-      display: flex;
-      align-items: center;
-      padding: 24rpx 0;
-
-      .feature-icon {
-        color: #6B5BFF;
-        margin-right: 16rpx;
-        font-weight: bold;
-      }
-
-      .feature-text {
-        color: #666;
-        font-size: 30rpx;
-      }
-    }
-  }
-
-  .consult-btn {
-    width: 100%;
-    height: 96rpx;
-    line-height: 96rpx;
-    background: #6B5BFF;
-    color: #fff;
-    font-size: 34rpx;
+  .coupon-item {
+    padding: 24rpx;
+    background: #f8f9ff;
     border-radius: 16rpx;
-    margin-top: 32rpx;
-    transition: all 0.2s;
+    margin: 16rpx 0;
+    display: flex;
+    align-items: center;
 
-    &:active {
-      opacity: 0.9;
-      transform: scale(0.98);
+    .times {
+      color: #4A67FF;
+      font-size: 40rpx;
+      font-weight: 600;
+      margin-right: 32rpx;
+      min-width: 96rpx;
+    }
+
+    .coupon-info {
+      .name {
+        color: #444;
+        font-size: 28rpx;
+      }
+
+      .condition {
+        color: #666;
+        font-size: 26rpx;
+      }
+
+      .expire {
+        color: #999;
+        font-size: 24rpx;
+        margin-top: 8rpx;
+      }
     }
   }
 }
 
+/* 功能列表优化 */
 .func-list {
   background: #fff;
-  border-radius: 24rpx;
+  border-radius: 20rpx;
   overflow: hidden;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 
   .func-item {
+    padding: 28rpx 32rpx;
+    border-bottom: 1rpx solid #f0f0f0;
     display: flex;
     align-items: center;
-    padding: 32rpx;
-    border-bottom: 2rpx solid #eee;
+    transition: background 0.2s;
 
     &:last-child {
       border-bottom: none;
     }
 
     .func-icon {
-      font-size: 44rpx;
+      font-size: 40rpx;
       margin-right: 24rpx;
+      width: 56rpx;
+      text-align: center;
     }
 
     .func-text {
       flex: 1;
-      font-size: 32rpx;
-      color: #333;
+      color: #444;
+      font-size: 30rpx;
     }
 
     .arrow {
-      color: #6B5BFF;
-      font-size: 48rpx;
+      color: #999;
+      font-size: 40rpx;
     }
 
     &:active {
-      background-color: #f8f9fa;
+      background: #f8f9ff;
     }
   }
 }
-
-.version {
-  text-align: center;
-  color: #999;
-  font-size: 26rpx;
-  padding: 48rpx 0;
-}
-
-.tab-bar {
-  display: flex;
-  height: 100rpx;
-  background: #fff;
-  box-shadow: 0 -8rpx 24rpx rgba(0, 0, 0, 0.04);
-
-  .tab-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    margin: 0 16rpx;
-
-    .tab-text {
-      font-size: 28rpx;
-      color: #666;
-    }
-
-    &.active {
-      .tab-text {
-        color: #6B5BFF;
-        font-weight: 600;
-      }
-
-      .tab-indicator {
-        width: 48rpx;
-        height: 8rpx;
-        background: #6B5BFF;
-        border-radius: 4rpx;
-        position: absolute;
-        bottom: 16rpx;
-      }
-    }
-  }
-}
-
 </style>

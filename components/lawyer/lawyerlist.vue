@@ -273,7 +273,7 @@ function handleClick(item) {
   border-radius: 50%;
   flex-shrink: 0;
   aspect-ratio: 1/1;
-  background: #f5f5f5 url('/static/avatar-placeholder.png') no-repeat center/60%;
+  background: #f5f5f5/* url('/static/avatar-placeholder.png')*/ no-repeat center/60%;
 }
 
 .lawyer-info {

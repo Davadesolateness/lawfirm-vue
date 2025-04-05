@@ -69,6 +69,27 @@
         "navigationBarTitleText": "修改律师信息",
         "enablePullDownRefresh": true
       }
+    },
+    {
+      "path": "pages/user/modifyuserinfo",
+      "style": {
+        "navigationBarTitleText": "修改客户信息",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/admin/admin",
+      "style": {
+        "navigationBarTitleText": "管理员页面",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/user/adduserinfo/adduserinfo",
+      "style": {
+        "navigationBarTitleText": "新增用户",
+        "enablePullDownRefresh": false
+      }
     }
   ],
   "tabBar": {

@@ -1,4 +1,6 @@
 {
-  "navigationBarTitleText": "uni-app",
-  "usingComponents": {}
+  "navigationBarTitleText": "用户信息",
+  "usingComponents": {
+    "lawyer-list": "../../components/lawyer/lawyerlist"
+  }
 }

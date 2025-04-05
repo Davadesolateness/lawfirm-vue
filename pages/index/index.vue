@@ -53,7 +53,7 @@ function filteredLawyers() {
 
 </script>
 
-<style lang="css" scoped>
+<style lang="scss" scoped>
 
 .container {
   background-color: #f5f5f5;

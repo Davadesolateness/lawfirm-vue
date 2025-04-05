@@ -146,7 +146,6 @@ function initLawyerInfo() {
   apiGetLawyerInfoById("444").then((data) =>{
     lawyerInfo.value = data;
   })
-  debugger
 }
 
 
@@ -158,7 +157,7 @@ function initLawyerInfo() {
 
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .container {
   background: #f8fafd;
   min-height: 100vh;

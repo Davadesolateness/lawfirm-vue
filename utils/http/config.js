@@ -1,6 +1,6 @@
 // 全局配置
 export const BASE_CONFIG = {
-    baseURL: process.env.VUE_APP_API_BASE || 'http://localhost:5173', // 从环境变量获取
+    baseURL: 'http://localhost:5173', // 从环境变量获取
     timeout: 15000, // 默认超时时间
     header: {
         'Content-Type': 'application/json;charset=UTF-8'
