@@ -3,27 +3,6 @@
     <!-- 垂直排列管理模块 -->
     <scroll-view class="management-list" scroll-y>
       <!-- 用户管理 -->
-      <view class="management-card">
-        <view class="card-header">
-          <text class="title">👥 用户管理</text>
-          <uni-icons type="arrowdown" size="20" color="#666"></uni-icons>
-        </view>
-
-<!--        <view class="card-content">
-          <input v-model="newUser.username" placeholder="用户名" class="form-input" />
-          <input v-model="newUser.email" placeholder="邮箱" class="form-input" />
-          <button class="submit-btn" @click="addUser">添加用户</button>
-
-          <view class="user-list">
-            <view v-for="user in users" :key="user.id" class="user-item">
-              <text>{{ user.name }}</text>
-              <picker v-model="user.level" :range="memberLevels" @change="updateLevel(user)">
-                <view class="level-tag">{{ memberLevels[user.level] }}</view>
-              </picker>
-            </view>
-          </view>
-        </view>-->
-      </view>
 
       <view class="management-card">
         <view class="card-header" @click="toggleUserManagement">
@@ -42,91 +21,74 @@
 
       <!-- 律师管理 -->
       <view class="management-card">
-        <view class="card-header">
+        <view class="card-header" @click="toggleLawyerManagement">
           <text class="title">⚖️ 律师管理</text>
-          <uni-icons type="arrowdown" size="20" color="#666"></uni-icons>
+          <uni-icons :type="isLawyerExpanded ? 'arrowup' : 'arrowdown'" size="20" color="#666"></uni-icons>
         </view>
-
-<!--        <view class="card-content">
-          <input v-model="lawyerForm.name" placeholder="律师姓名" class="form-input" />
-          <input v-model="lawyerForm.specialty" placeholder="专业领域" class="form-input" />
-          <editor
-              v-model="lawyerForm.intro"
-              class="rich-editor"
-              placeholder="律师简介"
-              show-img-size
-              show-img-toolbar
-          />
-          <button class="submit-btn" @click="saveLawyer">保存信息</button>
-        </view>-->
+        <view v-if="isLawyerExpanded" class="options-menu">
+          <view class="menu-item" @click="showLawyerForm">
+            <uni-icons type="plus-filled" size="16" color="#666"></uni-icons>
+            <text>增加律师信息</text>
+          </view>
+          <view class="menu-item" @click="editLawyer">
+            <uni-icons type="compose" size="16" color="#666"></uni-icons>
+            <text>修改律师信息</text>
+          </view>
+        </view>
       </view>
 
       <!-- 审核模块 -->
       <view class="management-card">
-        <view class="card-header">
+        <view class="card-header" @click="toggleAuditManagement">
           <text class="title">📝 信息审核</text>
-          <uni-icons type="arrowdown" size="20" color="#666"></uni-icons>
+          <uni-icons :type="isAuditExpanded ? 'arrowup' : 'arrowdown'" size="20" color="#666"></uni-icons>
         </view>
-
-<!--        <view class="card-content">
-          <view v-for="lawyer in pendingLawyers" :key="lawyer.id" class="review-item">
-            <text class="lawyer-name">{{ lawyer.name }}</text>
-            <view class="review-actions">
-              <button class="action-btn approve" @click="approveLawyer(lawyer)">通过</button>
-              <button class="action-btn reject" @click="rejectLawyer(lawyer)">驳回</button>
-            </view>
+        <view v-if="isAuditExpanded" class="options-menu">
+          <view class="menu-item" @click="auditUserInfo">
+            <uni-icons type="person" size="16" color="#666"></uni-icons>
+            <text>审核用户信息</text>
           </view>
-        </view>-->
+          <view class="menu-item" @click="auditLawyerInfo">
+            <uni-icons type="contact" size="16" color="#666"></uni-icons>
+            <text>审核律师信息</text>
+          </view>
+        </view>
       </view>
 
       <!-- 福利管理 -->
       <view class="management-card">
-        <view class="card-header">
+        <view class="card-header" @click="toggleWelfareManagement">
           <text class="title">🎁 福利发放</text>
-          <uni-icons type="arrowdown" size="20" color="#666"></uni-icons>
+          <uni-icons :type="isWelfareExpanded ? 'arrowup' : 'arrowdown'" size="20" color="#666"></uni-icons>
         </view>
-
-<!--        <view class="card-content">
-          <view class="welfare-section">
-            <text class="section-title">设置会员等级</text>
-            <picker v-model="selectedLevel" :range="memberLevels" class="level-picker">
-              <view class="picker">选择等级：{{ memberLevels[selectedLevel] }}</view>
-            </picker>
-            <button class="submit-btn" @click="setMemberLevel">确认设置</button>
+        <view v-if="isWelfareExpanded" class="options-menu">
+          <view class="menu-item" @click="issueMembership">
+            <uni-icons type="vip" size="16" color="#666"></uni-icons>
+            <text>发放会员</text>
           </view>
-
-          <view class="welfare-section">
-            <text class="section-title">发放优惠券</text>
-            <input v-model="couponForm.amount" type="number" placeholder="面额" class="form-input" />
-            <input v-model="couponForm.condition" type="number" placeholder="使用条件" class="form-input" />
-            <button class="submit-btn" @click="issueCoupon">立即发放</button>
+          <view class="menu-item" @click="issueConsultation">
+            <uni-icons type="chat" size="16" color="#666"></uni-icons>
+            <text>发放咨询次数</text>
           </view>
-        </view>-->
+        </view>
       </view>
 
       <!-- 公告管理 -->
       <view class="management-card">
-        <view class="card-header">
+        <view class="card-header" @click="toggleNoticeManagement">
           <text class="title">📢 公告管理</text>
-          <uni-icons type="arrowdown" size="20" color="#666"></uni-icons>
+          <uni-icons :type="isNoticeExpanded ? 'arrowup' : 'arrowdown'" size="20" color="#666"></uni-icons>
         </view>
-
-<!--        <view class="card-content">
-          <swiper class="notice-swiper">
-            <swiper-item v-for="notice in notices" :key="notice.id">
-              <view class="notice-item">{{ notice.content }}</view>
-            </swiper-item>
-          </swiper>
-
-          <editor
-              v-model="newNotice"
-              class="rich-editor"
-              placeholder="输入公告内容"
-              show-img-size
-              show-img-toolbar
-          />
-          <button class="submit-btn" @click="publishNotice">发布公告</button>
-        </view>-->
+        <view v-if="isNoticeExpanded" class="options-menu">
+          <view class="menu-item" @click="manageHomeNotice">
+            <uni-icons type="home" size="16" color="#666"></uni-icons>
+            <text>主页公告管理</text>
+          </view>
+          <view class="menu-item" @click="addActivity">
+            <uni-icons type="plus-filled" size="16" color="#666"></uni-icons>
+            <text>添加活动</text>
+          </view>
+        </view>
       </view>
 
       <!-- 在template的scroll-view内添加以下代码 -->
@@ -189,28 +151,28 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import {ref, reactive} from 'vue'
 // 在script setup部分添加以下代码
 
 // 权限数据
 const permissions = ref([
-  { id: 1, name: '用户管理' },
-  { id: 2, name: '律师管理' },
-  { id: 3, name: '公告管理' },
-  { id: 4, name: '权限管理' },
-  { id: 5, name: '审核管理' }
+  {id: 1, name: '用户管理'},
+  {id: 2, name: '律师管理'},
+  {id: 3, name: '公告管理'},
+  {id: 4, name: '权限管理'},
+  {id: 5, name: '审核管理'}
 ])
 
 const roles = ref([
   {
     id: 1,
     name: '超级管理员',
-    permissions: [1,2,3,4,5]
+    permissions: [1, 2, 3, 4, 5]
   },
   {
     id: 2,
     name: '内容管理员',
-    permissions: [2,3]
+    permissions: [2, 3]
   }
 ])
 
@@ -224,9 +186,56 @@ const currentRoleId = ref(null)
 const rolePopup = ref(null)
 const isExpanded = ref(false)
 
+// 新增展开状态变量
+const isLawyerExpanded = ref(false)
+const isAuditExpanded = ref(false)
+const isWelfareExpanded = ref(false)
+const isNoticeExpanded = ref(false)
+
+// 新增切换方法
+const toggleLawyerManagement = () => isLawyerExpanded.value = !isLawyerExpanded.value
+const toggleAuditManagement = () => isAuditExpanded.value = !isAuditExpanded.value
+const toggleWelfareManagement = () => isWelfareExpanded.value = !isWelfareExpanded.value
+const toggleNoticeManagement = () => isNoticeExpanded.value = !isNoticeExpanded.value
+
+// 新增方法
+const showLawyerForm = () => {
+  // 显示律师表单逻辑
+  console.log('打开律师表单')
+}
+
+const editLawyer = () => {
+  console.log('修改律师信息')
+}
+
+const auditUserInfo = () => {
+  console.log('审核用户信息')
+}
+
+const auditLawyerInfo = () => {
+  console.log('审核律师信息')
+}
+
+const issueMembership = () => {
+  console.log('发放会员')
+}
+
+const issueConsultation = () => {
+  console.log('发放咨询次数')
+}
+
+const manageHomeNotice = () => {
+  console.log('主页公告管理')
+}
+
+const addActivity = () => {
+  console.log('添加活动')
+}
+
 function toggleUserManagement() {
   isExpanded.value = !isExpanded.value
 }
+
 function addUser1() {
   // 这里添加新增用户的逻辑
   console.log('执行新增用户操作')
@@ -234,7 +243,7 @@ function addUser1() {
 
 // 方法
 const showRoleForm = (role = null) => {
-  if(role) {
+  if (role) {
     roleForm.id = role.id
     roleForm.name = role.name
     selectedPermissions.value = [...role.permissions]
@@ -247,7 +256,7 @@ const showRoleForm = (role = null) => {
 }
 
 const saveRole = (name) => {
-  if(!name) return uni.showToast({ title: '角色名称不能为空', icon: 'none' })
+  if (!name) return uni.showToast({title: '角色名称不能为空', icon: 'none'})
 
   const newRole = {
     id: roleForm.id || Date.now(),
@@ -256,7 +265,7 @@ const saveRole = (name) => {
   }
 
   const index = roles.value.findIndex(r => r.id === newRole.id)
-  if(index >= 0) {
+  if (index >= 0) {
     roles.value.splice(index, 1, newRole)
   } else {
     roles.value.push(newRole)
@@ -270,7 +279,7 @@ const deleteRole = (role) => {
     title: '确认删除',
     content: `确定要删除角色【${role.name}】吗？`,
     success: (res) => {
-      if(res.confirm) {
+      if (res.confirm) {
         roles.value = roles.value.filter(r => r.id !== role.id)
       }
     }
@@ -279,7 +288,7 @@ const deleteRole = (role) => {
 
 const togglePermission = (permissionId) => {
   const index = selectedPermissions.value.indexOf(permissionId)
-  if(index >= 0) {
+  if (index >= 0) {
     selectedPermissions.value.splice(index, 1)
   } else {
     selectedPermissions.value.push(permissionId)
@@ -287,34 +296,34 @@ const togglePermission = (permissionId) => {
 }
 
 // 用户管理
-const newUser = reactive({ username: '', email: '' })
+const newUser = reactive({username: '', email: ''})
 const users = ref([
-  { id: 1, name: '用户A', level: 0 },
-  { id: 2, name: '用户B', level: 2 }
+  {id: 1, name: '用户A', level: 0},
+  {id: 2, name: '用户B', level: 2}
 ])
 const memberLevels = ['普通', '白银', '黄金', '铂金']
 
 // 律师管理
-const lawyerForm = reactive({ name: '', specialty: '', intro: '' })
+const lawyerForm = reactive({name: '', specialty: '', intro: ''})
 const pendingLawyers = ref([
-  { id: 1, name: '张律师', status: 'pending' },
-  { id: 2, name: '李律师', status: 'pending' }
+  {id: 1, name: '张律师', status: 'pending'},
+  {id: 2, name: '李律师', status: 'pending'}
 ])
 
 // 福利管理
 const selectedLevel = ref(0)
-const couponForm = reactive({ amount: '', condition: '' })
+const couponForm = reactive({amount: '', condition: ''})
 
 // 公告管理
 const newNotice = ref('')
 const notices = ref([
-  { id: 1, content: '系统维护通知' },
-  { id: 2, content: '新功能上线公告' }
+  {id: 1, content: '系统维护通知'},
+  {id: 2, content: '新功能上线公告'}
 ])
 
 // 方法
 const addUser = () => {
-  if(newUser.username && newUser.email) {
+  if (newUser.username && newUser.email) {
     users.value.push({
       id: Date.now(),
       name: newUser.username,
@@ -331,9 +340,9 @@ const updateLevel = (user) => {
 }
 
 const saveLawyer = () => {
-  if(lawyerForm.name && lawyerForm.specialty) {
+  if (lawyerForm.name && lawyerForm.specialty) {
     console.log('保存律师信息:', lawyerForm)
-    Object.assign(lawyerForm, { name: '', specialty: '', intro: '' })
+    Object.assign(lawyerForm, {name: '', specialty: '', intro: ''})
   }
 }
 
@@ -352,7 +361,7 @@ const setMemberLevel = () => {
 }
 
 const issueCoupon = () => {
-  if(couponForm.amount && couponForm.condition) {
+  if (couponForm.amount && couponForm.condition) {
     console.log('发放优惠券:', couponForm)
     couponForm.amount = ''
     couponForm.condition = ''
@@ -360,7 +369,7 @@ const issueCoupon = () => {
 }
 
 const publishNotice = () => {
-  if(newNotice.value) {
+  if (newNotice.value) {
     notices.value.push({
       id: Date.now(),
       content: newNotice.value
@@ -385,7 +394,7 @@ const publishNotice = () => {
   background: white;
   border-radius: 16rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.08);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 
   .card-header {
     display: flex;
@@ -475,6 +484,7 @@ const publishNotice = () => {
 
 .welfare-section {
   margin-bottom: 40rpx;
+
   .section-title {
     display: block;
     font-size: 28rpx;
@@ -502,6 +512,7 @@ const publishNotice = () => {
 .notice-swiper {
   height: 200rpx;
   margin-bottom: 32rpx;
+
   .notice-item {
     padding: 32rpx;
     background: #f8f9ff;
@@ -579,7 +590,7 @@ const publishNotice = () => {
 .management-card {
   border-radius: 8px;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin: 10px;
 }
 
