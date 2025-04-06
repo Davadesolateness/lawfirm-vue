@@ -14,44 +14,71 @@
     </scroll-view>
   </view>
 
-
   <view class="lawyer-list">
-    <view
-        v-for="(lawyer, index) in filterLawyerList"
-        :key="index"
-        class="lawyer-card"
-        @click="handleClick(lawyer)"
-    >
-      <view class="lawyer-header">
-        <image :src="lawyer.avatar" class="avatar"/>
-        <view class="lawyer-info">
-          <view class="name-line">
-            <text class="name">{{ lawyer.name }}</text>
-            <text class="cert-badge">律师认证</text>
-            <text v-if="lawyer.recommend" class="recommend-badge">平台优选</text>
+    <!-- 搜索中状态 -->
+    <view v-if="loading" class="loading-container">
+      <view class="loading">搜索中...</view>
+    </view>
+    
+    <!-- 无搜索结果 -->
+    <view v-else-if="noMore && searchKeyword" class="empty-result">
+      <uni-icons type="info" size="32" color="#cecece"></uni-icons>
+      <text class="empty-text">没有找到"{{ searchKeyword }}"相关的律师</text>
+    </view>
+    
+    <!-- 搜索结果列表 -->
+    <template v-else>
+      <view
+          v-for="(lawyer, index) in filterLawyerList"
+          :key="index"
+          class="lawyer-card"
+          @click="handleClick(lawyer)"
+      >
+        <view class="lawyer-header">
+          <image :src="lawyer.avatar" class="avatar"/>
+          <view class="lawyer-info">
+            <view class="name-line">
+              <text class="name">{{ lawyer.name }}</text>
+              <text class="cert-badge">律师认证</text>
+              <text v-if="lawyer.recommend" class="recommend-badge">平台优选</text>
+            </view>
+            <view class="stats">
+              <text>咨询人数 {{ lawyer.consultCount }}</text>
+              <text class="score">用户评分 {{ lawyer.score }}</text>
+            </view>
+            <view class="expertise">{{ lawyer.expertise }}</view>
+            <view class="location">{{ lawyer.location }}</view>
           </view>
-          <view class="stats">
-            <text>咨询人数 {{ lawyer.consultCount }}</text>
-            <text class="score">用户评分 {{ lawyer.score }}</text>
-          </view>
-          <view class="expertise">{{ lawyer.expertise }}</view>
-          <view class="location">{{ lawyer.location }}</view>
+        </view>
+        <view class="price-line">
+          <text class="price">¥{{ lawyer.price }}/30分钟</text>
+          <text class="consult-type">电话咨询</text>
         </view>
       </view>
-      <view class="price-line">
-        <text class="price">¥{{ lawyer.price }}/30分钟</text>
-        <text class="consult-type">电话咨询</text>
+      
+      <!-- 底部状态显示 -->
+      <view v-if="filterLawyerList.length > 0 && !noMore" class="list-footer">
+        <view class="loading">加载更多中...</view>
       </view>
-    </view>
-    <view v-if="loading" class="loading">加载中...</view>
-    <view v-if="noMore" class="no-more">没有更多了</view>
+      <view v-else-if="filterLawyerList.length > 0" class="list-footer">
+        <view class="no-more">没有更多了</view>
+      </view>
+    </template>
   </view>
 </template>
 
 
 <script setup>
 import {navigateToUrl} from "@/utils/navigateTo";
-import {computed, ref} from "vue";
+import {computed, ref, watch} from "vue";
+
+// 接收搜索关键词参数
+const props = defineProps({
+  searchKeyword: {
+    type: String,
+    default: ''
+  }
+});
 
 const categories = ref([
   '全部', '刑事案件', '经济纠纷', '劳动纠纷', '工伤纠纷',
@@ -82,8 +109,8 @@ const lawyerList = [
     price: 48
   },
   {
-    id: 1,
-    name: '魏会然',
+    id: 3,
+    name: '李秀华',
     avatar: '/static/avatar1.png',
     consultCount: 75,
     score: 4.9,
@@ -91,31 +118,31 @@ const lawyerList = [
     location: '北京朝阳区',
     price: 68,
     recommend: true
-  },
-  {
-    id: 2,
-    name: '何巧玲',
-    avatar: '/static/avatar2.png',
-    consultCount: 1312,
-    score: 5.0,
-    expertise: '合同纠纷、房产纠纷',
-    location: '北京朝阳区',
-    price: 48
   },
   {
     id: 4,
-    name: '魏会然',
-    avatar: '/static/avatar1.png',
-    consultCount: 75,
-    score: 4.9,
-    expertise: '征地拆迁',
+    name: '张立强',
+    avatar: '/static/avatar2.png',
+    consultCount: 1312,
+    score: 5.0,
+    expertise: '合同纠纷、房产纠纷',
     location: '北京朝阳区',
-    price: 68,
-    recommend: true
+    price: 48
   },
   {
     id: 5,
-    name: '何巧玲',
+    name: '王天明',
+    avatar: '/static/avatar1.png',
+    consultCount: 75,
+    score: 4.9,
+    expertise: '征地拆迁',
+    location: '北京朝阳区',
+    price: 68,
+    recommend: true
+  },
+  {
+    id: 6,
+    name: '赵晓峰',
     avatar: '/static/avatar2.png',
     consultCount: 1312,
     score: 5.0,
@@ -124,8 +151,8 @@ const lawyerList = [
     price: 48
   },
   {
-    id: 6,
-    name: '魏会然',
+    id: 7,
+    name: '钱爱华',
     avatar: '/static/avatar1.png',
     consultCount: 75,
     score: 4.9,
@@ -135,8 +162,8 @@ const lawyerList = [
     recommend: true
   },
   {
-    id: 7,
-    name: '何巧玲',
+    id: 8,
+    name: '孙丽娜',
     avatar: '/static/avatar2.png',
     consultCount: 1312,
     score: 5.0,
@@ -145,8 +172,8 @@ const lawyerList = [
     price: 48
   },
   {
-    id: 8,
-    name: '魏会然',
+    id: 9,
+    name: '周海涛',
     avatar: '/static/avatar1.png',
     consultCount: 75,
     score: 4.9,
@@ -156,8 +183,8 @@ const lawyerList = [
     recommend: true
   },
   {
-    id: 9,
-    name: '何巧玲',
+    id: 10,
+    name: '吴文静',
     avatar: '/static/avatar2.png',
     consultCount: 1312,
     score: 5.0,
@@ -169,24 +196,62 @@ const lawyerList = [
   // 其他律师数据...
 ];
 
-//选择标签
+// 定义搜索状态
+const loading = ref(false);
+const noMore = ref(false);
+
+// 选择标签
 function selectTag(tagValue) {
-  this.currentTag = tagValue;
+  currentTag.value = tagValue;
 }
 
-// 计算属性：过滤律师列表
+// 监听搜索关键词变化
+watch(() => props.searchKeyword, (newValue) => {
+  console.log('搜索关键词变化：', newValue);
+  // 可以在这里执行其他搜索相关的逻辑
+});
+
+// 计算属性：过滤律师列表 - 增加搜索功能
 const filterLawyerList = computed(() => {
-  if (currentTag.value === '全部') {
-    return lawyerList;
+  let result = lawyerList;
+  
+  // 如果选择了特定标签，先按标签过滤
+  if (currentTag.value !== '全部') {
+    result = result.filter((lawyer) => lawyer.expertise.includes(currentTag.value));
   }
-  return lawyerList.filter((lawyer) => lawyer.expertise.includes(currentTag.value));
-})
+  
+  // 如果有搜索关键词，再按关键词过滤
+  if (props.searchKeyword) {
+    const keyword = props.searchKeyword.toLowerCase();
+    result = result.filter((lawyer) => 
+      lawyer.name.toLowerCase().includes(keyword) || 
+      lawyer.expertise.toLowerCase().includes(keyword)
+    );
+  }
+  
+  // 更新无数据状态
+  noMore.value = result.length === 0;
+  
+  return result;
+});
+
+// 导出搜索方法，允许父组件调用
+const searchLawyers = (keyword) => {
+  loading.value = true;
+  // 这里可以添加模拟搜索的逻辑，例如延时效果
+  setTimeout(() => {
+    loading.value = false;
+  }, 500);
+};
+
+// 暴露方法供父组件调用
+defineExpose({
+  searchLawyers
+});
 
 function handleClick(item) {
   // 跳转到律师详情页
-  navigateToUrl({
-    url: `/pages/lawyerDetail/lawyerDetail?lawyerId=${item.id}`
-  })
+  navigateToUrl(`/pages/lawyer/lawyerinfo?lawyerId=${item.id}`);
 }
 </script>
 
@@ -359,12 +424,24 @@ function handleClick(item) {
 }
 
 /* 加载状态优化 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60rpx 0;
+}
+
+.list-footer {
+  text-align: center;
+  padding: 40rpx 0;
+}
+
 .loading,
 .no-more {
   text-align: center;
   font-size: 28rpx;
   color: var(--text-tertiary);
-  padding: 40rpx 0;
+  padding: 20rpx 0;
   position: relative;
 }
 
@@ -379,6 +456,21 @@ function handleClick(item) {
   animation: spin 0.8s linear infinite;
   margin-left: 12rpx;
   vertical-align: middle;
+}
+
+/* 无结果状态 */
+.empty-result {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 100rpx 0;
+}
+
+.empty-text {
+  margin-top: 20rpx;
+  color: var(--text-tertiary);
+  font-size: 28rpx;
 }
 
 @keyframes spin {
