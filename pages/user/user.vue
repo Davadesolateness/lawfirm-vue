@@ -1,5 +1,5 @@
 <template>
-  <page-layout>
+  <PageLayout>
     <view class="container">
       <!-- 用户信息区 -->
       <view class="user-header">
@@ -65,7 +65,7 @@
         <button class="el-button--text" @click="adminPage">管理员</button>
       </view>
     </view>
-  </page-layout>
+  </PageLayout>
 </template>
 
 <script setup>

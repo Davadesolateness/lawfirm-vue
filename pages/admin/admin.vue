@@ -1,5 +1,5 @@
 <template>
-  <page-layout>
+  <PageLayout>
     <view class="admin-container">
       <!-- 垂直排列管理模块 -->
       <scroll-view class="management-list" scroll-y>
@@ -109,7 +109,7 @@
       </scroll-view>
 
     </view>
-  </page-layout>
+  </PageLayout>
 </template>
 
 <script setup>

@@ -20,7 +20,7 @@
         :key="index" 
         class="tab-item" 
         :class="{ active: current === index }"
-        @click="switchTab(item.pagePath, index)">
+        @click="handleNavigation(item.pagePath, index, item.isTabBar)">
         <image :src="current === index ? item.selectedIconPath : item.iconPath"></image>
         <text>{{ item.text }}</text>
       </view>
@@ -33,7 +33,7 @@
         :key="index" 
         class="tab-item" 
         :class="{ active: current === index }"
-        @click="switchTab(item.pagePath, index)">
+        @click="handleNavigation(item.pagePath, index, item.isTabBar)">
         <image :src="current === index ? item.selectedIconPath : item.iconPath"></image>
         <text>{{ item.text }}</text>
       </view>
@@ -43,62 +43,71 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { switchTabUrl } from '@/utils/navigateTo';
+import { switchTabUrl, navigateToUrl } from '@/utils/navigateTo';
 import { getUserType as getType, USER_TYPES } from '@/utils/userManager';
 
 // 响应式状态
 const userType = ref(USER_TYPES.USER); // 默认为普通用户
 const current = ref(0);
 
-// Tab 配置
+// Tab 配置 - 普通用户导航（全部是tabBar页面）
 const userTabs = [
   {
     pagePath: '/pages/index/index',
     text: '首页',
     iconPath: '/static/images/home.png',
-    selectedIconPath: '/static/images/home_active.png'
+    selectedIconPath: '/static/images/home_active.png',
+    isTabBar: true
   },
   {
     pagePath: '/pages/lawyer/lawyerinfo',
     text: '免费咨询',
     iconPath: '/static/images/home.png',
-    selectedIconPath: '/static/images/home_active.png'
+    selectedIconPath: '/static/images/home_active.png',
+    isTabBar: true
   },
   {
     pagePath: '/pages/order/orderlist',
     text: '订单',
     iconPath: '/static/images/user.png',
-    selectedIconPath: '/static/images/user_active.png'
+    selectedIconPath: '/static/images/user_active.png',
+    isTabBar: true
   },
   {
     pagePath: '/pages/user/user',
     text: '我的',
     iconPath: '/static/images/user.png',
-    selectedIconPath: '/static/images/user_active.png'
+    selectedIconPath: '/static/images/user_active.png',
+    isTabBar: true
   }
 ];
 
+// 律师用户导航
 const lawyerTabs = [
   {
     pagePath: '/pages/lawyer/lawyerinfo',
     text: '律师页面',
     iconPath: '/static/images/home.png',
-    selectedIconPath: '/static/images/home_active.png'
+    selectedIconPath: '/static/images/home_active.png',
+    isTabBar: true // 这是tabBar页面
   },
   {
     pagePath: '/pages/lawyer/modifylawyerinfo',
     text: '律师信息',
     iconPath: '/static/images/user.png',
-    selectedIconPath: '/static/images/user_active.png'
+    selectedIconPath: '/static/images/user_active.png',
+    isTabBar: false // 这不是tabBar页面，需要用navigateTo
   }
 ];
 
+// 管理员导航
 const adminTabs = [
   {
     pagePath: '/pages/admin/admin',
     text: '管理主页',
     iconPath: '/static/images/user.png',
-    selectedIconPath: '/static/images/user_active.png'
+    selectedIconPath: '/static/images/user_active.png',
+    isTabBar: false // 这不是tabBar页面，需要用navigateTo
   }
 ];
 
@@ -128,7 +137,20 @@ const setCurrentTab = () => {
   }
 };
 
-// 切换页面
+// 导航处理
+const handleNavigation = (url, index, isTabBar) => {
+  if (current.value !== index) {
+    // 根据页面类型选择导航方式
+    if (isTabBar) {
+      switchTabUrl(url);
+    } else {
+      navigateToUrl(url);
+    }
+    current.value = index;
+  }
+};
+
+// TabBar页面切换（仅用于tabBar页面）
 const switchTab = (url, index) => {
   if (current.value !== index) {
     switchTabUrl(url);

@@ -1,5 +1,5 @@
 <template>
-  <page-layout>
+  <PageLayout>
     <view class="content">
       <uni-segmented-control
           :current="tab"
@@ -104,7 +104,7 @@
         </view>
       </view>
     </view>
-  </page-layout>
+  </PageLayout>
 </template>
 <script>
 export default {

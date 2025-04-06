@@ -1,5 +1,5 @@
 <template>
-  <page-layout>
+  <PageLayout>
     <view class="container">
       <!-- 律师信息头部 -->
       <view class="profile-header">
@@ -90,16 +90,17 @@
         <button class="el-button--text" @click="addLawyerInfo">增加律师</button>
       </view>
     </view>
-  </page-layout>
+  </PageLayout>
 </template>
 
 <script setup>
-import {ref} from "vue"
+import {ref,onMounted} from "vue"
 import {navigateTo} from "@/utils/navigateTo";
 import {onShow} from "@dcloudio/uni-app";
 import {getLawyerInfoById} from "./lawyerservice";
 import {apiGetLawyerInfoById} from "@/api/lawyerapi";
-import PageLayout from "@/components/custom/tabbarlayout.vue";
+import PageLayout from "@/components/custom/tabbarlayout";
+import {getUserType, setUserType, USER_TYPES} from "@/utils/userManager";
 
 const lawyerInfo = ref();
 const guaranteeTags = ['平台保障', '严选真实律师', '1对1私密咨询', '未服务自动退款'];
@@ -113,6 +114,7 @@ const reviews = [
   },
   // ...其他评价数据
 ];
+const currentRole = ref('普通用户');
 
 function handleConsult() {
   uni.navigateTo({url: '/pages/consult/confirm'})
@@ -129,6 +131,28 @@ function modifyLawyerInfo() {
   })
 }
 
+// 切换用户角色
+function switchRole(role) {
+  setUserType(role);
+
+  // 更新当前显示的角色名称
+  if(role === USER_TYPES.USER) {
+    currentRole.value = '普通用户';
+  } else if(role === USER_TYPES.LAWYER) {
+    currentRole.value = '律师用户';
+  } else if(role === USER_TYPES.ADMIN) {
+    currentRole.value = '管理员';
+  }
+
+  // 刷新页面以重新加载tabBar
+  setTimeout(() => {
+    uni.reLaunch({
+      url: '/pages/index/index'
+    });
+  }, 300);
+}
+
+
 // 展示页面时调用此方法
 onShow(() => {
   initLawyerInfo();
@@ -141,11 +165,17 @@ function initLawyerInfo() {
   })
 }
 
-// 根据id获取律师信息
-/*const getLawyerInfoById = async () => {
-  lawyerInfo.value = await apiGetLawyerInfoById("444");
-  console.log("------"+lawyerInfo);
-}*/
+// 页面加载时获取当前用户角色
+onMounted(() => {
+  const userType = getUserType();
+  if(userType === USER_TYPES.USER) {
+    currentRole.value = '普通用户';
+  } else if(userType === USER_TYPES.LAWYER) {
+    currentRole.value = '律师用户';
+  } else if(userType === USER_TYPES.ADMIN) {
+    currentRole.value = '管理员';
+  }
+});
 
 </script>
 

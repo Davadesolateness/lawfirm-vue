@@ -1,5 +1,5 @@
 <template>
-  <page-layout>
+  <PageLayout>
     <view class="container">
       <!-- 顶部横幅 -->
       <view class="top-banner">
@@ -36,7 +36,7 @@
         跳转律师详情
       </button>
     </view>
-  </page-layout>
+  </PageLayout>
 </template>
 
 
@@ -44,7 +44,7 @@
 import {ref, onMounted} from 'vue';
 import {navigateToUrl} from "@/utils/navigateTo";
 import LawyerList from "@/components/lawyer/lawyerlist";
-import PageLayout from "@/components/custom/tabbarlayout.vue";
+import PageLayout from "@/components/custom/tabbarlayout";
 import {getUserType, setUserType, USER_TYPES} from "@/utils/userManager";
 
 function handleConsult(item) {
