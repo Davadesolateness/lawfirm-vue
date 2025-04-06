@@ -101,7 +101,7 @@
               <button 
                 v-if="order.status === 2" 
                 class="btn btn-outline" 
-                @click="cancelOrder(order.orderId)"
+                @click="cancelTheOrder(order.orderId)"
               >
                 取消订单
               </button>
@@ -142,6 +142,7 @@ export default {
 <script setup>
 import PageLayout from "@/components/custom/tabbarlayout.vue";
 import { ref, computed, onMounted } from 'vue';
+import { wxPay, getOrders, ORDER_STATUS, cancelOrder, updateOrderStatus } from '@/utils/pay';
 
 // 搜索
 const searchKeyword = ref('');
@@ -152,74 +153,8 @@ const hasMore = ref(true);
 const currentStatus = ref(0);
 const statusItems = ['全部', '待支付', '进行中', '已完成', '已取消'];
 
-// 模拟订单数据
-const orderList = ref([
-  {
-    orderId: 'LS202408120001',
-    userName: '张三',
-    lawyerName: '李律师',
-    lawyerAvatar: '/static/images/lawyer_avatar.jpg',
-    lawyerTitle: '合同纠纷专家',
-    fee: 99.00,
-    feeType: '电话咨询',
-    duration: 30,
-    consultTime: '2024-08-12 14:30',
-    status: 1,
-    statusText: '待支付'
-  },
-  {
-    orderId: 'LS202408110023',
-    userName: '李四',
-    lawyerName: '王律师',
-    lawyerAvatar: '/static/images/lawyer_avatar.jpg',
-    lawyerTitle: '婚姻家庭专家',
-    fee: 199.00,
-    feeType: '视频咨询',
-    duration: 60,
-    consultTime: '2024-08-11 10:15',
-    status: 3,
-    statusText: '已完成'
-  },
-  {
-    orderId: 'LS202408090015',
-    userName: '王五',
-    lawyerName: '赵律师',
-    lawyerAvatar: '/static/images/lawyer_avatar.jpg',
-    lawyerTitle: '劳动纠纷专家',
-    fee: 59.00,
-    feeType: '电话咨询',
-    duration: 15,
-    consultTime: '2024-08-09 16:45',
-    status: 3,
-    statusText: '已完成'
-  },
-  {
-    orderId: 'LS202408050078',
-    userName: '赵六',
-    lawyerName: '钱律师',
-    lawyerAvatar: '/static/images/lawyer_avatar.jpg',
-    lawyerTitle: '知识产权专家',
-    fee: 299.00,
-    feeType: '在线咨询',
-    duration: 45,
-    consultTime: '2024-08-05 09:30',
-    status: 2,
-    statusText: '进行中'
-  },
-  {
-    orderId: 'LS202408030042',
-    userName: '刘七',
-    lawyerName: '孙律师',
-    lawyerAvatar: '/static/images/lawyer_avatar.jpg',
-    lawyerTitle: '刑事辩护专家',
-    fee: 399.00,
-    feeType: '视频咨询',
-    duration: 60,
-    consultTime: '2024-08-03 11:00',
-    status: 4,
-    statusText: '已取消'
-  }
-]);
+// 订单列表
+const orderList = ref([]);
 
 // 处理搜索
 function handleSearch() {
@@ -237,16 +172,12 @@ function clearSearch() {
 // 切换订单状态
 function changeStatus(index) {
   currentStatus.value = index;
+  loadOrders();
 }
 
 // 过滤后的订单列表
 const filteredOrders = computed(() => {
   let result = orderList.value;
-  
-  // 根据状态筛选
-  if (currentStatus.value !== 0) {
-    result = result.filter(order => order.status === currentStatus.value);
-  }
   
   // 根据关键词搜索
   if (searchKeyword.value) {
@@ -260,8 +191,35 @@ const filteredOrders = computed(() => {
   return result;
 });
 
+// 加载订单数据
+function loadOrders() {
+  loading.value = true;
+  
+  // 根据选择的状态获取对应的订单
+  const statusMapping = {
+    0: undefined, // 全部
+    1: ORDER_STATUS.PENDING_PAYMENT, // 待支付
+    2: ORDER_STATUS.IN_PROGRESS, // 进行中
+    3: ORDER_STATUS.COMPLETED, // 已完成
+    4: ORDER_STATUS.CANCELLED // 已取消
+  };
+  
+  // 获取订单列表
+  const status = statusMapping[currentStatus.value];
+  const orders = getOrders(status);
+  
+  // 模拟网络请求延迟
+  setTimeout(() => {
+    orderList.value = orders;
+    hasMore.value = false; // 假设已加载所有数据
+    loading.value = false;
+  }, 500);
+}
+
 // 加载更多订单
 function loadMore() {
+  if (!hasMore.value) return;
+  
   loading.value = true;
   setTimeout(() => {
     // 这里可以添加实际的加载逻辑
@@ -272,23 +230,61 @@ function loadMore() {
 
 // 支付订单
 function payOrder(orderId) {
-  uni.showToast({
-    title: '正在跳转支付...',
-    icon: 'none'
+  const order = orderList.value.find(item => item.orderId === orderId);
+  if (!order) {
+    uni.showToast({
+      title: '订单不存在',
+      icon: 'none'
+    });
+    return;
+  }
+  
+  // 调用微信支付
+  wxPay({
+    orderId: order.orderId,
+    totalFee: order.fee,
+    description: `${order.feeType} - ${order.lawyerName}`,
+    success: (res) => {
+      uni.showToast({
+        title: '支付成功',
+        icon: 'success'
+      });
+      
+      // 刷新订单列表
+      loadOrders();
+      
+      // 支付成功后跳转到律师详情页
+      setTimeout(() => {
+        uni.navigateTo({
+          url: `/pages/lawyer/lawyerinfo?lawyerId=${order.lawyerId || 1}`
+        });
+      }, 1500);
+    },
+    fail: (err) => {
+      console.error('支付失败', err);
+    }
   });
 }
 
 // 取消订单
-function cancelOrder(orderId) {
+function cancelTheOrder(orderId) {
   uni.showModal({
     title: '提示',
     content: '确定要取消该订单吗？',
     success: function(res) {
       if (res.confirm) {
-        uni.showToast({
-          title: '订单已取消',
-          icon: 'success'
-        });
+        // 调用取消订单函数
+        const result = cancelOrder(orderId);
+        
+        if (result) {
+          uni.showToast({
+            title: '订单已取消',
+            icon: 'success'
+          });
+          
+          // 刷新订单列表
+          loadOrders();
+        }
       }
     }
   });
@@ -308,9 +304,24 @@ function viewOrderDetail(orderId) {
   });
 }
 
+// 模拟完成订单（仅用于测试）
+function completeOrder(orderId) {
+  const result = updateOrderStatus(orderId, ORDER_STATUS.COMPLETED);
+  
+  if (result) {
+    uni.showToast({
+      title: '订单已完成',
+      icon: 'success'
+    });
+    
+    // 刷新订单列表
+    loadOrders();
+  }
+}
+
 onMounted(() => {
   // 初始化加载数据
-  handleSearch();
+  loadOrders();
 });
 </script>
 
