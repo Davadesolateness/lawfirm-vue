@@ -54,6 +54,9 @@
       <button class="consult-btn" @click="handleConsult('111')">
         跳转律师详情
       </button>
+      <button class="consult-btn" @click="login">
+        登录
+      </button>
     </view>
   </PageLayout>
 </template>
@@ -86,6 +89,9 @@ function clearSearch() {
 
 function handleConsult(item) {
   navigateToUrl('/components/lawyer/lawyerlist')
+}
+function login(){
+  navigateToUrl('/pages/login/login')
 }
 
 const services = ref([
