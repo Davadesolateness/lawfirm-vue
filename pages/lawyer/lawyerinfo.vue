@@ -79,15 +79,16 @@
         </view>
       </view>
 
-      <!-- 固定咨询按钮 -->
-      <view class="fixed-consult-btn" @click="handleConsult">
-        <text>立即咨询</text>
-      </view>
-      <view>
-        <button class="el-button--text" @click="modifyLawyerInfo">修改律师</button>
-      </view>
-      <view>
-        <button class="el-button--text" @click="addLawyerInfo">增加律师</button>
+      <!-- 底部操作栏 -->
+      <view class="action-bar">
+        <view class="action-container">
+          <view class="call-action">
+            <CallButton :lawyer-info="lawyerInfo" @success="handleCallSuccess" />
+          </view>
+          <view class="contact-action">
+            <button class="contact-btn" @click="handleContactLawyer">在线咨询</button>
+          </view>
+        </view>
       </view>
     </view>
   </PageLayout>
@@ -101,6 +102,7 @@ import {getLawyerInfoById} from "./lawyerservice";
 import {apiGetLawyerInfoById} from "@/api/lawyerapi";
 import PageLayout from "@/components/custom/tabbarlayout";
 import {getUserType, setUserType, USER_TYPES} from "@/utils/userManager";
+import CallButton from '@/components/lawyer/callButton.vue';
 
 const lawyerInfo = ref();
 const guaranteeTags = ['平台保障', '严选真实律师', '1对1私密咨询', '未服务自动退款'];
@@ -176,6 +178,19 @@ onMounted(() => {
     currentRole.value = '管理员';
   }
 });
+
+// 处理电话咨询成功
+function handleCallSuccess(data) {
+  console.log('电话咨询订单创建成功', data);
+}
+
+// 处理在线咨询
+function handleContactLawyer() {
+  uni.showToast({
+    title: '功能开发中',
+    icon: 'none'
+  });
+}
 
 </script>
 
@@ -426,5 +441,39 @@ onMounted(() => {
   &:active {
     transform: translateX(-50%) scale(0.95);
   }
+}
+
+/* 底部操作栏 */
+.action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #fff;
+  padding: 20rpx 30rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+  z-index: 100;
+}
+
+.action-container {
+  display: flex;
+  gap: 20rpx;
+}
+
+.call-action, .contact-action {
+  flex: 1;
+}
+
+.contact-btn {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  background: #fff;
+  color: #2979FF;
+  font-size: 28rpx;
+  border-radius: 40rpx;
+  text-align: center;
+  border: 1rpx solid #2979FF;
 }
 </style>
