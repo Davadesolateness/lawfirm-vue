@@ -1,73 +1,71 @@
 <template>
-  <view class="container">
-    <!-- 用户信息区 -->
-    <view class="user-header">
-      <view class="user-info">
-        <image class="avatar" :src="userInfo.avatar" mode="aspectFill"/>
-        <view class="user-meta">
-          <text class="username">{{ userInfo.username }}</text>
-          <view class="user-tag" v-if="corporateuser">法人用户</view>
-          <view class="user-tag" v-else>普通用户</view>
+  <page-layout>
+    <view class="container">
+      <!-- 用户信息区 -->
+      <view class="user-header">
+        <view class="user-info">
+          <image class="avatar" :src="userInfo.avatar" mode="aspectFill"/>
+          <view class="user-meta">
+            <text class="username">{{ userInfo.username }}</text>
+            <view class="user-tag" v-if="corporateuser">法人用户</view>
+            <view class="user-tag" v-else>普通用户</view>
+          </view>
+        </view>
+        <view class="membership-card">
+          <text class="membership-level">黄金会员</text>
+          <text class="expire-date">有效期至：2024-12-31</text>
 
+          <view class="privilege-tags">
+            <text class="tag">专属律师</text>
+            <text class="tag">双倍积分</text>
+            <text class="tag">优先服务</text>
+          </view>
         </view>
 
-      </view>
-      <view class="membership-card">
-        <text class="membership-level">黄金会员</text>
-        <text class="expire-date">有效期至：2024-12-31</text>
-
-        <view class="privilege-tags">
-          <text class="tag">专属律师</text>
-          <text class="tag">双倍积分</text>
-          <text class="tag">优先服务</text>
-        </view>
-      </view>
-
-      <!-- 修改后的优惠券卡片 -->
-      <view class="coupon-card">
-        <view class="card-header">
-          <text class="card-title">我的使用次数</text>
-          <view class="decorative-line"></view>
-        </view>
-        <view class="coupon-list">
-          <view v-for="(coupon, index) in coupons" :key="index" class="coupon-item">
-            <text class="times">{{ coupon.times }}次</text>
-            <view class="coupon-info">
-              <text class="name">{{ coupon.name }}</text>
-              <text class="condition">可用{{ coupon.times }}次</text>
-              <text class="expire">{{ coupon.expire }}</text>
+        <!-- 修改后的优惠券卡片 -->
+        <view class="coupon-card">
+          <view class="card-header">
+            <text class="card-title">我的使用次数</text>
+            <view class="decorative-line"></view>
+          </view>
+          <view class="coupon-list">
+            <view v-for="(coupon, index) in coupons" :key="index" class="coupon-item">
+              <text class="times">{{ coupon.times }}次</text>
+              <view class="coupon-info">
+                <text class="name">{{ coupon.name }}</text>
+                <text class="condition">可用{{ coupon.times }}次</text>
+                <text class="expire">{{ coupon.expire }}</text>
+              </view>
             </view>
           </view>
         </view>
       </view>
-    </view>
-    <!-- 功能列表 -->
-    <view class="func-list">
-      <view class="func-item" @click="toPage('/pages/share/index')">
-        <text class="func-icon">👀</text>
-        <text class="func-text">推荐给好友</text>
-        <text class="arrow">›</text>
+      <!-- 功能列表 -->
+      <view class="func-list">
+        <view class="func-item" @click="toPage('/pages/share/index')">
+          <text class="func-icon">👀</text>
+          <text class="func-text">推荐给好友</text>
+          <text class="arrow">›</text>
+        </view>
+        <view class="func-item" @click="toPage('/pages/about/index')">
+          <text class="func-icon">💁</text>
+          <text class="func-text">关于</text>
+          <text class="arrow">›</text>
+        </view>
+        <view class="func-item" @click="toPage('/pages/feedback/index')">
+          <text class="func-icon">📧</text>
+          <text class="func-text">意见反馈</text>
+          <text class="arrow">›</text>
+        </view>
       </view>
-      <view class="func-item" @click="toPage('/pages/about/index')">
-        <text class="func-icon">💁</text>
-        <text class="func-text">关于</text>
-        <text class="arrow">›</text>
+      <view>
+        <button class="el-button--text" @click="modifyUserInfo">修改用户</button>
       </view>
-      <view class="func-item" @click="toPage('/pages/feedback/index')">
-        <text class="func-icon">📧</text>
-        <text class="func-text">意见反馈</text>
-        <text class="arrow">›</text>
+      <view>
+        <button class="el-button--text" @click="adminPage">管理员</button>
       </view>
     </view>
-    <view>
-      <button class="el-button--text" @click="modifyUserInfo">修改用户</button>
-    </view>
-    <view>
-      <button class="el-button--text" @click="adminPage">管理员</button>
-    </view>
-  </view>
-
-
+  </page-layout>
 </template>
 
 <script setup>
@@ -75,14 +73,13 @@ import {ref} from "vue"
 import {navigateTo, navigateToUrl} from "@/utils/navigateTo";
 import {apiGetUserInfoById} from "@/api/userapi";
 import {onShow} from "@dcloudio/uni-app";
-import {apiGetLawyerInfoById} from "@/api/lawyerapi";
+import PageLayout from "@/components/custom/tabbarlayout.vue";
 
 const features = [
   '111',
   '111',
   '1'
 ]
-
 
 // 修改后的响应式数据
 const coupons = ref([
@@ -100,6 +97,7 @@ const membership = ref({
 let corporateuser = true;
 let avatarImg = '';  // 头像
 const userInfo = ref(null); // 用户信息
+
 onShow(() => {
   initUserInfo();
 });
@@ -115,18 +113,15 @@ function judgeUserType() {
 // 初始化用户信息
 function initUserInfo() {
   getUserInfoById()
-
 }
 
 const getUserInfoById = async () => {
   userInfo.value = await apiGetUserInfoById("444");
   avatarImg = userInfo.value.avatar;
-
 }
 
 function toPage(url) {
   this.navigate.navigateToUrl("2020-01-01");
-
 }
 
 // 修改用户信息
@@ -144,7 +139,6 @@ function modifyUserInfo() {
 function adminPage() {
   navigateToUrl("/pages/admin/admin");
 }
-
 </script>
 
 <style lang="scss" scoped>

@@ -160,6 +160,43 @@ export const reLaunch = (options) => {
     });
 };
 
+/**
+ * 切换到 tabBar 页面
+ * @param {Object} options 跳转参数
+ * @param {string} options.url 跳转路径
+ */
+export const switchTab = (options) => {
+    const formattedUrl = navigateCheck(options);
+    if (!formattedUrl) {
+        console.warn('跳转中断，用户未登录或路径无效');
+        return;
+    }
+    
+    // 执行 tabBar 页面切换
+    uni.switchTab({
+        url: formattedUrl,
+        success: (res) => {
+            if (options.success) options.success(res);
+        },
+        fail: (err) => {
+            if (options.fail) options.fail(err);
+            debugger
+            console.error('Tab切换失败:', err);
+            uni.showToast({title: '页面切换失败', icon: 'none'});
+        }
+    });
+};
+
+/**
+ * 便捷的 tabBar 页面切换函数
+ * @param {String} url 必填，跳转路径
+ */
+export const switchTabUrl = (url) => {
+    switchTab({
+        url: url
+    });
+};
+
 /*
 // 登录状态检查（示例）
 const isLogin = () => {
@@ -171,4 +208,4 @@ const logEvent = (eventName, data) => {
     // 实现埋点逻辑...
 }*/
 
-export default {navigateTo, redirectTo, reLaunch, navigateToUrl}
+export default {navigateTo, redirectTo, reLaunch, navigateToUrl, switchTab, switchTabUrl}

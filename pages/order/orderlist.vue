@@ -1,108 +1,110 @@
 <template>
-  <view class="content">
-    <uni-segmented-control
-        :current="tab"
-        :values="items"
-        @clickItem="onClickItem"
-        style-type="text"
-        active-color="#333"
-    ></uni-segmented-control>
-    <view class="order-list">
+  <page-layout>
+    <view class="content">
+      <uni-segmented-control
+          :current="tab"
+          :values="items"
+          @clickItem="onClickItem"
+          style-type="text"
+          active-color="#333"
+      ></uni-segmented-control>
+      <view class="order-list">
 
-      <view class="goods-detail"
-            v-if="list && list.length">
-        <view class="order-item"
-              v-for="(item, index) in list"
-              :key="index"
-        >
-          <view class='cell-group'>
-            <view class='cell-item'
-                  @click="orderDetail(item.order_id)"
-            >
-              <view class='cell-item-hd'>
-                <view class='cell-hd-title'>订单编号：{{ item.order_id }}</view>
-              </view>
-              <view class='cell-item-ft'>
-                <text class='cell-ft-text'>{{ item.order_status_name }}</text>
+        <view class="goods-detail"
+              v-if="list && list.length">
+          <view class="order-item"
+                v-for="(item, index) in list"
+                :key="index"
+          >
+            <view class='cell-group'>
+              <view class='cell-item'
+                    @click="orderDetail(item.order_id)"
+              >
+                <view class='cell-item-hd'>
+                  <view class='cell-hd-title'>订单编号：{{ item.order_id }}</view>
+                </view>
+                <view class='cell-item-ft'>
+                  <text class='cell-ft-text'>{{ item.order_status_name }}</text>
+                </view>
               </view>
             </view>
-          </view>
-          <view class='img-list'>
-            <view class='img-list-item'
-                  v-for="(goods, key) in item.items"
-                  :key="key"
-            >
-              <image class='img-list-item-l little-img have-none' :src='goods.image_url' mode='aspectFill'
-                     lazy-load></image>
-              <view class='img-list-item-r little-right'>
-                <view class='little-right-t'>
-                  <view class='goods-name list-goods-name'
-                        @click="orderDetail(item.order_id)"
-                  >{{ goods.name }}
-                  </view>
-                  <view class='goods-price'>￥{{ goods.price }}</view>
-                </view>
-                <view class="romotion-tip">
-                  <view class="romotion-tip-item"
-                        v-for="(promotion, k) in formatPromotions(goods.promotion_list)"
-                        :key="k"
-                  >
-                    {{ promotion }}
-                  </view>
-                </view>
-                <view class='goods-item-c'>
-                  <view class='goods-buy'>
-                    <view class='goods-salesvolume'
-                          v-if="goods.addon !== null"
-                    >{{ goods.addon }}
+            <view class='img-list'>
+              <view class='img-list-item'
+                    v-for="(goods, key) in item.items"
+                    :key="key"
+              >
+                <image class='img-list-item-l little-img have-none' :src='goods.image_url' mode='aspectFill'
+                       lazy-load></image>
+                <view class='img-list-item-r little-right'>
+                  <view class='little-right-t'>
+                    <view class='goods-name list-goods-name'
+                          @click="orderDetail(item.order_id)"
+                    >{{ goods.name }}
                     </view>
-                    <view class='goods-num'>× {{ goods.nums }}</view>
+                    <view class='goods-price'>￥{{ goods.price }}</view>
+                  </view>
+                  <view class="romotion-tip">
+                    <view class="romotion-tip-item"
+                          v-for="(promotion, k) in formatPromotions(goods.promotion_list)"
+                          :key="k"
+                    >
+                      {{ promotion }}
+                    </view>
+                  </view>
+                  <view class='goods-item-c'>
+                    <view class='goods-buy'>
+                      <view class='goods-salesvolume'
+                            v-if="goods.addon !== null"
+                      >{{ goods.addon }}
+                      </view>
+                      <view class='goods-num'>× {{ goods.nums }}</view>
+                    </view>
                   </view>
                 </view>
               </view>
             </view>
-          </view>
-          <view class='cell-group'>
-            <view class='cell-item'>
-              <view class='cell-item-ft goods-num'>
-                <text class='cell-ft-text'>合计
-                  <text class="red-price">￥ {{ item.order_amount }}</text>
-                </text>
-                <text class='cell-ft-text'>共 {{ item.items.length }} 件</text>
+            <view class='cell-group'>
+              <view class='cell-item'>
+                <view class='cell-item-ft goods-num'>
+                  <text class='cell-ft-text'>合计
+                    <text class="red-price">￥ {{ item.order_amount }}</text>
+                  </text>
+                  <text class='cell-ft-text'>共 {{ item.items.length }} 件</text>
+                </view>
               </view>
             </view>
+            <view class='order-list-button'>
+
+              <button class='btn btn-circle btn-g' hover-class="btn-hover" @click="orderDetail(item.order_id)">查看详情
+              </button>
+
+              <button class='btn btn-circle btn-w'
+                      hover-class="btn-hover"
+                      v-if="item.status === 1 && item.pay_status === 1"
+                      @click="toPay(item.order_id)"
+              >立即支付
+              </button>
+
+
+              <button class='btn btn-circle btn-w'
+                      hover-class="btn-hover"
+                      v-if="item.status === 1 && item.pay_status === 2 && item.ship_status === 3 && item.confirm === 2 && item.is_comment === 1"
+                      @click="toEvaluate(item.order_id)"
+              >立即评价
+              </button>
+
+            </view>
           </view>
-          <view class='order-list-button'>
-
-            <button class='btn btn-circle btn-g' hover-class="btn-hover" @click="orderDetail(item.order_id)">查看详情
-            </button>
-
-            <button class='btn btn-circle btn-w'
-                    hover-class="btn-hover"
-                    v-if="item.status === 1 && item.pay_status === 1"
-                    @click="toPay(item.order_id)"
-            >立即支付
-            </button>
-
-
-            <button class='btn btn-circle btn-w'
-                    hover-class="btn-hover"
-                    v-if="item.status === 1 && item.pay_status === 2 && item.ship_status === 3 && item.confirm === 2 && item.is_comment === 1"
-                    @click="toEvaluate(item.order_id)"
-            >立即评价
-            </button>
-
-          </view>
+          <uni-load-more
+              :status="loadStatus"
+          ></uni-load-more>
         </view>
-        <uni-load-more
-            :status="loadStatus"
-        ></uni-load-more>
-      </view>
-      <view class="order-none" v-else>
-        <image class="order-none-img" src="/static/image/order.png" mode=""></image>
+        <view class="order-none" v-else>
+          <image class="order-none-img" src="/static/image/order.png" mode=""></image>
+        </view>
       </view>
     </view>
-  </view>
+  </page-layout>
 </template>
 <script>
 export default {
@@ -112,32 +114,44 @@ export default {
 </script>
 
 <script setup >
-let list = [];
-let loadStatus = '';
-let items =
-    [
-      '全部',
-      '待付款',
-      '待发货',
-      '待收货',
-      '待评价',
-    ];
-let status = [0, 1, 2, 3, 4];// 订单状态 0全部 1待付款 2待发货 3待收货 4待评价
-let isReload = false;
-function toEvaluate(orderId) {
+import PageLayout from "@/components/custom/tabbarlayout.vue";
+import { ref } from 'vue';
 
+let tab = ref(0);
+let list = ref([]);
+let loadStatus = ref('');
+let items = [
+  '全部',
+  '待付款',
+  '待发货',
+  '待收货',
+  '待评价',
+];
+let status = [0, 1, 2, 3, 4]; // 订单状态 0全部 1待付款 2待发货 3待收货 4待评价
+let isReload = false;
+
+function onClickItem(e) {
+  tab.value = e.currentIndex;
+  // 这里可以根据tab切换获取不同状态的订单
+}
+
+function formatPromotions(promotionList) {
+  if (!promotionList) return [];
+  return promotionList;
+}
+
+function toEvaluate(orderId) {
+  // 评价订单
 }
 
 function toPay(orderId) {
-
+  // 支付订单
 }
 
 function orderDetail(orderId) {
-
+  // 查看订单详情
 }
-
 </script>
-
 
 <style>.segmented-control {
   /*  #ifdef  H5  */

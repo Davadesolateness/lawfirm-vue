@@ -1,94 +1,96 @@
 <template>
-  <view class="container">
-    <!-- 律师信息头部 -->
-    <view class="profile-header">
-      <view class="user-info">
-        <image class="avatar" src="/static/default-avatar.png" mode="aspectFill"/>
-        <view class="user-meta">
-          <text class="username">{{ lawyerInfo.lawyername }}</text>
-          <view class="verify-tag">律师认证</view>
-        </view>
-      </view>
-      <view class="meta-info">
-        <text class="license">执业证号：{{ lawyerInfo.lawyerlicensenumber }}</text>
-        <text class="location">{{ lawyerInfo.address }}</text>
-      </view>
-    </view>
-
-    <!-- 服务类型 -->
-    <view class="service-card">
-      <view class="card-header">
-        <text class="card-title">电话咨询服务</text>
-        <view class="decorative-line"></view>
-      </view>
-      <view class="price-section">
-        <text class="price">¥38</text>
-        <text class="duration">/30分钟</text>
-      </view>
-      <text class="service-desc">下单后直接拨号，1分钟快速接通律师</text>
-
-      <view class="guarantee-tags">
-        <view class="tag-item" v-for="(tag,index) in guaranteeTags" :key="index">
-          <text class="tag-icon">✓</text>
-          <text class="tag-text">{{ tag }}</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 律师简介 -->
-    <view class="info-card">
-      <view class="card-header">
-        <text class="card-title">律师简介</text>
-        <view class="decorative-line"></view>
-      </view>
-      <text class="content-text">
-        {{ lawyerInfo.introduction }}
-      </text>
-    </view>
-
-    <!-- 专长经验 -->
-    <view class="info-card">
-      <view class="card-header">
-        <text class="card-title">专长经验</text>
-        <view class="decorative-line"></view>
-      </view>
-      <view class="expertise-item">
-        <text class="expertise-type">劳动纠纷</text>
-        <text class="case-count">办理了5个案件</text>
-      </view>
-    </view>
-
-    <!-- 用户评价 -->
-    <view class="info-card">
-      <view class="card-header">
-        <text class="card-title">用户评价</text>
-        <view class="decorative-line"></view>
-      </view>
-      <view class="review-list">
-        <view class="review-item" v-for="(review,index) in reviews" :key="index">
-          <view class="review-header">
-            <text class="username">{{ review.user }}</text>
-            <text class="rating-tag" :class="review.ratingClass">{{ review.ratingText }}</text>
+  <page-layout>
+    <view class="container">
+      <!-- 律师信息头部 -->
+      <view class="profile-header">
+        <view class="user-info">
+          <image class="avatar" src="/static/default-avatar.png" mode="aspectFill"/>
+          <view class="user-meta">
+            <text class="username">{{ lawyerInfo.lawyername }}</text>
+            <view class="verify-tag">律师认证</view>
           </view>
-          <view class="tag-group">
-            <text class="feature-tag" v-for="(tag,tIndex) in review.tags" :key="tIndex">{{ tag }}</text>
-          </view>
-          <text class="review-time">{{ review.time }}</text>
+        </view>
+        <view class="meta-info">
+          <text class="license">执业证号：{{ lawyerInfo.lawyerlicensenumber }}</text>
+          <text class="location">{{ lawyerInfo.address }}</text>
         </view>
       </view>
-    </view>
 
-    <!-- 固定咨询按钮 -->
-    <view class="fixed-consult-btn" @click="handleConsult">
-      <text>立即咨询</text>
+      <!-- 服务类型 -->
+      <view class="service-card">
+        <view class="card-header">
+          <text class="card-title">电话咨询服务</text>
+          <view class="decorative-line"></view>
+        </view>
+        <view class="price-section">
+          <text class="price">¥38</text>
+          <text class="duration">/30分钟</text>
+        </view>
+        <text class="service-desc">下单后直接拨号，1分钟快速接通律师</text>
+
+        <view class="guarantee-tags">
+          <view class="tag-item" v-for="(tag,index) in guaranteeTags" :key="index">
+            <text class="tag-icon">✓</text>
+            <text class="tag-text">{{ tag }}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 律师简介 -->
+      <view class="info-card">
+        <view class="card-header">
+          <text class="card-title">律师简介</text>
+          <view class="decorative-line"></view>
+        </view>
+        <text class="content-text">
+          {{ lawyerInfo.introduction }}
+        </text>
+      </view>
+
+      <!-- 专长经验 -->
+      <view class="info-card">
+        <view class="card-header">
+          <text class="card-title">专长经验</text>
+          <view class="decorative-line"></view>
+        </view>
+        <view class="expertise-item">
+          <text class="expertise-type">劳动纠纷</text>
+          <text class="case-count">办理了5个案件</text>
+        </view>
+      </view>
+
+      <!-- 用户评价 -->
+      <view class="info-card">
+        <view class="card-header">
+          <text class="card-title">用户评价</text>
+          <view class="decorative-line"></view>
+        </view>
+        <view class="review-list">
+          <view class="review-item" v-for="(review,index) in reviews" :key="index">
+            <view class="review-header">
+              <text class="username">{{ review.user }}</text>
+              <text class="rating-tag" :class="review.ratingClass">{{ review.ratingText }}</text>
+            </view>
+            <view class="tag-group">
+              <text class="feature-tag" v-for="(tag,tIndex) in review.tags" :key="tIndex">{{ tag }}</text>
+            </view>
+            <text class="review-time">{{ review.time }}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 固定咨询按钮 -->
+      <view class="fixed-consult-btn" @click="handleConsult">
+        <text>立即咨询</text>
+      </view>
+      <view>
+        <button class="el-button--text" @click="modifyLawyerInfo">修改律师</button>
+      </view>
+      <view>
+        <button class="el-button--text" @click="addLawyerInfo">增加律师</button>
+      </view>
     </view>
-    <view>
-      <button class="el-button--text" @click="modifyLawyerInfo">修改律师</button>
-    </view>
-    <view>
-      <button class="el-button--text" @click="addLawyerInfo">增加律师</button>
-    </view>
-  </view>
+  </page-layout>
 </template>
 
 <script setup>
@@ -97,6 +99,7 @@ import {navigateTo} from "@/utils/navigateTo";
 import {onShow} from "@dcloudio/uni-app";
 import {getLawyerInfoById} from "./lawyerservice";
 import {apiGetLawyerInfoById} from "@/api/lawyerapi";
+import PageLayout from "@/components/custom/tabbarlayout.vue";
 
 const lawyerInfo = ref();
 const guaranteeTags = ['平台保障', '严选真实律师', '1对1私密咨询', '未服务自动退款'];
@@ -113,16 +116,6 @@ const reviews = [
 
 function handleConsult() {
   uni.navigateTo({url: '/pages/consult/confirm'})
-}
-
-// 增加律师
-function addLawyerInfo() {
-  navigateTo({
-    url: "/pages/lawyer/addlawyerinfo",
-    params: {
-      isEditMode: false
-    }
-  })
 }
 
 // 修改律师
@@ -147,7 +140,6 @@ function initLawyerInfo() {
     lawyerInfo.value = data;
   })
 }
-
 
 // 根据id获取律师信息
 /*const getLawyerInfoById = async () => {

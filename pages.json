@@ -1,10 +1,23 @@
 {
   "pages": [
-    //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "用户信息"
+        "navigationBarTitleText": "首页"
+      }
+    },
+    {
+      "path": "pages/lawyer/lawyerinfo",
+      "style": {
+        "navigationBarTitleText": "律师详情",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/order/orderlist",
+      "style": {
+        "navigationBarTitleText": "订单列表",
+        "enablePullDownRefresh": false
       }
     },
     {
@@ -15,9 +28,16 @@
       }
     },
     {
-      "path": "pages/lawyer/lawyerinfo",
+      "path": "pages/admin/admin",
       "style": {
-        "navigationBarTitleText": "律师详情",
+        "navigationBarTitleText": "管理员页面",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/lawyer/modifylawyerinfo",
+      "style": {
+        "navigationBarTitleText": "修改律师信息",
         "enablePullDownRefresh": true
       }
     },
@@ -50,23 +70,9 @@
       }
     },
     {
-      "path": "pages/order/orderlist",
-      "style": {
-        "navigationBarTitleText": "订单列表",
-        "enablePullDownRefresh": false
-      }
-    },
-    {
       "path": "pages/lawyer/addlawyerinfo",
       "style": {
         "navigationBarTitleText": "增加律师信息",
-        "enablePullDownRefresh": true
-      }
-    },
-    {
-      "path": "pages/lawyer/modifylawyerinfo",
-      "style": {
-        "navigationBarTitleText": "修改律师信息",
         "enablePullDownRefresh": true
       }
     },
@@ -78,13 +84,6 @@
       }
     },
     {
-      "path": "pages/admin/admin",
-      "style": {
-        "navigationBarTitleText": "管理员页面",
-        "enablePullDownRefresh": false
-      }
-    },
-    {
       "path": "pages/user/adduserinfo/adduserinfo",
       "style": {
         "navigationBarTitleText": "新增用户",
@@ -92,46 +91,6 @@
       }
     }
   ],
-  "tabBar": {
-    "color": "#666",
-    // 默认文字颜色
-    "selectedColor": "#007AFF",
-    // 选中文字颜色
-    "borderStyle": "white",
-    // 底部边框颜色（仅支持 black/white）
-    "backgroundColor": "#fff",
-    // 背景颜色
-    "list": [
-      {
-        "pagePath": "pages/index/index",
-        // 对应页面路径
-        "text": "首页",
-        // 文本
-        "iconPath": "static/images/home.png",
-        // 未选中图标
-        "selectedIconPath": "static/images/home_active.png"
-        // 选中图标
-      },
-      {
-        "pagePath": "pages/lawyer/lawyerinfo",
-        "text": "免费咨询",
-        "iconPath": "static/images/home.png",
-        "selectedIconPath": "static/images/home_active.png"
-      },
-      {
-        "pagePath": "pages/order/orderlist",
-        "text": "订单",
-        "iconPath": "static/images/user.png",
-        "selectedIconPath": "static/images/user_active.png"
-      },
-      {
-        "pagePath": "pages/user/user",
-        "text": "我的",
-        "iconPath": "static/images/user.png",
-        "selectedIconPath": "static/images/user_active.png"
-      }
-    ]
-  },
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "uni-app",
