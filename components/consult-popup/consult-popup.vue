@@ -84,6 +84,7 @@ import { ref, computed } from 'vue'
 import { createCallOrder } from '@/pages/call/callService'
 import { getUserInfo } from '@/utils/userManager'
 import { navigateToUrl } from '@/utils/navigateTo'
+import { wxPay } from '@/utils/pay'
 
 // 定义组件属性
 const props = defineProps({
@@ -160,23 +161,25 @@ const handleConfirm = async () => {
       return
     }
 
-    const orderParams = {
+    // 构建通话参数
+    const callParams = {
       userId: userInfo.id,
-      userName: userInfo.name,
-      userPhone: userInfo.phone,
       lawyerId: props.lawyerInfo.id,
-      lawyerName: props.lawyerInfo.lawyername,
-      lawyerPhone: props.lawyerInfo.phone,
-      fee: props.basePrice,
-      duration: selectedDuration.value
+      duration: selectedDuration.value,
+      fee: props.basePrice * (selectedDuration.value / 30)
     }
 
-    const order = createCallOrder(orderParams)
-    navigateToUrl(`/pages/call/callpage?orderId=${order.orderId}`)
-    emit('confirm', order)
+    // 跳转到通话页面
+    navigateToUrl(`/pages/call/callpage?lawyerId=${props.lawyerInfo.id}&duration=${selectedDuration.value}`)
+    
+    // 触发确认事件
+    emit('confirm', callParams)
+    
+    // 重置状态
     resetState()
+
   } catch (error) {
-    uni.showToast({ title: error.message || '创建订单失败', icon: 'none' })
+    uni.showToast({ title: error.message || '操作失败', icon: 'none' })
   }
 }
 
