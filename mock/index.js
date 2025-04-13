@@ -25,6 +25,7 @@ const overrideRequest = () => {
 const loadMocks = () => {
     import("./modules/user");
     import("./modules/lawyer");
+    import("./modules/login");
 };
 
 export const initMock = () => {

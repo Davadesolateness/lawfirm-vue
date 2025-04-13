@@ -2,7 +2,7 @@ import http from "@/utils/http/index";
 
 // 手机号登录
 export function phoneLogin(data) {
-  return http.postWithRetry('/auth/phone-login', {
+  return http.postWithRetry('/auth/phoneLogin', {
     phone: data.phone,
     code: data.code,
     role: data.role
@@ -29,7 +29,7 @@ export function wechatLogin(data) {
 
 // 发送验证码
 export function sendVerificationCode(phone) {
-  return http.postWithTimeout('/auth/send-code', { phone });
+  return http.postWithTimeout('/auth/sendCode', { phone });
 }
 
 // 验证手机号

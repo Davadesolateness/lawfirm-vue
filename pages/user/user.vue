@@ -1,103 +1,80 @@
 <template>
   <PageLayout>
     <view class="container">
-      <!-- 用户信息卡片 -->
-      <view class="card user-card">
-        <view class="user-avatar">
-          <image src="/static/images/default_avatar.jpg" mode="aspectFill"></image>
-        </view>
+      <!-- 用户信息区 -->
+      <view class="user-header">
         <view class="user-info">
-          <view class="user-name">{{ userInfo.username || '游客' }}</view>
-          <view class="user-status">{{ userInfo.status || '普通会员' }}</view>
+          <image class="avatar" :src="userInfo.avatar" mode="aspectFill"/>
+          <view class="user-meta">
+            <text class="username">{{ userInfo.username }}</text>
+            <view class="user-tag" v-if="corporateuser">法人用户</view>
+            <view class="user-tag" v-else>普通用户</view>
+          </view>
         </view>
-        <view class="user-action">
-          <button class="btn btn-outline btn-sm">编辑资料</button>
+        <view class="membership-card">
+          <text class="membership-level">黄金会员</text>
+          <text class="expire-date">有效期至：2024-12-31</text>
+
+          <view class="privilege-tags">
+            <text class="tag">专属律师</text>
+            <text class="tag">双倍积分</text>
+            <text class="tag">优先服务</text>
+          </view>
         </view>
-      </view>
-      
-      <!-- 优惠券卡片 -->
-      <view class="card coupon-card">
-        <view class="coupon-header">
-          <view class="coupon-title">我的优惠券</view>
-          <view class="coupon-action">查看全部</view>
-        </view>
-        <view class="coupon-content">
-          <view class="coupon-item" v-for="(coupon, index) in coupons" :key="index">
-            <view class="coupon-value">
-              <text class="symbol">¥</text>
-              <text class="amount">{{ coupon.amount }}</text>
-            </view>
-            <view class="coupon-detail">
-              <text class="coupon-name">{{ coupon.name }}</text>
-              <text class="coupon-desc">{{ coupon.desc }}</text>
-              <text class="coupon-date">{{ coupon.validDate }}</text>
+
+        <!-- 修改后的优惠券卡片 -->
+        <view class="coupon-card">
+          <view class="card-header">
+            <text class="card-title">我的使用次数</text>
+            <view class="decorative-line"></view>
+          </view>
+          <view class="coupon-list">
+            <view v-for="(coupon, index) in coupons" :key="index" class="coupon-item">
+              <text class="times">{{ coupon.times }}次</text>
+              <view class="coupon-info">
+                <text class="name">{{ coupon.name }}</text>
+                <text class="condition">可用{{ coupon.times }}次</text>
+                <text class="expire">{{ coupon.expire }}</text>
+              </view>
             </view>
           </view>
         </view>
       </view>
-      
       <!-- 功能列表 -->
-      <view class="card function-card">
-        <view class="function-list">
-          <view class="function-item" v-for="(item, index) in functionList" :key="index" @click="handleFunction(item.type)">
-            <view class="function-icon">
-              <uni-icons :type="item.icon" size="24" color="var(--primary-color)"></uni-icons>
-            </view>
-            <view class="function-detail">
-              <text class="function-name">{{ item.name }}</text>
-            </view>
-            <uni-icons type="right" size="16" color="var(--text-tertiary)"></uni-icons>
-          </view>
+      <view class="func-list">
+        <view class="func-item" @click="toPage('/pages/share/index')">
+          <text class="func-icon">👀</text>
+          <text class="func-text">推荐给好友</text>
+          <text class="arrow">›</text>
+        </view>
+        <view class="func-item" @click="toPage('/pages/about/index')">
+          <text class="func-icon">💁</text>
+          <text class="func-text">关于</text>
+          <text class="arrow">›</text>
+        </view>
+        <view class="func-item" @click="toPage('/pages/feedback/index')">
+          <text class="func-icon">📧</text>
+          <text class="func-text">意见反馈</text>
+          <text class="arrow">›</text>
         </view>
       </view>
-      
-      <!-- 角色切换器（测试用） -->
-      <view class="card role-switcher">
-        <view class="card-header">
-          <text class="card-title">测试用户角色切换</text>
-        </view>
-        <view class="role-buttons">
-          <button class="btn btn-primary" @click="switchRole(USER_TYPES.USER)">普通用户</button>
-          <button class="btn btn-outline" @click="switchRole(USER_TYPES.LAWYER)">律师用户</button>
-          <button class="btn btn-outline" @click="switchRole(USER_TYPES.ADMIN)">管理员</button>
-        </view>
-        <text class="current-role">当前角色: {{ currentRole }}</text>
+
+      <view>
+        <button class="el-button--text" @click="modifyUserInfo">修改用户</button>
       </view>
-      
-      <!-- 退出登录按钮 -->
-      <button class="btn btn-danger logout-btn">退出登录</button>
+      <view>
+        <button class="el-button--text" @click="adminPage">管理员</button>
+      </view>
     </view>
   </PageLayout>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import {ref} from "vue"
+import {navigateTo, navigateToUrl} from "@/utils/navigateTo";
+import {apiGetUserInfoById} from "@/api/userapi";
+import {onShow} from "@dcloudio/uni-app";
 import PageLayout from "@/components/custom/tabbarlayout.vue";
-import { getUserType, setUserType, USER_TYPES } from '@/utils/userManager';
-import { navigateToUrl } from '@/utils/navigateTo';
-
-// 用户信息
-const userInfo = reactive({
-  username: '张三',
-  status: '普通会员',
-  avatar: '/static/images/default_avatar.jpg'
-});
-
-// 优惠券数据
-const coupons = ref([
-  {
-    amount: '50',
-    name: '法律咨询优惠券',
-    desc: '电话咨询满100元可用',
-    validDate: '有效期至2024-12-31'
-  },
-  {
-    amount: '100',
-    name: '新用户专享券',
-    desc: '首次咨询可用',
-    validDate: '有效期至2024-06-30'
-  }
-]);
 
 // 功能列表
 const functionList = ref([
@@ -128,265 +105,257 @@ const functionList = ref([
   }
 ]);
 
-// 当前角色状态
-const currentRole = ref('普通用户');
+// 修改后的响应式数据
+const coupons = ref([
+  {times: 3, name: '优惠券', expire: '2023-12-31'},
+  /* {times: 5, name: '会员专属券', expire: '2024-01-31'},
+   {times: 1, name: '新人礼券', expire: '2024-02-28'}*/
+]);
 
-// 处理功能点击
-function handleFunction(type) {
-  switch (type) {
-    case 'appointment':
-      navigateToUrl('/pages/appointment/list');
-      break;
-    case 'consultation':
-      navigateToUrl('/pages/consultation/list');
-      break;
-    case 'favorite':
-      navigateToUrl('/pages/favorite/list');
-      break;
-    case 'help':
-      navigateToUrl('/pages/help/center');
-      break;
-    case 'setting':
-      navigateToUrl('/pages/setting/index');
-      break;
-  }
-}
-
-// 切换用户角色
-function switchRole(role) {
-  setUserType(role);
-  
-  // 更新当前显示的角色名称
-  if(role === USER_TYPES.USER) {
-    currentRole.value = '普通用户';
-  } else if(role === USER_TYPES.LAWYER) {
-    currentRole.value = '律师用户';
-  } else if(role === USER_TYPES.ADMIN) {
-    currentRole.value = '管理员';
-  }
-  
-  // 刷新页面以重新加载tabBar
-  setTimeout(() => {
-    uni.reLaunch({
-      url: '/pages/index/index'
-    });
-  }, 300);
-}
-
-// 页面加载时获取当前用户角色
-onMounted(() => {
-  const userType = getUserType();
-  if(userType === USER_TYPES.USER) {
-    currentRole.value = '普通用户';
-  } else if(userType === USER_TYPES.LAWYER) {
-    currentRole.value = '律师用户';
-  } else if(userType === USER_TYPES.ADMIN) {
-    currentRole.value = '管理员';
-  }
+const membership = ref({
+  level: '黄金会员',
+  progress: 60,
+  expire: '2024-12-31'
 });
+
+let corporateuser = true;
+let avatarImg = '';  // 头像
+const userInfo = ref(null); // 用户信息
+
+onShow(() => {
+  initUserInfo();
+});
+
+function judgeUserType() {
+  if (userInfo.usertype == "corporate") {
+    corporateuser = true;
+  } else {
+    corporateuser = false;
+  }
+}
+
+// 初始化用户信息
+function initUserInfo() {
+  getUserInfoById()
+}
+
+const getUserInfoById = async () => {
+  userInfo.value = await apiGetUserInfoById("444");
+  avatarImg = userInfo.value.avatar;
+}
+
+function toPage(url) {
+  this.navigate.navigateToUrl("2020-01-01");
+}
+
+// 修改用户信息
+function modifyUserInfo() {
+  navigateTo({
+    url: "/pages/user/modifyuserinfo",
+    params: {
+      username: userInfo.value.username,
+      avatarImg: avatarImg,
+      phone: userInfo.value.phone_number
+    }
+  })
+}
+
+function adminPage() {
+  navigateToUrl("/pages/admin/admin");
+}
 </script>
 
-<style lang="scss">
-@import '@/uni_modules/theme/index.scss';
-
+<style lang="scss" scoped>
+/* 基础容器 */
 .container {
-  min-height: 100vh;
-  padding-bottom: var(--spacing-xl);
-}
-
-.user-card {
+  height: 100vh;
   display: flex;
-  align-items: center;
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-md);
-  
-  .user-avatar {
-    margin-right: var(--spacing-md);
-    
-    image {
-      width: 120rpx;
-      height: 120rpx;
-      border-radius: 50%;
-      border: 3rpx solid var(--primary-light);
-    }
-  }
-  
+  flex-direction: column;
+  background: #f8fafb;
+}
+
+/* 用户信息区优化 */
+.user-header {
+  background: linear-gradient(135deg, #f0f4ff 0%, #e6ecfa 100%);
+  padding: 48rpx 32rpx 10rpx;
+  position: relative;
+
   .user-info {
-    flex: 1;
-    
-    .user-name {
-      font-size: var(--font-size-lg);
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--spacing-xs);
-    }
-    
-    .user-status {
-      font-size: var(--font-size-sm);
-      color: var(--text-secondary);
-    }
-  }
-}
-
-.coupon-card {
-  margin-bottom: var(--spacing-md);
-  
-  .coupon-header {
-    display: flex;
-    justify-content: space-between;
-    padding: var(--spacing-md);
-    border-bottom: 1rpx solid var(--border-color);
-    
-    .coupon-title {
-      font-size: var(--font-size-md);
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    
-    .coupon-action {
-      font-size: var(--font-size-sm);
-      color: var(--primary-color);
-    }
-  }
-  
-  .coupon-content {
-    padding: var(--spacing-md);
-  }
-  
-  .coupon-item {
     display: flex;
     align-items: center;
-    background: linear-gradient(to right, var(--primary-light), var(--card-bg));
-    border-radius: var(--border-radius-md);
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-sm);
-    position: relative;
-    overflow: hidden;
-    
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      right: 120rpx;
-      width: 30rpx;
-      background: var(--bg-color);
+    margin-bottom: 40rpx;
+
+    .avatar {
+      width: 128rpx;
+      height: 128rpx;
       border-radius: 50%;
-      box-shadow: 0 -15rpx 0 0 var(--bg-color), 0 15rpx 0 0 var(--bg-color);
+      border: 2rpx solid rgba(255, 255, 255, 0.8);
+      margin-right: 32rpx;
+      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
     }
-    
-    &:last-child {
-      margin-bottom: 0;
-    }
-    
-    .coupon-value {
-      min-width: 120rpx;
-      text-align: center;
-      margin-right: var(--spacing-md);
-      
-      .symbol {
-        font-size: var(--font-size-sm);
-        color: var(--primary-color);
-        font-weight: 500;
+
+    .user-meta {
+      .username {
+        color: #2d3436;
+        font-size: 40rpx;
+        font-weight: 600;
+        letter-spacing: 0.5rpx;
       }
-      
-      .amount {
-        font-size: var(--font-size-xl);
-        color: var(--primary-color);
-        font-weight: 700;
-      }
-    }
-    
-    .coupon-detail {
-      flex: 1;
-      padding-left: var(--spacing-md);
-      
-      .coupon-name {
-        font-size: var(--font-size-md);
-        font-weight: 500;
-        color: var(--text-primary);
-        margin-bottom: var(--spacing-xs);
-        display: block;
-      }
-      
-      .coupon-desc {
-        font-size: var(--font-size-xs);
-        color: var(--text-secondary);
-        margin-bottom: var(--spacing-xs);
-        display: block;
-      }
-      
-      .coupon-date {
-        font-size: var(--font-size-xs);
-        color: var(--text-tertiary);
-        display: block;
+
+      .user-tag {
+        display: inline-block;
+        padding: 6rpx 24rpx;
+        background: rgba(127, 127, 213, 0.1);
+        border-radius: 32rpx;
+        color: #7F7FD5;
+        font-size: 26rpx;
+        margin-top: 12rpx;
+        border: 1rpx solid rgba(127, 127, 213, 0.2);
       }
     }
   }
 }
 
-.function-card {
-  margin-bottom: var(--spacing-md);
-  
-  .function-list {
-    padding: 0 var(--spacing-xs);
+/* 会员卡片优化 */
+.membership-card {
+  background: linear-gradient(135deg, #f0f5ff 0%, #e8efff 100%);
+  border-radius: 20rpx;
+  padding: 28rpx;
+  margin: 0 0 24rpx;
+  border: 1rpx solid rgba(127, 127, 213, 0.1);
+
+  .membership-level {
+    color: #4A67FF;
+    font-size: 36rpx;
+    font-weight: 600;
+    margin-bottom: 12rpx;
   }
-  
-  .function-item {
+
+  .expire-date {
+    color: #666;
+    font-size: 26rpx;
+
+    &::before {
+      content: "📅 ";
+    }
+  }
+
+  .privilege-tags {
+    margin-top: 24rpx;
+    display: flex;
+    gap: 16rpx;
+
+    .tag {
+      background: rgba(127, 127, 213, 0.08);
+      color: #4A67FF;
+      padding: 6rpx 20rpx;
+      border-radius: 32rpx;
+      font-size: 24rpx;
+      border: 1rpx solid rgba(127, 127, 213, 0.15);
+    }
+  }
+}
+
+/* 使用次数卡片优化 */
+.coupon-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin: 24rpx 0;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+
+  .card-header {
+    margin-bottom: 24rpx;
+
+    .card-title {
+      color: #444;
+      font-size: 32rpx;
+      font-weight: 500;
+    }
+
+    .decorative-line {
+      width: 48rpx;
+      height: 4rpx;
+      background: #7F7FD5;
+      margin-top: 12rpx;
+    }
+  }
+
+  .coupon-item {
+    padding: 24rpx;
+    background: #f8f9ff;
+    border-radius: 16rpx;
+    margin: 16rpx 0;
     display: flex;
     align-items: center;
-    padding: var(--spacing-md) var(--spacing-sm);
-    border-bottom: 1rpx solid var(--border-color);
-    
+
+    .times {
+      color: #4A67FF;
+      font-size: 40rpx;
+      font-weight: 600;
+      margin-right: 32rpx;
+      min-width: 96rpx;
+    }
+
+    .coupon-info {
+      .name {
+        color: #444;
+        font-size: 28rpx;
+      }
+
+      .condition {
+        color: #666;
+        font-size: 26rpx;
+      }
+
+      .expire {
+        color: #999;
+        font-size: 24rpx;
+        margin-top: 8rpx;
+      }
+    }
+  }
+}
+
+/* 功能列表优化 */
+.func-list {
+  background: #fff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+
+  .func-item {
+    padding: 28rpx 32rpx;
+    border-bottom: 1rpx solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+
     &:last-child {
       border-bottom: none;
     }
-    
-    .function-icon {
-      margin-right: var(--spacing-md);
+
+    .func-icon {
+      font-size: 40rpx;
+      margin-right: 24rpx;
+      width: 56rpx;
+      text-align: center;
     }
-    
-    .function-detail {
+
+    .func-text {
       flex: 1;
-      
-      .function-name {
-        font-size: var(--font-size-md);
-        color: var(--text-primary);
-      }
+      color: #444;
+      font-size: 30rpx;
+    }
+
+    .arrow {
+      color: #999;
+      font-size: 40rpx;
+    }
+
+    &:active {
+      background: #f8f9ff;
     }
   }
-}
-
-.role-switcher {
-  margin-bottom: var(--spacing-xl);
-  
-  .card-header {
-    margin-bottom: var(--spacing-md);
-  }
-}
-
-.role-buttons {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-  
-  .btn {
-    flex: 1;
-  }
-}
-
-.current-role {
-  display: block;
-  text-align: center;
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  margin-top: var(--spacing-sm);
-}
-
-.logout-btn {
-  width: 80%;
-  margin: 0 auto;
-  margin-top: var(--spacing-xl);
 }
 </style>

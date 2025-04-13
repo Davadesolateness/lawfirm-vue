@@ -278,7 +278,7 @@ async function handleLogin() {
   uni.showLoading({
     title: '登录中...'
   });
-  
+  debugger
   try {
     let response;
     if (loginType.value === 'phone') {
@@ -295,7 +295,7 @@ async function handleLogin() {
       });
     }
     
-    const { token, userData } = response.data;
+    const { token, userData } = response;
     
     // 设置用户类型
     setUserType(USER_TYPES[selectedRole.value.toUpperCase()]);
@@ -306,7 +306,7 @@ async function handleLogin() {
     
     // 存储登录信息到本地
     uni.setStorageSync('token', token);
-    uni.setStorageSync('userInfo', JSON.stringify(userData));
+    uni.setStorageSync('userInfo', userData);
     
     uni.hideLoading();
     uni.showToast({
@@ -372,7 +372,7 @@ async function handleWechatLogin() {
     
     // 保存登录信息
     uni.setStorageSync('token', token);
-    uni.setStorageSync('userInfo', JSON.stringify(userData));
+    uni.setStorageSync('userInfo', userData);
     
     // 设置用户类型
     setUserType(USER_TYPES.USER);

@@ -142,7 +142,7 @@ export default {
 <script setup>
 import PageLayout from "@/components/custom/tabbarlayout.vue";
 import { ref, computed, onMounted } from 'vue';
-import { wxPay, getOrders, ORDER_STATUS, cancelOrder, updateOrderStatus } from '@/utils/pay';
+import { wxPay,  ORDER_STATUS,  } from '@/utils/pay';
 
 // 搜索
 const searchKeyword = ref('');
@@ -206,7 +206,7 @@ function loadOrders() {
   
   // 获取订单列表
   const status = statusMapping[currentStatus.value];
-  const orders = getOrders(status);
+  //const orders = getOrders(status);
   
   // 模拟网络请求延迟
   setTimeout(() => {
@@ -274,7 +274,7 @@ function cancelTheOrder(orderId) {
     success: function(res) {
       if (res.confirm) {
         // 调用取消订单函数
-        const result = cancelOrder(orderId);
+        //const result = cancelTheOrder(orderId);
         
         if (result) {
           uni.showToast({
