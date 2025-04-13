@@ -4,10 +4,13 @@
       <!-- 律师信息头部 -->
       <view class="profile-header">
         <view class="user-info">
-          <image class="avatar" src="/static/default-avatar.png" mode="aspectFill"/>
+          <image class="avatar" :src="lawyerInfo.avatar || '/static/default-avatar.png'" mode="aspectFill"/>
           <view class="user-meta">
             <text class="username">{{ lawyerInfo.lawyername }}</text>
-            <view class="verify-tag">律师认证</view>
+            <view class="verify-tag">
+              <uni-icons type="verified" size="16" color="#fff"></uni-icons>
+              律师认证
+            </view>
           </view>
         </view>
         <view class="meta-info">
@@ -23,14 +26,14 @@
           <view class="decorative-line"></view>
         </view>
         <view class="price-section">
-          <text class="price">¥38</text>
+          <text class="price">¥{{ basePrice }}</text>
           <text class="duration">/30分钟</text>
         </view>
-        <text class="service-desc">下单后直接拨号，1分钟快速接通律师</text>
+        <text class="service-desc">专业领域律师1v1服务，快速解决法律问题</text>
 
         <view class="guarantee-tags">
-          <view class="tag-item" v-for="(tag,index) in guaranteeTags" :key="index">
-            <text class="tag-icon">✓</text>
+          <view v-for="(tag,index) in guaranteeTags" :key="index" class="tag-item">
+            <uni-icons type="checkmark" size="14" color="#6B5BFF"></uni-icons>
             <text class="tag-text">{{ tag }}</text>
           </view>
         </view>
@@ -43,211 +46,152 @@
           <view class="decorative-line"></view>
         </view>
         <text class="content-text">
-          {{ lawyerInfo.introduction }}
+          {{ lawyerInfo.introduction || '该律师暂未填写个人简介' }}
         </text>
       </view>
 
-      <!-- 专长经验 -->
-      <view class="info-card">
-        <view class="card-header">
-          <text class="card-title">专长经验</text>
-          <view class="decorative-line"></view>
-        </view>
-        <view class="expertise-item">
-          <text class="expertise-type">劳动纠纷</text>
-          <text class="case-count">办理了5个案件</text>
-        </view>
-      </view>
-
-      <!-- 用户评价 -->
-      <view class="info-card">
-        <view class="card-header">
-          <text class="card-title">用户评价</text>
-          <view class="decorative-line"></view>
-        </view>
-        <view class="review-list">
-          <view class="review-item" v-for="(review,index) in reviews" :key="index">
-            <view class="review-header">
-              <text class="username">{{ review.user }}</text>
-              <text class="rating-tag" :class="review.ratingClass">{{ review.ratingText }}</text>
-            </view>
-            <view class="tag-group">
-              <text class="feature-tag" v-for="(tag,tIndex) in review.tags" :key="tIndex">{{ tag }}</text>
-            </view>
-            <text class="review-time">{{ review.time }}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 底部操作栏 -->
-      <view class="action-bar">
-        <view class="action-container">
-          <view class="call-action">
-            <CallButton :lawyer-info="lawyerInfo" @success="handleCallSuccess" />
-          </view>
-          <view class="contact-action">
-            <button class="contact-btn" @click="handleContactLawyer">在线咨询</button>
-          </view>
-        </view>
+      <!-- 在线咨询按钮 -->
+      <view class="action-container">
+        <button class="action-btn call-btn" @click="handleCallConsult">电话咨询</button>
+        <button class="action-btn contact-btn" @click="handleContact">在线咨询</button>
       </view>
     </view>
+
+    <!-- 电话咨询弹窗 -->
+    <consult-popup
+        v-if="showCallPopup"
+        :show="showCallPopup"
+        :duration-options="durationOptions"
+        :base-price="basePrice"
+        @close="handlePopupClose"
+        @confirm="handleCallConfirm"
+    />
   </PageLayout>
 </template>
 
 <script setup>
-import {ref,onMounted} from "vue"
-import {navigateTo} from "@/utils/navigateTo";
-import {onShow} from "@dcloudio/uni-app";
-import {getLawyerInfoById} from "./lawyerservice";
-import {apiGetLawyerInfoById} from "@/api/lawyerapi";
-import PageLayout from "@/components/custom/tabbarlayout";
-import {getUserType, setUserType, USER_TYPES} from "@/utils/userManager";
-import CallButton from '@/components/lawyer/callButton.vue';
+import { ref, computed } from "vue"
+import { onShow } from "@dcloudio/uni-app"
+import PageLayout from "@/components/custom/tabbarlayout"
+import ConsultPopup from "@/components/consult-popup/consult-popup"
+import { apiGetLawyerInfoById } from "@/api/lawyerapi"
 
-const lawyerInfo = ref();
-const guaranteeTags = ['平台保障', '严选真实律师', '1对1私密咨询', '未服务自动退款'];
-const reviews = [
-  {
-    user: '15****',
-    tags: ['解答很清晰', '态度很好', '回复很快'],
-    ratingText: '好',
-    ratingClass: 'rating-good',
-    time: '2024-04-07 12:17:14'
-  },
-  // ...其他评价数据
-];
-const currentRole = ref('普通用户');
+const basePrice = 38 // 基础价格
+const lawyerInfo = ref({})
+const showCallPopup = ref(false)
 
-function handleConsult() {
-  uni.navigateTo({url: '/pages/consult/confirm'})
-}
-
-// 修改律师
-function modifyLawyerInfo() {
-  navigateTo({
-    url: "/pages/lawyer/addlawyerinfo",
-    params: {
-      isEditMode: true,
-      lawyerId: "444"
-    }
-  })
-}
-
-// 切换用户角色
-function switchRole(role) {
-  setUserType(role);
-
-  // 更新当前显示的角色名称
-  if(role === USER_TYPES.USER) {
-    currentRole.value = '普通用户';
-  } else if(role === USER_TYPES.LAWYER) {
-    currentRole.value = '律师用户';
-  } else if(role === USER_TYPES.ADMIN) {
-    currentRole.value = '管理员';
-  }
-
-  // 刷新页面以重新加载tabBar
-  setTimeout(() => {
-    uni.reLaunch({
-      url: '/pages/index/index'
-    });
-  }, 300);
-}
+// 保障标签
+const guaranteeTags = ['隐私保护', '平台认证', '服务保障', '不满意可退款']
 
 
-// 展示页面时调用此方法
-onShow(() => {
-  initLawyerInfo();
-});
 
 // 初始化律师信息
-function initLawyerInfo() {
-  apiGetLawyerInfoById("444").then((data) =>{
-    lawyerInfo.value = data;
-  })
+const initLawyerInfo = async () => {
+  try {
+    const data = await apiGetLawyerInfoById("444")
+    lawyerInfo.value = data
+  } catch (error) {
+    uni.showToast({ title: '信息加载失败', icon: 'none' })
+  }
 }
 
-// 页面加载时获取当前用户角色
-onMounted(() => {
-  const userType = getUserType();
-  if(userType === USER_TYPES.USER) {
-    currentRole.value = '普通用户';
-  } else if(userType === USER_TYPES.LAWYER) {
-    currentRole.value = '律师用户';
-  } else if(userType === USER_TYPES.ADMIN) {
-    currentRole.value = '管理员';
-  }
-});
+// 处理弹窗关闭
+const handlePopupClose = () => {
+  showCallPopup.value = false;
+}
 
-// 处理电话咨询成功
-function handleCallSuccess(data) {
-  console.log('电话咨询订单创建成功', data);
+// 处理电话咨询
+const handleCallConsult = () => {
+  showCallPopup.value = true;
+}
+
+// 确认咨询
+const handleCallConfirm = async (orderData) => {
+  try {
+    uni.showLoading({ title: '创建订单中...' })
+    // 这里调用支付接口
+    uni.navigateTo({ url: `/pages/consult/confirm?orderId=${orderData.orderId}` })
+  } catch (error) {
+    uni.showToast({ title: error.message || '操作失败', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+  }
 }
 
 // 处理在线咨询
-function handleContactLawyer() {
-  uni.showToast({
-    title: '功能开发中',
-    icon: 'none'
-  });
+const handleContact = () => {
+  uni.showToast({ title: '功能即将上线，敬请期待', icon: 'none' })
 }
 
+onShow(() => initLawyerInfo())
 </script>
 
 <style lang="scss">
 .container {
   background: #f8fafd;
-  min-height: 100vh;
-  padding: 0 32rpx 120rpx;
+  padding: 24rpx 24rpx 160rpx;
 }
 
 .profile-header {
-  background: linear-gradient(135deg, #6B5BFF 0%, #8176a5 100%);
-  border-radius: 24rpx;
-  padding: 32rpx;
-  margin: 32rpx 0;
-  box-shadow: 0 8rpx 24rpx rgba(107, 91, 255, 0.1);
+  background: linear-gradient(135deg, #6B5BFF, #857AFF);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40rpx;
+    background: rgba(255,255,255,0.1);
+  }
 
   .user-info {
     display: flex;
     align-items: center;
-    margin-bottom: 40rpx;
+    margin-bottom: 32rpx;
 
     .avatar {
-      width: 120rpx;
-      height: 120rpx;
+      width: 96rpx;
+      height: 96rpx;
       border-radius: 50%;
-      border: 4rpx solid rgba(255, 255, 255, 0.3);
-      margin-right: 32rpx;
+      border: 2rpx solid rgba(255,255,255,0.3);
+      margin-right: 24rpx;
     }
 
     .user-meta {
       .username {
         color: #fff;
-        font-size: 40rpx;
+        font-size: 36rpx;
         font-weight: 600;
-        margin-bottom: 8rpx;
+        line-height: 1.4;
       }
 
       .verify-tag {
-        display: inline-block;
-        padding: 8rpx 24rpx;
-        background: rgba(255, 255, 255, 0.3);
+        display: inline-flex;
+        align-items: center;
+        padding: 8rpx 16rpx;
+        background: rgba(255,255,255,0.15);
         border-radius: 32rpx;
         color: #fff;
-        font-size: 28rpx;
+        font-size: 24rpx;
+        margin-top: 8rpx;
       }
     }
   }
 
   .meta-info {
-    border-top: 2rpx solid rgba(255, 255, 255, 0.2);
+    border-top: 1rpx solid rgba(255,255,255,0.15);
     padding-top: 24rpx;
 
     .license, .location {
       display: block;
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 28rpx;
+      color: rgba(255,255,255,0.85);
+      font-size: 26rpx;
       line-height: 1.6;
     }
   }
@@ -255,26 +199,26 @@ function handleContactLawyer() {
 
 .service-card, .info-card {
   background: #fff;
-  border-radius: 24rpx;
-  padding: 32rpx;
-  margin-bottom: 32rpx;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.04);
 
   .card-header {
-    margin-bottom: 32rpx;
+    margin-bottom: 24rpx;
 
     .card-title {
-      font-size: 36rpx;
+      font-size: 32rpx;
       font-weight: 600;
-      color: #2d3436;
+      color: #1a1a1a;
     }
 
     .decorative-line {
-      width: 80rpx;
-      height: 8rpx;
+      width: 64rpx;
+      height: 6rpx;
       background: #6B5BFF;
-      border-radius: 4rpx;
-      margin-top: 16rpx;
+      border-radius: 3rpx;
+      margin-top: 12rpx;
     }
   }
 }
@@ -283,48 +227,44 @@ function handleContactLawyer() {
   .price-section {
     display: flex;
     align-items: baseline;
-    margin-bottom: 24rpx;
+    margin-bottom: 20rpx;
 
     .price {
-      color: #f44336;
-      font-size: 48rpx;
+      color: #FF5252;
+      font-size: 40rpx;
       font-weight: 700;
-      margin-right: 16rpx;
+      margin-right: 12rpx;
     }
 
     .duration {
-      color: #757575;
-      font-size: 28rpx;
+      color: #666;
+      font-size: 26rpx;
     }
   }
 
   .service-desc {
     color: #666;
-    font-size: 28rpx;
-    margin-bottom: 32rpx;
+    font-size: 26rpx;
+    line-height: 1.6;
+    margin-bottom: 24rpx;
   }
 
   .guarantee-tags {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 16rpx;
+    gap: 12rpx;
 
     .tag-item {
-      background: #f8f9ff;
-      border-radius: 16rpx;
-      padding: 16rpx;
       display: flex;
       align-items: center;
-
-      .tag-icon {
-        color: #6B5BFF;
-        margin-right: 12rpx;
-        font-weight: bold;
-      }
+      padding: 16rpx;
+      background: #F8F9FF;
+      border-radius: 12rpx;
 
       .tag-text {
         color: #444;
-        font-size: 26rpx;
+        font-size: 24rpx;
+        margin-left: 8rpx;
       }
     }
   }
@@ -333,147 +273,42 @@ function handleContactLawyer() {
 .info-card {
   .content-text {
     color: #666;
-    font-size: 28rpx;
+    font-size: 26rpx;
     line-height: 1.8;
   }
-
-  .expertise-item {
-    background: #f8f9ff;
-    border-radius: 16rpx;
-    padding: 24rpx;
-    margin-top: 24rpx;
-
-    .expertise-type {
-      color: #6B5BFF;
-      font-size: 30rpx;
-      font-weight: 500;
-    }
-
-    .case-count {
-      color: #888;
-      font-size: 26rpx;
-      margin-top: 12rpx;
-    }
-  }
 }
 
-.review-list {
-  .review-item {
-    padding: 32rpx 0;
-    border-bottom: 2rpx solid #eee;
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    .review-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16rpx;
-
-      .username {
-        color: #444;
-        font-size: 28rpx;
-      }
-
-      .rating-tag {
-        font-size: 24rpx;
-        padding: 8rpx 24rpx;
-        border-radius: 32rpx;
-
-        &.rating-good {
-          background: #e8f5e9;
-          color: #2e7d32;
-        }
-
-        &.rating-great {
-          background: #e3f2fd;
-          color: #0277bd;
-        }
-
-        &.rating-satisfied {
-          background: #fff9c4;
-          color: #9e9d24;
-        }
-      }
-    }
-
-    .tag-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16rpx;
-      margin-bottom: 16rpx;
-
-      .feature-tag {
-        background: #f5f5f5;
-        color: #666;
-        font-size: 24rpx;
-        padding: 8rpx 24rpx;
-        border-radius: 32rpx;
-      }
-    }
-
-    .review-time {
-      color: #999;
-      font-size: 24rpx;
-    }
-  }
-}
-
-.fixed-consult-btn {
-  position: fixed;
-  bottom: 64rpx;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 70%;
-  height: 96rpx;
-  background: linear-gradient(135deg, #6B5BFF 0%, #8176a5 100%);
-  color: white;
-  border-radius: 64rpx;
-  font-size: 34rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8rpx 24rpx rgba(107, 91, 255, 0.3);
-  transition: all 0.2s;
-
-  &:active {
-    transform: translateX(-50%) scale(0.95);
-  }
-}
-
-/* 底部操作栏 */
-.action-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #fff;
-  padding: 20rpx 30rpx;
-  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
-  z-index: 100;
-}
-
+/* 操作按钮容器 */
 .action-container {
   display: flex;
-  gap: 20rpx;
-}
+  gap: 16rpx;
+  margin: 32rpx 0;
+  padding: 0 24rpx;
 
-.call-action, .contact-action {
-  flex: 1;
-}
+  .action-btn {
+    flex: 1;
+    height: 80rpx;
+    line-height: 80rpx;
+    font-size: 28rpx;
+    border-radius: 40rpx;
+    text-align: center;
+    transition: all 0.2s;
 
-.contact-btn {
-  width: 100%;
-  height: 80rpx;
-  line-height: 80rpx;
-  background: #fff;
-  color: #2979FF;
-  font-size: 28rpx;
-  border-radius: 40rpx;
-  text-align: center;
-  border: 1rpx solid #2979FF;
+    &.call-btn {
+      background: linear-gradient(135deg, #6B5BFF, #857AFF);
+      color: #fff;
+      border: none;
+    }
+
+    &.contact-btn {
+      background: #fff;
+      color: #6B5BFF;
+      border: 1rpx solid #6B5BFF;
+    }
+
+    &:active {
+      opacity: 0.9;
+    }
+  }
 }
 </style>

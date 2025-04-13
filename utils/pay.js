@@ -482,3 +482,4 @@ export default {
   ORDER_STATUS_TEXT,
   CONSULTATION_TYPES
 };
+

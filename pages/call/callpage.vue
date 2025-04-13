@@ -1,97 +1,136 @@
 <template>
-  <view class="call-container">
+  <view class="call-page">
     <!-- 顶部状态栏 -->
-    <view class="status-bar" :class="statusClass">
-      <text class="status-text">{{ statusText }}</text>
+    <view class="call-page__status-bar" :class="statusClass">
+      <view class="call-page__status-bar-content">
+        <text class="call-page__status-bar-text">{{ statusText }}</text>
+        <view v-if="callStatus === 'connected'" class="call-page__status-bar-quality">
+          <uni-icons :type="callQualityIcon" size="16" :color="callQualityColor"></uni-icons>
+          <text>{{ callQualityText }}</text>
+        </view>
+      </view>
     </view>
     
     <!-- 律师信息 -->
-    <view class="lawyer-info">
-      <image class="avatar" :src="lawyerInfo.avatar || '/static/images/lawyer_avatar.jpg'" mode="aspectFill"></image>
-      <view class="info">
+    <view class="call-page__lawyer-info">
+      <image class="call-page__lawyer-info-avatar" :src="lawyerInfo.avatar || '/static/images/lawyer_avatar.jpg'" mode="aspectFill"></image>
+      <view class="call-page__lawyer-info-info">
         <text class="name">{{ lawyerInfo.name || '律师' }}</text>
         <text class="title">{{ lawyerInfo.title || '专业律师' }}</text>
         <text class="phone">{{ encryptedPhone }}</text>
       </view>
+      <view v-if="callStatus === 'connected'" class="call-page__lawyer-info-recording" :class="{ 'call-page__lawyer-info-recording--active': isRecording }">
+        <uni-icons type="record" size="16" color="#ff4d4f"></uni-icons>
+        <text>录音中</text>
+      </view>
     </view>
     
     <!-- 通话信息 -->
-    <view class="call-info">
-      <view class="timer">
+    <view class="call-page__call-info">
+      <view class="call-page__call-info-timer">
         <text class="time">{{ callTime }}</text>
         <text v-if="isBillingStarted" class="billing">计费中</text>
       </view>
       
-      <view v-if="callStatus === 'connected'" class="fee-info">
-        <text class="fee-text">咨询费用: {{ fee }}元/分钟</text>
-        <text class="fee-text">已产生费用: {{ calculatedFee }}元</text>
-        <text class="fee-notice" v-if="!isBillingStarted">通话1分钟内免费</text>
+      <view v-if="callStatus === 'connected'" class="call-page__call-info-fee">
+        <view class="call-page__call-info-fee-row">
+          <text class="call-page__call-info-fee-label">咨询费用:</text>
+          <text class="call-page__call-info-fee-value">¥{{ fee }}/分钟</text>
+        </view>
+        <view class="call-page__call-info-fee-row">
+          <text class="call-page__call-info-fee-label">已产生费用:</text>
+          <text class="call-page__call-info-fee-value call-page__call-info-fee-value--price">¥{{ calculatedFee }}</text>
+        </view>
+        <text class="call-page__call-info-fee-notice" v-if="!isBillingStarted">通话1分钟内免费</text>
       </view>
       
-      <view v-if="callStatus === 'connecting'" class="connecting-animation">
-        <view class="dot"></view>
-        <view class="dot"></view>
-        <view class="dot"></view>
+      <view v-if="callStatus === 'connecting'" class="call-page__call-info-connecting">
+        <view class="call-page__call-info-connecting-dot"></view>
+        <view class="call-page__call-info-connecting-dot"></view>
+        <view class="call-page__call-info-connecting-dot"></view>
       </view>
     </view>
     
     <!-- 通话控制 -->
-    <view class="call-controls">
-      <view class="control-row">
-        <view class="control-btn mute" :class="{ active: isMuted }" @click="toggleMute">
+    <view class="call-page__controls">
+      <view class="call-page__controls-row">
+        <view class="call-page__controls-btn" :class="{ 'call-page__controls-btn--active': isMuted }" @click="toggleMute">
           <uni-icons :type="isMuted ? 'mic-slash' : 'mic'" size="24" color="#fff"></uni-icons>
           <text>{{ isMuted ? '已静音' : '静音' }}</text>
         </view>
         
-        <view class="control-btn speaker" :class="{ active: isSpeaker }" @click="toggleSpeaker">
+        <view class="call-page__controls-btn" :class="{ 'call-page__controls-btn--active': isSpeaker }" @click="toggleSpeaker">
           <uni-icons :type="isSpeaker ? 'sound' : 'sound-filled'" size="24" color="#fff"></uni-icons>
           <text>{{ isSpeaker ? '扬声器' : '听筒' }}</text>
         </view>
+        
+        <view class="call-page__controls-btn" :class="{ 'call-page__controls-btn--active': isRecording }" @click="toggleRecording">
+          <uni-icons :type="isRecording ? 'record-filled' : 'record'" size="24" color="#fff"></uni-icons>
+          <text>{{ isRecording ? '停止录音' : '开始录音' }}</text>
+        </view>
       </view>
       
-      <view class="end-call" @click="handleEndCall">
+      <view class="call-page__controls-end" @click="handleEndCall">
         <uni-icons type="phone-filled" size="36" color="#fff"></uni-icons>
         <text>结束通话</text>
       </view>
     </view>
     
+    <!-- 通话笔记 -->
+    <view v-if="callStatus === 'connected'" class="call-page__notes">
+      <textarea 
+        v-model="callNotes" 
+        placeholder="记录通话要点..." 
+        maxlength="500" 
+        class="call-page__notes-input"
+      ></textarea>
+      <text class="call-page__notes-count">{{ callNotes.length }}/500</text>
+    </view>
+    
     <!-- 未接通或通话结束时的操作按钮 -->
-    <view v-if="callStatus === 'pending' || callStatus === 'failed' || callStatus === 'completed'" class="action-buttons">
-      <button class="btn primary" @click="makePhoneCall" v-if="callStatus === 'pending' || callStatus === 'failed'">
+    <view v-if="callStatus === 'pending' || callStatus === 'failed' || callStatus === 'completed'" class="call-page__actions">
+      <button class="call-page__actions-btn call-page__actions-btn--primary" @click="makePhoneCall" v-if="callStatus === 'pending' || callStatus === 'failed'">
         {{ callStatus === 'failed' ? '重新拨打' : '拨打电话' }}
       </button>
       
-      <button class="btn outline" @click="goBack" v-if="callStatus === 'failed' || callStatus === 'completed'">
+      <button class="call-page__actions-btn call-page__actions-btn--outline" @click="goBack" v-if="callStatus === 'failed' || callStatus === 'completed'">
         返回
       </button>
       
-      <button class="btn cancel" @click="cancelCall" v-if="callStatus === 'connecting'">
+      <button class="call-page__actions-btn call-page__actions-btn--cancel" @click="cancelCall" v-if="callStatus === 'connecting'">
         取消
       </button>
     </view>
     
     <!-- 通话结束摘要 -->
-    <view v-if="callStatus === 'completed'" class="call-summary">
-      <view class="summary-card">
-        <view class="summary-title">通话摘要</view>
-        <view class="summary-item">
+    <view v-if="callStatus === 'completed'" class="call-page__summary">
+      <view class="call-page__summary-card">
+        <view class="call-page__summary-card-title">通话摘要</view>
+        <view class="call-page__summary-card-item">
           <text class="label">通话时长:</text>
           <text class="value">{{ formatDuration(callDuration) }}</text>
         </view>
-        <view class="summary-item">
+        <view class="call-page__summary-card-item">
           <text class="label">计费时长:</text>
           <text class="value">{{ formatDuration(chargedDuration) }}</text>
         </view>
-        <view class="summary-item">
+        <view class="call-page__summary-card-item">
           <text class="label">咨询费用:</text>
-          <text class="value price">¥{{ calculatedFee }}</text>
+          <text class="value value--price">¥{{ calculatedFee }}</text>
         </view>
-        <view class="summary-note" v-if="chargedDuration === 0">
+        <view class="call-page__summary-card-note" v-if="chargedDuration === 0">
           <text>通话未满1分钟，不收取费用</text>
+        </view>
+        <view class="call-page__summary-card-notes" v-if="callNotes">
+          <text class="label">通话笔记:</text>
+          <text class="value">{{ callNotes }}</text>
         </view>
       </view>
       
-      <button class="btn primary" @click="goToEvaluation" v-if="callDuration > 60">评价咨询</button>
+      <view class="call-page__summary-actions">
+        <button class="btn btn--primary" @click="goToEvaluation" v-if="callDuration > 60">评价咨询</button>
+        <button class="btn btn--outline" @click="saveCallNotes" v-if="callNotes">保存笔记</button>
+      </view>
     </view>
   </view>
 </template>
@@ -110,6 +149,7 @@ const chargedDuration = ref(0);
 const isBillingStarted = ref(false);
 const isMuted = ref(false);
 const isSpeaker = ref(false);
+const isRecording = ref(false);
 
 // 律师信息
 const lawyerInfo = ref({
@@ -161,6 +201,51 @@ const statusClass = computed(() => {
 // 定时器
 let timer = null;
 let callHandler = null;
+
+// 通话质量相关
+const callQuality = ref('good'); // good, fair, poor
+const callQualityIcon = computed(() => {
+  switch(callQuality.value) {
+    case 'good': return 'signal';
+    case 'fair': return 'signal-fair';
+    case 'poor': return 'signal-poor';
+    default: return 'signal';
+  }
+});
+const callQualityColor = computed(() => {
+  switch(callQuality.value) {
+    case 'good': return '#52c41a';
+    case 'fair': return '#faad14';
+    case 'poor': return '#ff4d4f';
+    default: return '#52c41a';
+  }
+});
+const callQualityText = computed(() => {
+  switch(callQuality.value) {
+    case 'good': return '通话质量良好';
+    case 'fair': return '通话质量一般';
+    case 'poor': return '通话质量较差';
+    default: return '';
+  }
+});
+
+// 通话笔记
+const callNotes = ref('');
+
+// 通话记录
+const callHistory = ref([]);
+
+// 错误重试次数
+const retryCount = ref(0);
+const MAX_RETRY_COUNT = 3;
+
+// 监控通话质量
+function monitorCallQuality() {
+  // 模拟通话质量变化
+  const qualities = ['good', 'fair', 'poor'];
+  const randomQuality = qualities[Math.floor(Math.random() * qualities.length)];
+  callQuality.value = randomQuality;
+}
 
 // 生命周期钩子
 onMounted(() => {
@@ -269,88 +354,104 @@ function restoreCallState(callInfo) {
 }
 
 // 开始通话
-function makePhoneCall() {
-  if (callStatus.value === 'connecting') return;
-  
-  callStatus.value = 'connecting';
-  
-  // 调用拨打电话服务
-  callHandler = makeCall({
-    orderId: orderId.value,
-    onStateChange: (state) => {
-      console.log('通话状态变更', state);
-      
-      if (state.status === 'connected') {
-        callStatus.value = 'connected';
-        startTimer();
-      } else if (state.status === 'failed') {
-        callStatus.value = 'failed';
-        uni.showToast({
-          title: state.message || '连接失败',
-          icon: 'none'
-        });
-      } else if (state.status === 'cancelled') {
-        callStatus.value = 'cancelled';
-      } else if (state.status === 'billing_started') {
-        isBillingStarted.value = true;
-      } else if (state.status === 'in_progress') {
-        callDuration.value = state.duration || 0;
-        if (state.isBillingStarted) {
-          isBillingStarted.value = true;
-          chargedDuration.value = state.chargedDuration || 0;
-        }
-      }
-    },
-    onSuccess: (res) => {
-      console.log('通话已接通', res);
-    },
-    onFail: (err) => {
-      console.error('通话失败', err);
-      callStatus.value = 'failed';
-      uni.showToast({
-        title: err.errMsg || '通话失败',
-        icon: 'none'
-      });
+async function makePhoneCall() {
+  try {
+    callStatus.value = 'connecting';
+    retryCount.value = 0;
+    
+    // 开始通话
+    const result = await makeCall(orderId.value);
+    
+    if (result.success) {
+      callStatus.value = 'connected';
+      startCallTimer();
+      monitorCallQuality();
+    } else {
+      handleCallFailure();
     }
-  });
+  } catch (error) {
+    console.error('拨打电话失败:', error);
+    handleCallFailure();
+  }
 }
 
-// 取消通话
-function cancelCall() {
-  if (callHandler && callHandler.cancel) {
-    callHandler.cancel();
-    callStatus.value = 'cancelled';
+// 处理通话失败
+function handleCallFailure() {
+  if (retryCount.value < MAX_RETRY_COUNT) {
+    retryCount.value++;
+    uni.showModal({
+      title: '连接失败',
+      content: `是否重试？(第${retryCount.value}次)`,
+      success: (res) => {
+        if (res.confirm) {
+          makePhoneCall();
+        } else {
+          callStatus.value = 'failed';
+        }
+      }
+    });
+  } else {
+    callStatus.value = 'failed';
+    uni.showToast({
+      title: '连接失败，请稍后重试',
+      icon: 'none'
+    });
   }
 }
 
 // 结束通话
-function handleEndCall() {
-  if (callStatus.value !== 'connected') return;
+async function handleEndCall() {
+  try {
+    uni.showModal({
+      title: '结束通话',
+      content: '确定要结束本次通话吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          const result = await endCall(orderId.value);
+          if (result.success) {
+            callStatus.value = 'completed';
+            saveCallHistory();
+          } else {
+            uni.showToast({
+              title: '结束通话失败',
+              icon: 'none'
+            });
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error('结束通话失败:', error);
+    uni.showToast({
+      title: '结束通话失败',
+      icon: 'none'
+    });
+  }
+}
+
+// 保存通话记录
+function saveCallHistory() {
+  const history = {
+    orderId: orderId.value,
+    lawyerName: lawyerInfo.value.name,
+    duration: callDuration.value,
+    fee: calculatedFee.value,
+    notes: callNotes.value,
+    timestamp: new Date().getTime()
+  };
   
-  // 清理计时器
+  callHistory.value.push(history);
+  // 实际应用中，这里应该调用保存通话记录的API
+}
+
+// 清理资源
+function cleanup() {
   if (timer) {
     clearInterval(timer);
     timer = null;
   }
-  
-  // 调用结束通话服务
-  const result = endCall(orderId.value);
-  if (result) {
-    callStatus.value = 'completed';
-    
-    // 获取最终通话信息
-    const callInfo = getCallInfo(orderId.value);
-    if (callInfo) {
-      callDuration.value = callInfo.actualDuration || 0;
-      chargedDuration.value = callInfo.chargedDuration || 0;
-      callTime.value = formatTime(callDuration.value);
-    }
-    
-    // 显示结束提示
-    uni.showToast({
-      title: '通话已结束',
-      icon: 'none'
-    });
+  if (callHandler) {
+    callHandler = null;
   }
 }
 
@@ -406,6 +507,17 @@ function toggleSpeaker() {
   });
 }
 
+// 切换录音状态
+function toggleRecording() {
+  isRecording.value = !isRecording.value;
+  
+  // 实际应用中，这里应该调用真实的通话API
+  uni.showToast({
+    title: isRecording.value ? '录音已开始' : '录音已停止',
+    icon: 'none'
+  });
+}
+
 // 格式化时间
 function formatDuration(seconds) {
   return formatTime(seconds);
@@ -422,306 +534,434 @@ function goToEvaluation() {
     url: `/pages/order/comment?orderId=${orderId.value}`
   });
 }
+
+// 保存通话笔记
+function saveCallNotes() {
+  // 实际应用中，这里应该调用保存笔记的API
+  uni.showToast({
+    title: '通话笔记已保存',
+    icon: 'none'
+  });
+}
 </script>
 
-<style lang="scss">
-.call-container {
+<style lang="scss" scoped>
+.call-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #334155, #1e293b);
-  color: #fff;
-  padding: 40rpx 30rpx;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 状态栏样式 */
-.status-bar {
-  text-align: center;
-  padding: 20rpx 0;
-  border-radius: 50rpx;
-  background: rgba(255,255,255,0.1);
-  margin-bottom: 60rpx;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20rpx;
   
-  &.status-connecting {
-    background: rgba(255, 163, 0, 0.2);
-    color: #ffa000;
-  }
-  
-  &.status-connected {
-    background: rgba(0, 200, 83, 0.2);
-    color: #00c853;
-  }
-  
-  &.status-failed {
-    background: rgba(244, 67, 54, 0.2);
-    color: #f44336;
-  }
-  
-  &.status-completed {
-    background: rgba(255, 255, 255, 0.2);
-  }
-}
-
-.status-text {
-  font-size: 28rpx;
-  font-weight: 500;
-}
-
-/* 律师信息 */
-.lawyer-info {
-  display: flex;
-  align-items: center;
-  margin-bottom: 80rpx;
-  
-  .avatar {
-    width: 160rpx;
-    height: 160rpx;
-    border-radius: 50%;
-    border: 4rpx solid rgba(255,255,255,0.2);
-    margin-right: 30rpx;
-  }
-  
-  .info {
-    flex: 1;
-    
-    .name {
-      font-size: 40rpx;
-      font-weight: 600;
-      margin-bottom: 10rpx;
-    }
-    
-    .title {
-      font-size: 28rpx;
-      color: rgba(255,255,255,0.7);
-      margin-bottom: 10rpx;
-    }
-    
-    .phone {
-      font-size: 26rpx;
-      color: rgba(255,255,255,0.5);
-    }
-  }
-}
-
-/* 通话信息 */
-.call-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 80rpx;
-  flex: 1;
-}
-
-.timer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 30rpx;
-  
-  .time {
-    font-size: 68rpx;
-    font-weight: 300;
-    font-family: 'Courier New', monospace;
-    margin-bottom: 10rpx;
-  }
-  
-  .billing {
-    font-size: 24rpx;
-    color: #ff9800;
-    background: rgba(255, 152, 0, 0.2);
-    padding: 6rpx 20rpx;
-    border-radius: 30rpx;
-  }
-}
-
-.fee-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 20rpx;
-  
-  .fee-text {
-    font-size: 28rpx;
-    color: rgba(255,255,255,0.8);
-    margin-bottom: 10rpx;
-  }
-  
-  .fee-notice {
-    font-size: 24rpx;
-    color: #4fc3f7;
-    margin-top: 10rpx;
-  }
-}
-
-/* 连接动画 */
-.connecting-animation {
-  display: flex;
-  justify-content: center;
-  margin-top: 40rpx;
-  
-  .dot {
-    width: 20rpx;
-    height: 20rpx;
-    border-radius: 50%;
-    background-color: rgba(255,255,255,0.8);
-    margin: 0 10rpx;
-    animation: pulse 1.5s infinite ease-in-out;
-    
-    &:nth-child(2) {
-      animation-delay: 0.3s;
-    }
-    
-    &:nth-child(3) {
-      animation-delay: 0.6s;
-    }
-  }
-}
-
-@keyframes pulse {
-  0%, 80%, 100% {
-    transform: scale(0.6);
-    opacity: 0.3;
-  }
-  40% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* 通话控制 */
-.call-controls {
-  margin-top: auto;
-  
-  .control-row {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 40rpx;
-  }
-  
-  .control-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20rpx;
-    border-radius: 20rpx;
-    background: rgba(255,255,255,0.1);
-    width: 160rpx;
-    
-    text {
-      font-size: 24rpx;
-      margin-top: 10rpx;
-      color: rgba(255,255,255,0.8);
-    }
-    
-    &.active {
-      background: rgba(255,255,255,0.2);
-    }
-  }
-  
-  .end-call {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: #f44336;
-    border-radius: 50%;
-    width: 120rpx;
-    height: 120rpx;
-    margin: 0 auto 40rpx;
-    
-    text {
-      font-size: 24rpx;
-      margin-top: 5rpx;
-    }
-  }
-}
-
-/* 按钮 */
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  margin-top: auto;
-  gap: 20rpx;
-  
-  .btn {
-    min-width: 240rpx;
-    height: 80rpx;
-    line-height: 80rpx;
-    border-radius: 40rpx;
-    font-size: 28rpx;
-    
-    &.primary {
-      background: linear-gradient(135deg, #4A90E2, #2979FF);
-      color: #fff;
-    }
-    
-    &.outline {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.6);
-      color: #fff;
-    }
-    
-    &.cancel {
-      background: rgba(255,255,255,0.2);
-      color: #fff;
-    }
-  }
-}
-
-/* 通话摘要 */
-.call-summary {
-  margin-top: 40rpx;
-  
-  .summary-card {
-    background: rgba(255,255,255,0.1);
+  &__status-bar {
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 16rpx;
-    padding: 30rpx;
-    margin-bottom: 30rpx;
-  }
-  
-  .summary-title {
-    font-size: 32rpx;
-    font-weight: 600;
+    padding: 20rpx;
     margin-bottom: 20rpx;
-    text-align: center;
-  }
-  
-  .summary-item {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20rpx;
-    font-size: 28rpx;
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
     
-    .label {
-      color: rgba(255,255,255,0.7);
+    &--connecting {
+      animation: call-page-pulse 1.5s infinite;
     }
     
-    .value {
+    &--connected {
+      background: rgba(82, 196, 26, 0.1);
+    }
+    
+    &--failed {
+      background: rgba(245, 34, 45, 0.1);
+    }
+    
+    &-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    &-text {
+      font-size: 28rpx;
+      color: #333;
       font-weight: 500;
+    }
+    
+    &-quality {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
       
-      &.price {
-        color: #ff9800;
+      text {
+        font-size: 24rpx;
       }
     }
   }
   
-  .summary-note {
-    text-align: center;
-    font-size: 24rpx;
-    color: #4fc3f7;
-    margin-top: 20rpx;
+  &__lawyer-info {
+    background: #fff;
+    border-radius: 16rpx;
+    padding: 20rpx;
+    margin-bottom: 20rpx;
+    display: flex;
+    align-items: center;
+    gap: 20rpx;
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+    
+    &-avatar {
+      width: 120rpx;
+      height: 120rpx;
+      border-radius: 60rpx;
+    }
+    
+    &-info {
+      flex: 1;
+      
+      .name {
+        font-size: 32rpx;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 8rpx;
+        display: block;
+      }
+      
+      .title {
+        font-size: 24rpx;
+        color: #666;
+        margin-bottom: 8rpx;
+        display: block;
+      }
+      
+      .phone {
+        font-size: 24rpx;
+        color: #999;
+      }
+    }
+    
+    &-recording {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+      padding: 8rpx 16rpx;
+      background: rgba(255, 77, 79, 0.1);
+      border-radius: 8rpx;
+      
+      text {
+        font-size: 24rpx;
+        color: #ff4d4f;
+      }
+      
+      &--active {
+        animation: call-page-pulse 1.5s infinite;
+      }
+    }
   }
   
-  .btn.primary {
-    width: 100%;
-    background: linear-gradient(135deg, #4A90E2, #2979FF);
-    color: #fff;
-    height: 80rpx;
-    line-height: 80rpx;
-    border-radius: 40rpx;
-    font-size: 28rpx;
-    margin-top: 20rpx;
+  &__call-info {
+    background: #fff;
+    border-radius: 16rpx;
+    padding: 20rpx;
+    margin-bottom: 20rpx;
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+    
+    &-timer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20rpx;
+      
+      .time {
+        font-size: 48rpx;
+        font-weight: 500;
+        color: #333;
+      }
+      
+      .billing {
+        font-size: 24rpx;
+        color: #ff4d4f;
+        padding: 4rpx 12rpx;
+        background: rgba(255, 77, 79, 0.1);
+        border-radius: 8rpx;
+      }
+    }
+    
+    &-fee {
+      border-top: 1rpx solid #eee;
+      padding-top: 20rpx;
+      
+      &-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12rpx;
+      }
+      
+      &-label {
+        font-size: 28rpx;
+        color: #666;
+      }
+      
+      &-value {
+        font-size: 28rpx;
+        color: #333;
+        font-weight: 500;
+        
+        &--price {
+          color: #ff4d4f;
+        }
+      }
+      
+      &-notice {
+        font-size: 24rpx;
+        color: #999;
+        margin-top: 12rpx;
+        display: block;
+      }
+    }
+    
+    &-connecting {
+      display: flex;
+      justify-content: center;
+      gap: 16rpx;
+      margin-top: 20rpx;
+      
+      &-dot {
+        width: 16rpx;
+        height: 16rpx;
+        background: #1890ff;
+        border-radius: 50%;
+        animation: call-page-bounce 1.4s infinite;
+        
+        &:nth-child(2) {
+          animation-delay: 0.2s;
+        }
+        
+        &:nth-child(3) {
+          animation-delay: 0.4s;
+        }
+      }
+    }
+  }
+  
+  &__controls {
+    background: #fff;
+    border-radius: 16rpx;
+    padding: 20rpx;
+    margin-bottom: 20rpx;
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+    
+    &-row {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20rpx;
+    }
+    
+    &-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8rpx;
+      padding: 20rpx;
+      border-radius: 12rpx;
+      transition: all 0.3s;
+      
+      text {
+        font-size: 24rpx;
+        color: #666;
+      }
+      
+      &--active {
+        background: rgba(24, 144, 255, 0.1);
+        
+        text {
+          color: #1890ff;
+        }
+      }
+    }
+    
+    &-end {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8rpx;
+      padding: 20rpx;
+      background: #ff4d4f;
+      border-radius: 12rpx;
+      transition: all 0.3s;
+      
+      text {
+        font-size: 24rpx;
+        color: #fff;
+      }
+      
+      &:active {
+        opacity: 0.8;
+      }
+    }
+  }
+  
+  &__notes {
+    background: #fff;
+    border-radius: 16rpx;
+    padding: 20rpx;
+    margin-bottom: 20rpx;
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+    
+    &-input {
+      width: 100%;
+      height: 200rpx;
+      padding: 16rpx;
+      border: 1rpx solid #eee;
+      border-radius: 8rpx;
+      font-size: 28rpx;
+      color: #333;
+      margin-bottom: 12rpx;
+    }
+    
+    &-count {
+      font-size: 24rpx;
+      color: #999;
+      text-align: right;
+    }
+  }
+  
+  &__actions {
+    display: flex;
+    gap: 20rpx;
+    margin-bottom: 20rpx;
+    
+    &-btn {
+      flex: 1;
+      height: 80rpx;
+      border-radius: 40rpx;
+      font-size: 28rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      &--primary {
+        background: #1890ff;
+        color: #fff;
+      }
+      
+      &--outline {
+        background: #fff;
+        color: #1890ff;
+        border: 1rpx solid #1890ff;
+      }
+      
+      &--cancel {
+        background: #ff4d4f;
+        color: #fff;
+      }
+    }
+  }
+  
+  &__summary {
+    background: #fff;
+    border-radius: 16rpx;
+    padding: 20rpx;
+    margin-bottom: 20rpx;
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+    
+    &-card {
+      margin-bottom: 20rpx;
+      
+      &-title {
+        font-size: 32rpx;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 20rpx;
+      }
+      
+      &-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16rpx;
+        
+        .label {
+          font-size: 28rpx;
+          color: #666;
+        }
+        
+        .value {
+          font-size: 28rpx;
+          color: #333;
+          font-weight: 500;
+          
+          &--price {
+            color: #ff4d4f;
+          }
+        }
+      }
+      
+      &-note {
+        font-size: 24rpx;
+        color: #999;
+        margin-top: 12rpx;
+        display: block;
+      }
+      
+      &-notes {
+        margin-top: 20rpx;
+        padding-top: 20rpx;
+        border-top: 1rpx solid #eee;
+        
+        .label {
+          font-size: 28rpx;
+          color: #666;
+          margin-bottom: 12rpx;
+          display: block;
+        }
+        
+        .value {
+          font-size: 28rpx;
+          color: #333;
+          line-height: 1.6;
+        }
+      }
+    }
+    
+    &-actions {
+      display: flex;
+      gap: 20rpx;
+      
+      .btn {
+        flex: 1;
+        height: 80rpx;
+        border-radius: 40rpx;
+        font-size: 28rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        &--primary {
+          background: #1890ff;
+          color: #fff;
+        }
+        
+        &--outline {
+          background: #fff;
+          color: #1890ff;
+          border: 1rpx solid #1890ff;
+        }
+      }
+    }
+  }
+}
+
+@keyframes call-page-pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes call-page-bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
   }
 }
 </style> 
