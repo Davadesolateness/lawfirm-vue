@@ -63,6 +63,7 @@
         :show="showCallPopup"
         :duration-options="durationOptions"
         :base-price="basePrice"
+        :lawyer-info="lawyerInfo"
         @close="handlePopupClose"
         @confirm="handleCallConfirm"
     />

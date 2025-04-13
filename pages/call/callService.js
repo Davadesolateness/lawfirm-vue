@@ -73,43 +73,32 @@ export function createCallOrder(params) {
   
   // 计算总费用
   const totalFee = fee * duration;
-  
+
   // 生成订单
   const order = generateOrder({
-    userName,
-    userId,
-    lawyerId,
-    lawyerName,
-    lawyerAvatar,
-    lawyerTitle,
-    fee: totalFee,
+    ...params,
+    totalFee,
     feeType: '电话咨询',
-    duration,
     consultTime: new Date().toISOString()
-  });
-  
+  })
+
   // 将加密后的电话号码存储到订单额外信息中
   // 实际应用中，应该将敏感信息安全地存储在服务端
   const callInfo = {
-    userPhone: encryptedUserPhone,
-    lawyerPhone: encryptedLawyerPhone,
-    callStatus: 'pending', // 'pending', 'connecting', 'connected', 'completed', 'failed'
-    startTime: null,
-    endTime: null,
-    actualDuration: 0,
-    billingStartTime: null, // 实际计费开始时间（接通后1分钟）
-    chargedDuration: 0,     // 实际计费时长
-    callRecords: []         // 通话记录
-  };
+    userPhone: encryptPhoneNumber(params.userPhone),
+    lawyerPhone: encryptPhoneNumber(params.lawyerPhone),
+    callStatus: 'pending',
+    freeDuration: 60, // 免费时长60秒
+    billingStartTime: null,
+    chargedDuration: 0
+  }
   
   // 在真实应用中，这些敏感数据应该存储在服务端
   // 这里仅做模拟，将数据存储在本地
   saveCallInfo(order.orderId, callInfo);
-  
-  return {
-    ...order,
-    callInfo
-  };
+
+  return order;
+
 }
 
 /**
@@ -287,97 +276,40 @@ export function makeCall(params) {
  * @param {Date} startTime - 开始时间
  * @param {Function} onStateChange - 状态变更回调
  */
-function startCallTimer(orderId, startTime, onStateChange) {
+// 更新计时逻辑
+function startCallTimer(orderId, startTime) {
   let timer;
   let duration = 0;
-  let isBillingStarted = false;
-  let billingStartTime = null;
-  let chargedDuration = 0;
-  
-  const callInfo = getCallInfo(orderId);
-  if (!callInfo) return;
-  
-  // 更新通话信息
-  timer = setInterval(() => {
-    duration += 1;
-    
-    // 通话一分钟后开始计费
-    if (duration >= 60 && !isBillingStarted) {
-      isBillingStarted = true;
-      billingStartTime = new Date();
-      
-      // 更新计费开始时间
-      updateCallStatus(orderId, 'connected', {
-        billingStartTime: billingStartTime.toISOString(),
-        callRecords: [...(callInfo.callRecords || []), {
-          action: 'billing_started',
-          time: billingStartTime.toISOString(),
-          message: '开始计费'
-        }]
-      });
-      
-      onStateChange && onStateChange({
-        status: 'billing_started',
-        message: '通话已超过1分钟，开始计费',
-        duration,
-        billingStartTime
-      });
+
+  const update = () => {
+    duration += 1
+    const callInfo = getCallInfo(orderId)
+
+    // 超过免费时长开始计费
+    if (duration > callInfo.freeDuration && !callInfo.billingStartTime) {
+      callInfo.billingStartTime = new Date().toISOString()
+      saveCallInfo(orderId, callInfo)
     }
-    
-    // 如果已开始计费，计算计费时长
-    if (isBillingStarted) {
-      chargedDuration = duration - 60;
-    }
-    
-    // 通知状态变更
-    onStateChange && onStateChange({
-      status: 'in_progress',
-      message: `通话时长: ${formatDuration(duration)}`,
-      duration,
-      isBillingStarted,
-      chargedDuration: isBillingStarted ? chargedDuration : 0
-    });
-    
-    // 每30秒更新一次通话记录
-    if (duration % 30 === 0) {
-      updateCallStatus(orderId, 'connected', {
-        actualDuration: duration,
-        chargedDuration: isBillingStarted ? chargedDuration : 0
-      });
-    }
-  }, 1000);
-  
-  // 返回终止计时器的函数
+
+    // 计算计费时长
+    const charged = duration > callInfo.freeDuration
+        ? duration - callInfo.freeDuration
+        : 0
+
+    saveCallInfo(orderId, {
+      ...callInfo,
+      actualDuration: duration,
+      chargedDuration: charged
+    })
+  }
+
+  timer = setInterval(update, 1000)
+
   return {
-    stop: () => {
-      if (timer) {
-        clearInterval(timer);
-        
-        const endTime = new Date();
-        
-        // 更新通话信息
-        updateCallStatus(orderId, 'completed', {
-          endTime: endTime.toISOString(),
-          actualDuration: duration,
-          chargedDuration: isBillingStarted ? chargedDuration : 0,
-          callRecords: [...(callInfo.callRecords || []), {
-            action: 'completed',
-            time: endTime.toISOString(),
-            message: '通话已结束',
-            duration,
-            chargedDuration: isBillingStarted ? chargedDuration : 0
-          }]
-        });
-        
-        // 如果通话未满1分钟，不计费
-        if (!isBillingStarted) {
-          // 更新订单状态为已完成
-          updateOrderStatus(orderId, ORDER_STATUS.COMPLETED);
-        }
-      }
-    }
-  };
+    stop: () => clearInterval(timer)
+  }
 }
+
 
 /**
  * 结束通话

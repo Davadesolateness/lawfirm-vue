@@ -30,6 +30,18 @@
           <text class="duration-text">{{ item.label }}</text>
           <text class="duration-price">¥{{ item.price }}</text>
         </view>
+
+        <!-- 提示信息 -->
+        <view class="tips-section">
+          <view class="tip-item">
+            <uni-icons type="shield" size="16" color="#6B5BFF"/>
+            <text class="tip-text">电话号码经过加密处理，保证隐私安全</text>
+          </view>
+          <view class="tip-item">
+            <uni-icons type="info" size="16" color="#6B5BFF"/>
+            <text class="tip-text">电话未接通不收费，接通1分钟内不收费</text>
+          </view>
+        </view>
       </view>
 
       <!-- 底部操作区 -->
@@ -47,7 +59,8 @@
               <text
                   class="agreement-link"
                   @click.stop="handleViewAgreement"
-              >《服务协议》</text>
+              >《服务协议》
+              </text>
             </label>
           </checkbox-group>
         </view>
@@ -68,11 +81,32 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { createCallOrder } from '@/pages/call/callService'
+import { getUserInfo } from '@/utils/userManager'
+import { navigateToUrl } from '@/utils/navigateTo'
 
+// 定义组件属性
 const props = defineProps({
   show: { type: Boolean, default: false },
-  basePrice: { type: Number, default: 38 }
+  basePrice: { type: Number, default: 38 },
+  lawyerInfo: {
+    type: Object,
+    required: true,
+    default: () => ({
+      id: '',
+      lawyername: '',
+      phone: '',
+      fee: 0
+    })
+  }
 })
+
+// 定义组件事件
+const emit = defineEmits(['close', 'confirm'])
+
+// 组件状态
+const selectedDuration = ref(null)
+const isAgreed = ref(false)
 
 // 咨询时长选项
 const durationOptions = [
@@ -81,34 +115,27 @@ const durationOptions = [
   { label: '1小时', value: 60, price: 0 }
 ]
 
-const emit = defineEmits(['close', 'confirm'])
-
-// 组件状态
-const selectedDuration = ref(null)
-const isAgreed = ref(false)
-
-// 处理后的选项数据
+// 计算属性
 const processedOptions = computed(() =>
-    durationOptions.map(option => ({
-      ...option,
-      price: option.price || props.basePrice * (option.value / 30)
-    }))
+  durationOptions.map(option => ({
+    ...option,
+    price: option.price || props.basePrice * (option.value / 30)
+  }))
 )
 
-// 是否可提交
 const canSubmit = computed(() =>
-    selectedDuration.value !== null && isAgreed.value
+  selectedDuration.value !== null && isAgreed.value
 )
 
-// 确认按钮文字
 const confirmText = computed(() =>
-    selectedDuration.value
-        ? `立即咨询 ¥${processedOptions.value.find(o => o.value === selectedDuration.value)?.price}`
-        : '立即咨询'
+  selectedDuration.value
+    ? `立即咨询 ¥${processedOptions.value.find(o => o.value === selectedDuration.value)?.price}`
+    : '立即咨询'
 )
 
-// 事件处理
+// 事件处理函数
 const handleClose = () => emit('close')
+
 const handlePopupStateChange = (e) => !e.show && resetState()
 
 const handleSelectDuration = (item) => {
@@ -120,21 +147,37 @@ const handleAgreementToggle = (e) => {
 }
 
 const handleViewAgreement = () => {
-  uni.navigateTo({ url: '/pages/agreement/service' })
+  navigateToUrl('/pages/agreement/service')
 }
 
-const handleConfirm = () => {
+const handleConfirm = async () => {
   if (!canSubmit.value) return
 
-  const selectedOption = processedOptions.value.find(
-      o => o.value === selectedDuration.value
-  )
+  try {
+    const userInfo = await getUserInfo()
+    if (!userInfo || !userInfo.phone) {
+      uni.showToast({ title: '请先完善手机号', icon: 'none' })
+      return
+    }
 
-  emit('confirm', {
-    duration: selectedOption.value,
-    price: selectedOption.price
-  })
-  resetState()
+    const orderParams = {
+      userId: userInfo.id,
+      userName: userInfo.name,
+      userPhone: userInfo.phone,
+      lawyerId: props.lawyerInfo.id,
+      lawyerName: props.lawyerInfo.lawyername,
+      lawyerPhone: props.lawyerInfo.phone,
+      fee: props.basePrice,
+      duration: selectedDuration.value
+    }
+
+    const order = createCallOrder(orderParams)
+    navigateToUrl(`/pages/call/callpage?orderId=${order.orderId}`)
+    emit('confirm', order)
+    resetState()
+  } catch (error) {
+    uni.showToast({ title: error.message || '创建订单失败', icon: 'none' })
+  }
 }
 
 // 重置状态
@@ -191,6 +234,30 @@ const resetState = () => {
         font-size: 32rpx;
         font-weight: 500;
         color: #FF5252;
+      }
+    }
+
+    .tips-section {
+      margin-top: 24rpx;
+      padding: 20rpx;
+      background: rgba(107, 91, 255, 0.05);
+      border-radius: 12rpx;
+
+      .tip-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 16rpx;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .tip-text {
+          margin-left: 12rpx;
+          font-size: 24rpx;
+          color: #666;
+          line-height: 1.4;
+        }
       }
     }
   }

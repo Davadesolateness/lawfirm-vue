@@ -103,6 +103,20 @@
         "navigationBarTitleText": "电话咨询",
         "enablePullDownRefresh": false
       }
+    },
+    {
+      "path": "components/lawyer/callButton",
+      "style": {
+        "navigationBarTitleText": "电话咨询",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/call/callpage",
+      "style": {
+        "navigationBarTitleText": "通话页面",
+        "enablePullDownRefresh": false
+      }
     }
   ],
   "tabBar": {

@@ -17,6 +17,7 @@ export const setUserInfo = (userInfo) => {
   try {
     // 确保用户类型合法
     if (userInfo.userType && Object.values(USER_TYPES).includes(userInfo.userType)) {
+      debugger
       uni.setStorageSync('userInfo', userInfo);
       return true;
     } else {
@@ -32,7 +33,8 @@ export const setUserInfo = (userInfo) => {
 // 获取用户信息
 export const getUserInfo = () => {
   try {
-    const userInfo = uni.getStorageSync('userInfo');
+    const userInfo = JSON.parse(uni.getStorageSync('userInfo'));
+    //userInfo.phone = '18738992181';
     return userInfo || null;
   } catch (e) {
     console.error('获取用户信息失败', e);
@@ -57,7 +59,7 @@ export const setUserType = (userType) => {
     console.error('用户类型无效');
     return false;
   }
-  
+  debugger
   try {
     const userInfo = uni.getStorageSync('userInfo') || {};
     userInfo.userType = userType;

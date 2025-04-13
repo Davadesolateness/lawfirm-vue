@@ -252,101 +252,174 @@ async function createCallOrder1() {
 }
 </script>
 
-
 <style lang="scss">
 .call-consultation {
   width: 100%;
-  
-  /* 调整主按钮尺寸 */
-  .call-btn {
-    height: 72rpx !important;
-    line-height: 72rpx !important;
-    font-size: 26rpx !important;
-    border-radius: 36rpx !important;
-  }
+}
+
+.call-btn {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  background: linear-gradient(135deg, #4A90E2, #2979FF);
+  color: #fff;
+  font-size: 28rpx;
+  border-radius: 40rpx;
+  text-align: center;
 }
 
 .popup-content {
-  max-height: 70vh; /* 限制最大高度 */
-  overflow-y: auto;  /* 允许滚动 */
-  padding-bottom: calc(env(safe-area-inset-bottom) + 20rpx);
-  
-  /* 弹窗头部优化 */
-  .popup-header {
-    padding: 20rpx 24rpx;
-    .title {
-      font-size: 28rpx !important;
-    }
+  background-color: #fff;
+  border-top-left-radius: 24rpx;
+  border-top-right-radius: 24rpx;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #f1f1f1;
+
+  .title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #333;
   }
 
-  /* 律师信息紧凑布局 */
-  .lawyer-info {
-    padding: 20rpx 24rpx;
-    .avatar {
-      width: 80rpx !important;
-      height: 80rpx !important;
-    }
+  .close {
+    padding: 10rpx;
+  }
+}
+
+.lawyer-info {
+  display: flex;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #f1f1f1;
+
+  .avatar {
+    width: 100rpx;
+    height: 100rpx;
+    border-radius: 50%;
+    margin-right: 20rpx;
+  }
+
+  .info {
+    flex: 1;
+
     .name {
-      font-size: 28rpx !important;
+      font-size: 32rpx;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 6rpx;
     }
+
     .title {
-      font-size: 22rpx !important;
-    }
-  }
-
-  /* 时长选择优化 */
-  .duration-select {
-    padding: 20rpx 24rpx;
-    .label {
-      font-size: 26rpx !important;
-      margin-bottom: 16rpx;
-    }
-    .duration-item {
-      height: 100rpx !important;
-      margin-bottom: 16rpx;
-      .duration-text {
-        font-size: 26rpx !important;
-      }
-      .duration-price {
-        font-size: 22rpx !important;
-      }
-    }
-  }
-
-  /* 备注信息紧凑 */
-  .notes {
-    padding: 0 24rpx 20rpx;
-    .note-item text {
-      font-size: 22rpx !important;
-    }
-  }
-
-  /* 协议条款调整 */
-  .agreement {
-    padding: 0 24rpx 20rpx;
-    .checkbox-label {
-      font-size: 22rpx !important;
-    }
-  }
-
-  /* 操作按钮优化 */
-  .action-buttons {
-    padding: 0 24rpx 24rpx;
-    .submit-btn {
-      height: 80rpx !important;
-      line-height: 80rpx !important;
-      font-size: 28rpx !important;
+      font-size: 24rpx;
+      color: #666;
     }
   }
 }
 
-/* 通用间距缩减 */
-[class*="-select"], 
-[class*="-info"], 
-.notes,
+.duration-select {
+  padding: 30rpx;
+
+  .label {
+    font-size: 28rpx;
+    color: #333;
+    margin-bottom: 20rpx;
+    display: block;
+  }
+
+  .duration-options {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -10rpx;
+  }
+
+  .duration-item {
+    width: calc(33.33% - 20rpx);
+    margin: 0 10rpx 20rpx;
+    height: 120rpx;
+    border-radius: 12rpx;
+    border: 1rpx solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    &.active {
+      border-color: #2979FF;
+      background-color: rgba(41, 121, 255, 0.05);
+    }
+
+    .duration-text {
+      font-size: 28rpx;
+      color: #333;
+      margin-bottom: 10rpx;
+    }
+
+    .duration-price {
+      font-size: 24rpx;
+      color: #ff6b00;
+    }
+  }
+}
+
+.notes {
+  padding: 0 30rpx 30rpx;
+
+  .note-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 12rpx;
+
+    .uni-icons {
+      margin-right: 8rpx;
+      margin-top: 6rpx;
+    }
+
+    text {
+      font-size: 24rpx;
+      color: #999;
+      flex: 1;
+    }
+  }
+}
+
 .agreement {
-  border-bottom: none !important;
-  margin-bottom: 0 !important;
-  padding-bottom: 16rpx !important;
+  padding: 0 30rpx 30rpx;
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    font-size: 24rpx;
+    color: #666;
+  }
+
+  .link {
+    color: #2979FF;
+  }
+}
+
+.action-buttons {
+  padding: 0 30rpx 30rpx;
+
+  .submit-btn {
+    width: 100%;
+    height: 90rpx;
+    line-height: 90rpx;
+    background: linear-gradient(135deg, #4A90E2, #2979FF);
+    color: #fff;
+    font-size: 30rpx;
+    border-radius: 45rpx;
+    text-align: center;
+
+    &.disabled {
+      opacity: 0.6;
+    }
+  }
 }
 </style>

@@ -292,9 +292,11 @@ function handleLogin() {
     userInfo.value = {
       userId: '12345',
       userName: loginType.value === 'phone' ? `用户${phoneNumber.value.substring(7)}` : username.value,
-      userType: selectedRole.value
+      userType: selectedRole.value,
+      phone: '18738992181'
+
     };
-    
+    debugger
     // 存储登录信息到本地
     uni.setStorageSync('token', 'sample_token_' + Date.now());
     uni.setStorageSync('userInfo', JSON.stringify(userInfo.value));
@@ -334,7 +336,8 @@ function handleWechatLogin() {
       userId: 'wx_' + Date.now(),
       userName: wxUserInfo.nickName,
       userType: 'user',
-      avatarUrl: wxUserInfo.avatarUrl
+      avatarUrl: wxUserInfo.avatarUrl,
+      phone: '18738992181'
     };
     
     // 存储登录信息到本地
