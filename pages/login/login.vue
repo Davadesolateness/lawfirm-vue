@@ -52,7 +52,7 @@
           <view 
             class="send-code-btn" 
             :class="{ disabled: isSending || !isPhoneValid }" 
-            @click="sendVerificationCode"
+            @click="sendVerificationCodeForUser"
           >
             {{ sendBtnText }}
           </view>
@@ -146,6 +146,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { setUserType, USER_TYPES } from '@/utils/userManager';
+import { phoneLogin, accountLogin, wechatLogin, sendVerificationCode } from '@/api/login';
 
 // 登录方式
 const loginType = ref('phone'); // 'phone' 或 'account'
@@ -216,32 +217,40 @@ function validatePassword() {
 }
 
 // 发送验证码
-function sendVerificationCode() {
+async function sendVerificationCodeForUser() {
   if (isSending.value || !isPhoneValid.value) return;
-  
+  debugger
   if (!validatePhoneNumber()) return;
   
   isSending.value = true;
   countdown.value = 60;
   
-  // 模拟发送验证码
-  uni.showToast({
-    title: '验证码已发送',
-    icon: 'success'
-  });
-  
-  // 倒计时
-  const timer = setInterval(() => {
-    countdown.value--;
-    if (countdown.value <= 0) {
-      clearInterval(timer);
-      isSending.value = false;
-    }
-  }, 1000);
+  try {
+    await sendVerificationCode(phoneNumber.value);
+    uni.showToast({
+      title: '验证码已发送',
+      icon: 'success'
+    });
+    
+    // 倒计时
+    const timer = setInterval(() => {
+      countdown.value--;
+      if (countdown.value <= 0) {
+        clearInterval(timer);
+        isSending.value = false;
+      }
+    }, 1000);
+  } catch (error) {
+    isSending.value = false;
+    uni.showToast({
+      title: error.message || '发送验证码失败',
+      icon: 'none'
+    });
+  }
 }
 
 // 登录处理
-function handleLogin() {
+async function handleLogin() {
   // 验证表单
   if (loginType.value === 'phone') {
     if (!validatePhoneNumber()) return;
@@ -270,80 +279,36 @@ function handleLogin() {
     title: '登录中...'
   });
   
-  // 模拟登录请求，实际项目中替换为真实的API调用
-  setTimeout(() => {
-    uni.hideLoading();
-    
-    // 根据角色设置用户类型
-    switch(selectedRole.value) {
-      case 'user':
-        setUserType(USER_TYPES.USER);
-        break;
-      case 'lawyer':
-        setUserType(USER_TYPES.LAWYER);
-        break;
-      case 'admin':
-        setUserType(USER_TYPES.ADMIN);
-        break;
+  try {
+    let response;
+    if (loginType.value === 'phone') {
+      response = await phoneLogin({
+        phone: phoneNumber.value,
+        code: verificationCode.value,
+        role: selectedRole.value
+      });
+    } else {
+      response = await accountLogin({
+        username: username.value,
+        password: password.value,
+        role: selectedRole.value
+      });
     }
     
+    const { token, userData } = response.data;
+    
+    // 设置用户类型
+    setUserType(USER_TYPES[selectedRole.value.toUpperCase()]);
+    
     // 登录成功，保存用户信息和token
     isLoggedIn.value = true;
-    userInfo.value = {
-      userId: '12345',
-      userName: loginType.value === 'phone' ? `用户${phoneNumber.value.substring(7)}` : username.value,
-      userType: selectedRole.value,
-      phone: '18738992181'
-
-    };
-    debugger
+    userInfo.value = userData;
+    
     // 存储登录信息到本地
-    uni.setStorageSync('token', 'sample_token_' + Date.now());
-    uni.setStorageSync('userInfo', JSON.stringify(userInfo.value));
+    uni.setStorageSync('token', token);
+    uni.setStorageSync('userInfo', JSON.stringify(userData));
     
-    uni.showToast({
-      title: '登录成功',
-      icon: 'success'
-    });
-    
-    // 登录成功后，根据用户角色重定向到不同页面
-    redirectAfterLogin();
-  }, 1500);
-}
-
-// 微信登录
-function handleWechatLogin() {
-  uni.showLoading({
-    title: '正在登录...'
-  });
-  
-  // 模拟微信登录流程
-  setTimeout(() => {
     uni.hideLoading();
-    
-    // 假设已获取微信用户信息
-    const wxUserInfo = {
-      nickName: '微信用户',
-      avatarUrl: '/static/default_avatar.jpg'
-    };
-    
-    // 设置为普通用户角色（可以根据实际情况调整）
-    setUserType(USER_TYPES.USER);
-    
-    // 登录成功，保存用户信息和token
-    isLoggedIn.value = true;
-    userInfo.value = {
-      userId: 'wx_' + Date.now(),
-      userName: wxUserInfo.nickName,
-      userType: 'user',
-      avatarUrl: wxUserInfo.avatarUrl,
-      phone: '18738992181'
-    };
-    
-    // 存储登录信息到本地
-    uni.setStorageSync('token', 'wx_token_' + Date.now());
-    uni.setStorageSync('userInfo', JSON.stringify(userInfo.value));
-    
     uni.showToast({
       title: '登录成功',
       icon: 'success'
@@ -351,7 +316,87 @@ function handleWechatLogin() {
     
     // 登录成功后重定向
     redirectAfterLogin();
-  }, 1500);
+  } catch (error) {
+    uni.hideLoading();
+    uni.showToast({
+      title: error.message || '登录失败',
+      icon: 'none'
+    });
+  }
+}
+
+// 微信登录
+async function handleWechatLogin() {
+  uni.showLoading({
+    title: '正在登录...'
+  });
+  
+  // 检查是否支持微信登录
+  if (!uni.canIUse('getUserProfile')) {
+    uni.hideLoading();
+    uni.showToast({
+      title: '当前版本不支持微信登录',
+      icon: 'none'
+    });
+    return;
+  }
+
+  try {
+    // 获取微信用户信息
+    const userProfile = await new Promise((resolve, reject) => {
+      uni.getUserProfile({
+        desc: '用于完善用户资料',
+        lang: 'zh_CN',
+        success: resolve,
+        fail: reject
+      });
+    });
+    
+    // 获取微信登录凭证
+    const loginRes = await new Promise((resolve, reject) => {
+      uni.login({
+        provider: 'weixin',
+        success: resolve,
+        fail: reject
+      });
+    });
+    
+    // 调用微信登录接口
+    const response = await wechatLogin({
+      code: loginRes.code,
+      userInfo: userProfile.userInfo,
+      role: selectedRole.value
+    });
+    
+    const { token, userData } = response.data;
+    
+    // 保存登录信息
+    uni.setStorageSync('token', token);
+    uni.setStorageSync('userInfo', JSON.stringify(userData));
+    
+    // 设置用户类型
+    setUserType(USER_TYPES.USER);
+    
+    // 更新状态
+    isLoggedIn.value = true;
+    userInfo.value = userData;
+    
+    uni.hideLoading();
+    uni.showToast({
+      title: '登录成功',
+      icon: 'success'
+    });
+    
+    // 登录成功后重定向
+    redirectAfterLogin();
+  } catch (error) {
+    uni.hideLoading();
+    uni.showToast({
+      title: error.message || '登录失败',
+      icon: 'none'
+    });
+    console.error('微信登录失败:', error);
+  }
 }
 
 // 登录成功后重定向
@@ -391,14 +436,10 @@ function checkLoginStatus() {
   const token = uni.getStorageSync('token');
   const savedUserInfo = uni.getStorageSync('userInfo');
 
-
   if (token && savedUserInfo) {
     try {
       userInfo.value = JSON.parse(savedUserInfo);
       isLoggedIn.value = true;
-      debugger
-      // 已登录则直接跳转
-      //redirectAfterLogin();
     } catch (e) {
       console.error('Parse userInfo error:', e);
     }

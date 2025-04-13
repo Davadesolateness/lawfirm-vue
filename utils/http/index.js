@@ -69,6 +69,7 @@ class HttpRequest {
         })
     }
 
+    // 基础post请求
     post(url, data, options = {}) {
         return this.request({
             url,
@@ -78,7 +79,133 @@ class HttpRequest {
         })
     }
 
-    // 其他方法同理...
+    // 带token的post请求
+    postWithToken(url, data, options = {}) {
+        const token = uni.getStorageSync('token')
+        return this.post(url, data, {
+            ...options,
+            header: {
+                ...options.header,
+                'Authorization': `Bearer ${token}`
+            }
+        })
+    }
+
+    // 带重试的post请求
+    postWithRetry(url, data, options = {}) {
+        return this.post(url, data, {
+            ...options,
+            custom: {
+                ...options.custom,
+                retry: 3
+            }
+        })
+    }
+
+    // 带超时的post请求
+    postWithTimeout(url, data, options = {}) {
+        return this.post(url, data, {
+            ...options,
+            timeout: 10000
+        })
+    }
+
+    // 带进度回调的post请求
+    postWithProgress(url, data, options = {}) {
+        return this.post(url, data, {
+            ...options,
+            custom: {
+                ...options.custom,
+                onProgress: (progress) => {
+                    console.log('上传进度:', progress)
+                }
+            }
+        })
+    }
+
+    // 上传文件
+    uploadFile(url, filePath, options = {}) {
+        return this.postWithProgress(url, {
+            file: filePath
+        }, {
+            ...options,
+            header: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+    }
+
+    // 批量请求
+    batchPost(requests) {
+        return Promise.all(requests.map(req => 
+            this.post(req.url, req.data, req.options)
+        ))
+    }
+
+    // 带取消功能的post请求
+    cancellablePost(url, data, options = {}) {
+        const controller = new AbortController()
+        const signal = controller.signal
+        
+        const request = this.post(url, data, {
+            ...options,
+            signal
+        })
+        
+        request.cancel = () => controller.abort()
+        return request
+    }
+
+    // 带缓存的post请求
+    postWithCache(url, data, options = {}) {
+        const cacheKey = `${url}_${JSON.stringify(data)}`
+        const cachedData = uni.getStorageSync(cacheKey)
+        
+        if (cachedData) {
+            return Promise.resolve(cachedData)
+        }
+        
+        return this.post(url, data, options).then(response => {
+            uni.setStorageSync(cacheKey, response)
+            return response
+        })
+    }
+
+    // 带重定向的post请求
+    postWithRedirect(url, data, options = {}) {
+        return this.post(url, data, {
+            ...options,
+            custom: {
+                ...options.custom,
+                followRedirect: true
+            }
+        })
+    }
+
+    // 带压缩的post请求
+    postWithCompression(url, data, options = {}) {
+        return this.post(url, data, {
+            ...options,
+            header: {
+                ...options.header,
+                'Accept-Encoding': 'gzip, deflate'
+            }
+        })
+    }
+
+    // 带自定义错误处理的post请求
+    postWithErrorHandler(url, data, options = {}) {
+        return this.post(url, data, {
+            ...options,
+            custom: {
+                ...options.custom,
+                errorHandler: (error) => {
+                    console.error('请求错误:', error)
+                    // 自定义错误处理逻辑
+                }
+            }
+        })
+    }
 }
 
 // 创建实例
