@@ -6,50 +6,39 @@
         <view class="user-info">
           <image class="avatar" :src="userInfo.avatar" mode="aspectFill"/>
           <view class="user-meta">
-            <!--            <text class="username">{{ userInfo.username }}</text>
-                        <view class="user-tag" v-else>普通用户</view>-->
-
+            <!-- 企业用户 -->
             <view v-if="isCorporateuser">
-              <view class="username">{{ userInfo?.companyName || '公司名称' }}</view>
-              <view class="user-tag">证件号：{{ userInfo?.certificateNumber || '未设置' }}</view>
-              <view class="user-tag">法人用户</view>
+              <view class="username">{{ userInfo.companyName || '公司名称' }}</view>
+              <view class="certificate">证件号：{{ userInfo.certificateNumber || '未设置' }}</view>
+              <view class="corporate-tag">法人用户</view>
             </view>
-            <!-- 个人客户只显示用户名 -->
+
+            <!-- 个人用户 -->
             <view v-else>
-              <text class="username">{{ userInfo?.username || userInfo?.fullName || '用户名称' }}</text>
-              <view class="user-tag">个人用户</view>
+              <text class="username">{{ userInfo.userName || userInfo.fullName || '用户名称' }}</text>
+              <view class="personal-tag">个人用户</view>
             </view>
           </view>
-          <!-- 法人客户显示公司名称和证件号码 -->
-
         </view>
 
-        <view class="membership-card">
-          <text class="membership-level">黄金会员</text>
-          <text class="expire-date">有效期至：2024-12-31</text>
-
-          <view class="privilege-tags">
-            <text class="tag">专属律师</text>
-            <text class="tag">双倍积分</text>
-            <text class="tag">优先服务</text>
-          </view>
-        </view>
-
-        <!-- 修改后的优惠券卡片 -->
-        <view class="coupon-card">
+        <!-- 企业用户专属卡片 -->
+        <view v-if="isCorporateuser" class="corporate-card">
           <view class="card-header">
-            <text class="card-title">我的使用次数</text>
+            <text class="card-title">企业权益</text>
             <view class="decorative-line"></view>
           </view>
-          <view class="coupon-list">
-            <view v-for="(coupon, index) in coupons" :key="index" class="coupon-item">
-              <text class="times">{{ coupon.times }}次</text>
-              <view class="coupon-info">
-                <text class="name">{{ coupon.name }}</text>
-                <text class="condition">可用{{ coupon.times }}次</text>
-                <text class="expire">{{ coupon.expire }}</text>
-              </view>
-            </view>
+          <view class="corporate-content">
+            <text class="info-item">专属客户经理：张经理</text>
+            <text class="info-item">企业信用分：{{ corporateCredit }}</text>
+          </view>
+        </view>
+
+        <!-- 个人用户会员卡片 -->
+        <view v-else class="membership-card">
+          <text class="membership-level">{{ membership.level }}</text>
+          <text class="expire-date">有效期至：{{ membership.expire }}</text>
+          <view class="privilege-tags">
+            <text v-for="(tag, index) in membership.tags" :key="index" class="tag">{{ tag }}</text>
           </view>
         </view>
       </view>
@@ -83,41 +72,12 @@
 </template>
 
 <script setup>
-import {reactive, ref} from "vue"
+import {onMounted, reactive, ref} from "vue"
 import {navigateTo, navigateToUrl} from "@/utils/navigateTo";
 import {apiGetCorporateDetails, apiGetUserInfoById} from "@/api/userapi";
-import {onShow} from "@dcloudio/uni-app";
 import PageLayout from "@/components/custom/tabbarlayout.vue";
 import {cacheManager} from "@/utils/store";
 
-// 功能列表
-const functionList = ref([
-  {
-    icon: 'calendar',
-    name: '我的预约',
-    type: 'appointment'
-  },
-  {
-    icon: 'paperplane',
-    name: '我的咨询',
-    type: 'consultation'
-  },
-  {
-    icon: 'star',
-    name: '我的收藏',
-    type: 'favorite'
-  },
-  {
-    icon: 'help',
-    name: '帮助中心',
-    type: 'help'
-  },
-  {
-    icon: 'settings',
-    name: '设置',
-    type: 'setting'
-  }
-]);
 
 // 修改后的响应式数据
 const coupons = ref([
@@ -132,28 +92,35 @@ const membership = ref({
   expire: '2024-12-31'
 });
 
-let isCorporateuser = false;
 let avatarImg = '';  // 头像
-let userInfo = null; // 用户信息
 
-onShow(() => {
-  initUserInfo();
-});
+// 响应式数据
+const isCorporateuser = ref(false)
+const userInfo = reactive({
+  avatar: '',
+  userName: '',
+  companyName: '',
+  certificateNumber: '',
+  userType: ''
+})
 
-// 初始化用户信息
-function initUserInfo11() {
-  debugger
-  let userInfoTemp = getUserInfo()
-  userInfo = reactive(userInfoTemp);
-  // 判断法人用户还是个人用户
-  judgeUserType(userInfo.value.userType)
-  //getUserInfoById()
-}
+const corporateCredit = ref(85)
+
+
+// 生命周期
+onMounted(async () => {
+  await initUserInfo()
+  judgeUserType()
+})
 
 // 初始化用户详情信息
 function initUserInfo() {
-  userInfo = cacheManager.getCache("userInfo");
-  debugger
+  const cachedInfo = cacheManager.getCache("userInfo")
+  if (cachedInfo) {
+    Object.assign(userInfo, cachedInfo)
+  } else {
+    //await fetchUserInfo()
+  }
   if (userInfo) {
     // 如果是法人用户且没有公司信息，则尝试获取详细信息
     if (userInfo.userType === 'corporate' && !userInfo.companyName) {
@@ -163,6 +130,7 @@ function initUserInfo() {
     else if (userInfo.userType === 'individual' && !userInfo.fullName) {
       fetchIndividualUserDetails();
     }
+
   } else {
     // 如果本地存储没有用户信息，尝试通过API获取
     getUserInfoById();
@@ -172,20 +140,18 @@ function initUserInfo() {
 // 获取法人用户详细信息
 async function fetchCorporateUserDetails() {
   try {
-    debugger
-    // 这里应该是调用获取法人客户详情的API
     const response = await apiGetCorporateDetails(userInfo.userId);
-    // 模拟数据
-    const corporateDetails = {
-      companyName: "某科技有限公司",
-      certificateNumber: "91110108MA01A2BC3D",
-      contactPerson: "张三"
-    };
 
-    // 合并信息到用户对象
-    userInfo.value = {...userInfo.value, ...corporateDetails};
+    // 方式1: 使用 Object.assign 合并对象
+    Object.assign(userInfo, response.data);
+
+    // 方式2: 显式更新关键字段（更安全）
+    // userInfo.companyName = response.data.companyName || '未设置';
+    // userInfo.certificateNumber = response.data.certificateNumber || '未设置';
+
   } catch (error) {
-    console.error("获取法人详情失败", error);
+    console.error("获取企业信息失败:", error);
+    userInfo.companyName = '数据加载失败';
   }
 }
 
@@ -200,6 +166,7 @@ async function fetchIndividualUserDetails() {
       gender: "male",
       birthDate: "1990-01-01"
     };
+
 
     // 合并信息到用户对象
     userInfo.value = {...userInfo.value, ...individualDetails};
@@ -220,9 +187,9 @@ function toPage(url) {
 // 判断法人用户还是个人用户
 function judgeUserType(userType) {
   if (userType == "corporate") {
-    isCorporateuser = true;
+    isCorporateuser.value = true;
   } else {
-    isCorporateuser = false;
+    isCorporateuser.value = false;
   }
 }
 
@@ -245,6 +212,74 @@ function adminPage() {
 </script>
 
 <style lang="scss" scoped>
+/* 企业用户样式 */
+.corporate-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin: 24rpx 0;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+
+  .card-title {
+    color: #2c3e50;
+    font-size: 32rpx;
+    font-weight: 600;
+  }
+
+  .corporate-content {
+    margin-top: 20rpx;
+
+    .info-item {
+      display: block;
+      color: #34495e;
+      font-size: 28rpx;
+      padding: 12rpx 0;
+    }
+  }
+}
+
+/* 个人用户样式 */
+.membership-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 20rpx;
+  padding: 28rpx;
+
+  .membership-level {
+    color: #e67e22;
+    font-size: 36rpx;
+    font-weight: 600;
+    display: block;
+  }
+
+  .privilege-tags {
+    margin-top: 24rpx;
+
+    .tag {
+      background: rgba(230, 126, 34, 0.1);
+      color: #e67e22;
+    }
+  }
+}
+
+/* 用户标签差异化样式 */
+.corporate-tag {
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498db;
+}
+
+.personal-tag {
+  background: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+}
+
+.user-tag {
+  padding: 6rpx 24rpx;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  display: inline-block;
+  margin-top: 12rpx;
+}
+
 /* 基础容器 */
 .container {
   height: 100vh;

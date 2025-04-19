@@ -22,7 +22,6 @@ class HttpRequest {
             custom: {...this.config.custom, ...(options.custom || {})}
         }
 
-        debugger
         // 自动添加Token逻辑
         if (!config.custom.noAuth) {
             const token = getToken()

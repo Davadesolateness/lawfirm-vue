@@ -439,7 +439,6 @@ function checkLoginStatus() {
 
   if (token && savedUserInfo) {
     try {
-      debugger
       userInfo = savedUserInfo;
       isLoggedIn.value = true;
     } catch (e) {
