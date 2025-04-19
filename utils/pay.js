@@ -4,7 +4,7 @@
  */
 
 // 系统模块依赖
-import {getUserInfo} from './userManager';
+import {getUserInfo} from './store/userManager';
 
 // ================== 配置常量 ==================
 const WX_PAY_CONFIG = {

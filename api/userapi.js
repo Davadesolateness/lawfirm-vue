@@ -28,7 +28,7 @@ export function apiGetIndividualDetails(id) {
 export function apiGetCorporateDetails(id) {
     return http.get("/user/getCorporateDetails", id, ({
         data: {
-            id: id
+            userId: id
         },
     }));
 }

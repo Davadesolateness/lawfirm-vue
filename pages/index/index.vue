@@ -67,7 +67,7 @@ import {ref, onMounted} from 'vue';
 import {navigateToUrl} from "@/utils/navigateTo";
 import LawyerList from "@/components/lawyer/lawyerlist";
 import PageLayout from "@/components/custom/tabbarlayout";
-import {getUserType, setUserType, USER_TYPES} from "@/utils/userManager";
+import {getUserType, setUserType, USER_TYPES} from "@/utils/store/userManager";
 
 // 搜索相关
 const searchKeyword = ref('');

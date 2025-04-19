@@ -1,15 +1,15 @@
-import { BASE_CONFIG, HTTP_STATUS } from './config'
-import { requestInterceptor, responseInterceptor } from './interceptor'
-import { handleError } from './error'
+import {BASE_CONFIG} from './config'
+import {requestInterceptor, responseInterceptor} from './interceptor'
+import {getCache, getToken, setCache, setToken} from '@/utils/store/cacheManager'
 
 class HttpRequest {
     constructor() {
-        this.config = { ...BASE_CONFIG }
+        this.config = {...BASE_CONFIG}
     }
 
     // 设置全局配置
     setConfig(config) {
-        this.config = { ...this.config, ...config }
+        this.config = {...this.config, ...config}
     }
 
     // 核心请求方法
@@ -18,8 +18,20 @@ class HttpRequest {
         const config = {
             ...this.config,
             ...options,
-            header: { ...this.config.header, ...(options.header || {}) },
-            custom: { ...this.config.custom, ...(options.custom || {}) }
+            header: {...this.config.header, ...(options.header || {})},
+            custom: {...this.config.custom, ...(options.custom || {})}
+        }
+
+        debugger
+        // 自动添加Token逻辑
+        if (!config.custom.noAuth) {
+            const token = getToken()
+            if (token) {
+                config.header = {
+                    ...config.header,
+                    Authorization: `Bearer ${token}`
+                }
+            }
         }
 
         try {
@@ -42,6 +54,7 @@ class HttpRequest {
             return await this._baseRequest(config)
         } catch (error) {
             if (retryCount < config.custom.retry) {
+                console.log(`请求重试: ${config.url}, 第${retryCount + 1}次`)
                 return this._requestWithRetry(config, retryCount + 1)
             }
             throw error
@@ -79,14 +92,13 @@ class HttpRequest {
         })
     }
 
-    // 带token的post请求
-    postWithToken(url, data, options = {}) {
-        const token = uni.getStorageSync('token')
+    // 免token的post请求
+    postWithoutToken(url, data, options = {}) {
         return this.post(url, data, {
             ...options,
-            header: {
-                ...options.header,
-                'Authorization': `Bearer ${token}`
+            custom: {
+                ...options.custom,
+                noAuth: true  // 设置不需要认证
             }
         })
     }
@@ -124,87 +136,112 @@ class HttpRequest {
     }
 
     // 上传文件
+    // 修改后的uploadFile方法（移除手动Token处理）
     uploadFile(url, filePath, options = {}) {
-        return this.postWithProgress(url, {
-            file: filePath
-        }, {
-            ...options,
-            header: {
-                'Content-Type': 'multipart/form-data'
+        return new Promise((resolve, reject) => {
+            const uploadTask = uni.uploadFile({
+                url: this.config.baseURL + url,
+                filePath,
+                name: options.name || 'file',
+                formData: options.formData || {},
+                header: options.header || {},  // 依赖全局header合并
+                success: (res) => {
+                    try {
+                        const data = JSON.parse(res.data)
+                        resolve(data)
+                    } catch (e) {
+                        resolve(res.data)
+                    }
+                },
+                fail: (err) => {
+                    reject(err)
+                }
+            })
+
+            if (options.onProgress) {
+                uploadTask.onProgressUpdate((res) => {
+                    options.onProgress(res.progress)
+                })
             }
         })
     }
 
     // 批量请求
     batchPost(requests) {
-        return Promise.all(requests.map(req => 
+        return Promise.all(requests.map(req =>
             this.post(req.url, req.data, req.options)
         ))
     }
 
     // 带取消功能的post请求
     cancellablePost(url, data, options = {}) {
-        const controller = new AbortController()
-        const signal = controller.signal
-        
-        const request = this.post(url, data, {
-            ...options,
-            signal
-        })
-        
-        request.cancel = () => controller.abort()
-        return request
+        let aborted = false;
+
+        const requestPromise = new Promise((resolve, reject) => {
+            const task = uni.request({
+                url: this.config.baseURL + url,
+                data,
+                method: 'POST',
+                header: {
+                    ...this.config.header,
+                    ...(options.header || {})
+                },
+                success: (res) => {
+                    if (!aborted) {
+                        resolve(responseInterceptor.onSuccess(res));
+                    }
+                },
+                fail: (err) => {
+                    if (!aborted) {
+                        reject(err);
+                    }
+                }
+            });
+
+            // 添加取消方法
+            requestPromise.abort = () => {
+                aborted = true;
+                task.abort();
+            };
+        });
+
+        return requestPromise;
     }
 
     // 带缓存的post请求
-    postWithCache(url, data, options = {}) {
-        const cacheKey = `${url}_${JSON.stringify(data)}`
-        const cachedData = uni.getStorageSync(cacheKey)
-        
+    async postWithCache(url, data, options = {}) {
+        const cacheKey = `http_cache_${url}_${JSON.stringify(data)}`
+        const cacheTime = options.cacheTime || 5 * 60 * 1000 // 默认缓存5分钟
+
+        // 检查是否有缓存
+        const cachedData = getCache(cacheKey)
         if (cachedData) {
-            return Promise.resolve(cachedData)
+            return cachedData
         }
-        
-        return this.post(url, data, options).then(response => {
-            uni.setStorageSync(cacheKey, response)
-            return response
-        })
+
+        // 无缓存，发起请求
+        const response = await this.post(url, data, options)
+        // 缓存响应数据
+        setCache(cacheKey, response, cacheTime)
+        return response
     }
 
-    // 带重定向的post请求
-    postWithRedirect(url, data, options = {}) {
-        return this.post(url, data, {
-            ...options,
-            custom: {
-                ...options.custom,
-                followRedirect: true
-            }
-        })
+    // 处理登录响应，自动保存token
+    handleLoginResponse(response) {
+        if (response && response.token) {
+            // 设置token
+            setToken(response.token, response.tokenExpireTime);
+            console.log('Token已保存:', response.token);
+        } else {
+            console.warn('响应中没有找到token');
+        }
+        return response;
     }
 
-    // 带压缩的post请求
-    postWithCompression(url, data, options = {}) {
-        return this.post(url, data, {
-            ...options,
-            header: {
-                ...options.header,
-                'Accept-Encoding': 'gzip, deflate'
-            }
-        })
-    }
-
-    // 带自定义错误处理的post请求
-    postWithErrorHandler(url, data, options = {}) {
-        return this.post(url, data, {
-            ...options,
-            custom: {
-                ...options.custom,
-                errorHandler: (error) => {
-                    console.error('请求错误:', error)
-                    // 自定义错误处理逻辑
-                }
-            }
-        })
+    // 登录并保存token
+    login(url, data, options = {}) {
+        return this.postWithoutToken(url, data, options)
+            .then(response => this.handleLoginResponse(response));
     }
 }
 

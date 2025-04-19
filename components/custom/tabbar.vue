@@ -44,7 +44,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { switchTabUrl, navigateToUrl } from '@/utils/navigateTo';
-import { getUserType as getType, USER_TYPES } from '@/utils/userManager';
+import { getUserType as getType, USER_TYPES } from '@/utils/store/userManager';
 
 // 响应式状态
 const userType = ref(USER_TYPES.USER); // 默认为普通用户

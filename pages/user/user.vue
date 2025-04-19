@@ -85,10 +85,10 @@
 <script setup>
 import {reactive, ref} from "vue"
 import {navigateTo, navigateToUrl} from "@/utils/navigateTo";
-import {apiGetUserInfoById} from "@/api/userapi";
+import {apiGetCorporateDetails, apiGetUserInfoById} from "@/api/userapi";
 import {onShow} from "@dcloudio/uni-app";
 import PageLayout from "@/components/custom/tabbarlayout.vue";
-import {getUserInfo} from "@/utils/userManager";
+import {cacheManager} from "@/utils/store";
 
 // 功能列表
 const functionList = ref([
@@ -152,11 +152,9 @@ function initUserInfo11() {
 
 // 初始化用户详情信息
 function initUserInfo() {
-  userInfo = getUserInfo();
+  userInfo = cacheManager.getCache("userInfo");
   debugger
-  if (userInfoFromStorage) {
-    userInfo = userInfoFromStorage;
-
+  if (userInfo) {
     // 如果是法人用户且没有公司信息，则尝试获取详细信息
     if (userInfo.userType === 'corporate' && !userInfo.companyName) {
       fetchCorporateUserDetails();
@@ -174,8 +172,9 @@ function initUserInfo() {
 // 获取法人用户详细信息
 async function fetchCorporateUserDetails() {
   try {
+    debugger
     // 这里应该是调用获取法人客户详情的API
-    // const response = await apiGetCorporateDetails(userInfo.value.relatedEntityId);
+    const response = await apiGetCorporateDetails(userInfo.userId);
     // 模拟数据
     const corporateDetails = {
       companyName: "某科技有限公司",

@@ -2,6 +2,8 @@
 import store from '@/store'
 */
 import { HTTP_STATUS } from './config'
+import { getToken } from '../store/cacheManager'
+import { handleError } from './error'
 
 // 请求拦截器
 export const requestInterceptor = {
@@ -11,17 +13,23 @@ export const requestInterceptor = {
             uni.showLoading({ title: '加载中...', mask: true })
         }
 
-        /*// 自动携带 Token
-        const token = store.getters.token
-        if (token && !config.noAuth) {
-            config.header.Authorization = `Bearer ${token}`
-        }*/
+        // 自动携带 Token
+        const token = getToken()
+        // 如果有token且配置没有明确指定不需要认证
+        if (token && !config.custom.noAuth) {
+            config.header = {
+                ...config.header,
+                'Authorization': `Bearer ${token}`
+            }
+        }
 
         // URL 处理
         if (!config.url.startsWith('http')) {
             config.url = config.baseURL + config.url
         }
 
+        // 打印请求信息，便于调试
+        console.log(`请求: ${config.method} ${config.url}`, config.data || {})
 
         return config
     }
@@ -45,7 +53,7 @@ export const responseInterceptor = {
         }
 
         // 业务状态码处理（根据后端约定调整）
-        if (res.code !== 200) {
+        if (res.code !== undefined && res.code !== 200) {
             return Promise.reject({
                 code: res.code,
                 message: res.message || '业务逻辑错误',
@@ -53,7 +61,7 @@ export const responseInterceptor = {
             })
         }
 
-        return res.data
+        return res.data || res
     },
 
     onError(error) {
