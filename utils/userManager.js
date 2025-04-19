@@ -17,7 +17,6 @@ export const setUserInfo = (userInfo) => {
     try {
         // 确保用户类型合法
         if (userInfo.userType && Object.values(USER_TYPES).includes(userInfo.userType)) {
-            debugger
             uni.setStorageSync('userInfo', userInfo);
             return true;
         } else {
@@ -34,7 +33,6 @@ export const setUserInfo = (userInfo) => {
 export const getUserInfo = () => {
     try {
         const userInfo = uni.getStorageSync('userInfo');
-        //userInfo.phone = '18738992181';
         return userInfo || null;
     } catch (e) {
         console.error('获取用户信息失败', e);
@@ -46,7 +44,23 @@ export const getUserInfo = () => {
 export const getUserType = () => {
     try {
         const userInfo = uni.getStorageSync('userInfo');
-        return userInfo?.userType || USER_TYPES.USER; // 默认为普通用户
+        // 判断返回的用户类型并设置对应的用户角色
+        if (userInfo && userInfo.userType) {
+            if (userInfo.userType === 'corporate' || userInfo.userType === 'individual') {
+                // 如果是法人客户或个人客户，设置为普通用户角色
+                return USER_TYPES.USER
+            } else if (userInfo.userType === 'lawyer') {
+                // 如果是律师，设置为律师角色
+                return USER_TYPES.LAWYER
+            } else if (userInfo.userType === 'admin') {
+                // 如果是管理员，设置为管理员角色
+                return USER_TYPES.ADMIN;
+            } else {
+                // 默认为用户角色
+                return USER_TYPES.USER
+            }
+        }
+        return USER_TYPES.USER; // 默认为普通用户
     } catch (e) {
         console.error('获取用户类型失败', e);
         return USER_TYPES.USER; // 默认为普通用户
@@ -59,7 +73,6 @@ export const setUserType = (userType) => {
         console.error('用户类型无效');
         return false;
     }
-    debugger;
     try {
         // 解析获取到的json数据
         const userInfo = uni.getStorageSync('userInfo') || {};

@@ -180,7 +180,7 @@ export const switchTab = (options) => {
         },
         fail: (err) => {
             if (options.fail) options.fail(err);
-            debugger
+
             console.error('Tab切换失败:', err);
             uni.showToast({title: '页面切换失败', icon: 'none'});
         }

@@ -6,11 +6,24 @@
         <view class="user-info">
           <image class="avatar" :src="userInfo.avatar" mode="aspectFill"/>
           <view class="user-meta">
-            <text class="username">{{ userInfo.username }}</text>
-            <view class="user-tag" v-if="corporateuser">法人用户</view>
-            <view class="user-tag" v-else>普通用户</view>
+            <!--            <text class="username">{{ userInfo.username }}</text>
+                        <view class="user-tag" v-else>普通用户</view>-->
+
+            <view v-if="isCorporateuser">
+              <view class="username">{{ userInfo?.companyName || '公司名称' }}</view>
+              <view class="user-tag">证件号：{{ userInfo?.certificateNumber || '未设置' }}</view>
+              <view class="user-tag">法人用户</view>
+            </view>
+            <!-- 个人客户只显示用户名 -->
+            <view v-else>
+              <text class="username">{{ userInfo?.username || userInfo?.fullName || '用户名称' }}</text>
+              <view class="user-tag">个人用户</view>
+            </view>
           </view>
+          <!-- 法人客户显示公司名称和证件号码 -->
+
         </view>
+
         <view class="membership-card">
           <text class="membership-level">黄金会员</text>
           <text class="expire-date">有效期至：2024-12-31</text>
@@ -70,11 +83,12 @@
 </template>
 
 <script setup>
-import {ref} from "vue"
+import {reactive, ref} from "vue"
 import {navigateTo, navigateToUrl} from "@/utils/navigateTo";
 import {apiGetUserInfoById} from "@/api/userapi";
 import {onShow} from "@dcloudio/uni-app";
 import PageLayout from "@/components/custom/tabbarlayout.vue";
+import {getUserInfo} from "@/utils/userManager";
 
 // 功能列表
 const functionList = ref([
@@ -118,25 +132,81 @@ const membership = ref({
   expire: '2024-12-31'
 });
 
-let corporateuser = true;
+let isCorporateuser = false;
 let avatarImg = '';  // 头像
-const userInfo = ref(null); // 用户信息
+let userInfo = null; // 用户信息
 
 onShow(() => {
   initUserInfo();
 });
 
-function judgeUserType() {
-  if (userInfo.usertype == "corporate") {
-    corporateuser = true;
+// 初始化用户信息
+function initUserInfo11() {
+  debugger
+  let userInfoTemp = getUserInfo()
+  userInfo = reactive(userInfoTemp);
+  // 判断法人用户还是个人用户
+  judgeUserType(userInfo.value.userType)
+  //getUserInfoById()
+}
+
+// 初始化用户详情信息
+function initUserInfo() {
+  userInfo = getUserInfo();
+  debugger
+  if (userInfoFromStorage) {
+    userInfo = userInfoFromStorage;
+
+    // 如果是法人用户且没有公司信息，则尝试获取详细信息
+    if (userInfo.userType === 'corporate' && !userInfo.companyName) {
+      fetchCorporateUserDetails();
+    }
+    // 如果是个人用户且没有详细信息，则尝试获取
+    else if (userInfo.userType === 'individual' && !userInfo.fullName) {
+      fetchIndividualUserDetails();
+    }
   } else {
-    corporateuser = false;
+    // 如果本地存储没有用户信息，尝试通过API获取
+    getUserInfoById();
   }
 }
 
-// 初始化用户信息
-function initUserInfo() {
-  getUserInfoById()
+// 获取法人用户详细信息
+async function fetchCorporateUserDetails() {
+  try {
+    // 这里应该是调用获取法人客户详情的API
+    // const response = await apiGetCorporateDetails(userInfo.value.relatedEntityId);
+    // 模拟数据
+    const corporateDetails = {
+      companyName: "某科技有限公司",
+      certificateNumber: "91110108MA01A2BC3D",
+      contactPerson: "张三"
+    };
+
+    // 合并信息到用户对象
+    userInfo.value = {...userInfo.value, ...corporateDetails};
+  } catch (error) {
+    console.error("获取法人详情失败", error);
+  }
+}
+
+// 获取个人用户详细信息
+async function fetchIndividualUserDetails() {
+  try {
+    // 这里应该是调用获取个人客户详情的API
+    // const response = await apiGetIndividualDetails(userInfo.value.relatedEntityId);
+    // 模拟数据
+    const individualDetails = {
+      fullName: "李四",
+      gender: "male",
+      birthDate: "1990-01-01"
+    };
+
+    // 合并信息到用户对象
+    userInfo.value = {...userInfo.value, ...individualDetails};
+  } catch (error) {
+    console.error("获取个人详情失败", error);
+  }
 }
 
 const getUserInfoById = async () => {
@@ -147,6 +217,16 @@ const getUserInfoById = async () => {
 function toPage(url) {
   this.navigate.navigateToUrl("2020-01-01");
 }
+
+// 判断法人用户还是个人用户
+function judgeUserType(userType) {
+  if (userType == "corporate") {
+    isCorporateuser = true;
+  } else {
+    isCorporateuser = false;
+  }
+}
+
 
 // 修改用户信息
 function modifyUserInfo() {

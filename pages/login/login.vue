@@ -65,8 +65,8 @@
           <uni-icons type="person" size="20" color="#999"></uni-icons>
           <input 
             type="text" 
-            v-model="username" 
-            placeholder="请输入账号/手机号" 
+            v-model="phoneNumber"
+            placeholder="请输入手机号"
           />
         </view>
         
@@ -146,7 +146,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { setUserType, USER_TYPES } from '@/utils/userManager';
-import { phoneLogin, accountLogin, wechatLogin, sendVerificationCode } from '@/api/login';
+import { phoneLogin, loginByPassword, wechatLogin, sendVerificationCode } from '@/api/login';
 
 // 登录方式
 const loginType = ref('phone'); // 'phone' 或 'account'
@@ -160,7 +160,6 @@ const countdown = ref(0);
 const isSending = ref(false);
 
 // 账号密码登录相关
-const username = ref('');
 const password = ref('');
 const passwordError = ref('');
 const showPassword = ref(false);
@@ -219,7 +218,6 @@ function validatePassword() {
 // 发送验证码
 async function sendVerificationCodeForUser() {
   if (isSending.value || !isPhoneValid.value) return;
-  debugger
   if (!validatePhoneNumber()) return;
   
   isSending.value = true;
@@ -263,9 +261,9 @@ async function handleLogin() {
       return;
     }
   } else {
-    if (!username.value) {
+    if (!phoneNumber.value) {
       uni.showToast({
-        title: '请输入账号',
+        title: '请输入手机号',
         icon: 'none'
       });
       return;
@@ -278,7 +276,6 @@ async function handleLogin() {
   uni.showLoading({
     title: '登录中...'
   });
-  debugger
   try {
     let response;
     if (loginType.value === 'phone') {
@@ -288,25 +285,25 @@ async function handleLogin() {
         role: selectedRole.value
       });
     } else {
-      response = await accountLogin({
-        username: username.value,
+      response = await loginByPassword({
+        phoneNumber: phoneNumber.value,
         password: password.value,
         role: selectedRole.value
       });
     }
     
-    const { token, userData } = response;
-    
+     userInfo.value = response;
+
+    if (selectedRole.value.toUpperCase() == "")
     // 设置用户类型
     setUserType(USER_TYPES[selectedRole.value.toUpperCase()]);
     
     // 登录成功，保存用户信息和token
     isLoggedIn.value = true;
-    userInfo.value = userData;
-    
+    debugger
     // 存储登录信息到本地
-    uni.setStorageSync('token', token);
-    uni.setStorageSync('userInfo', userData);
+    uni.setStorageSync('token', userInfo.value.token);
+    uni.setStorageSync('userInfo', userInfo);
     
     uni.hideLoading();
     uni.showToast({
@@ -368,11 +365,11 @@ async function handleWechatLogin() {
       role: selectedRole.value
     });
     
-    const { token, userData } = response.data;
-    
+    const userInfo = response.data;
+
     // 保存登录信息
-    uni.setStorageSync('token', token);
-    uni.setStorageSync('userInfo', userData);
+    uni.setStorageSync('token', userInfo.value.token);
+    uni.setStorageSync('userInfo', userInfo);
     
     // 设置用户类型
     setUserType(USER_TYPES.USER);
@@ -453,7 +450,6 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
-@import '@/uni_modules/theme/index.scss';
 
 .login-container {
   min-height: 100vh;

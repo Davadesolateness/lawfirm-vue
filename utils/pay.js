@@ -50,7 +50,7 @@ export function wxPay(params) {
     // 参数校验
     const required = ['userId', 'lawyerId', 'fee', 'consultType'];
     if (required.some(key => !params[key])) {
-        debugger
+
         //return handlePaymentError('缺少必要支付参数', params.fail);
     }
 

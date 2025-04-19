@@ -51,7 +51,7 @@ BetterMock.mock(BASE_URL + '/auth/phoneLogin', 'POST', {
 })
 
 // 账号密码登录
-BetterMock.mock('/api/login/account', 'POST', {
+BetterMock.mock(BASE_URL + '/auth/loginByPassword', 'POST', {
     code: 200,
     message: '登录成功',
     data: {

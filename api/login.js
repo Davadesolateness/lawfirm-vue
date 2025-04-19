@@ -10,9 +10,9 @@ export function phoneLogin(data) {
 }
 
 // 账号密码登录
-export function accountLogin(data) {
-  return http.postWithTimeout('/auth/account-login', {
-    username: data.username,
+export function loginByPassword(data) {
+  return http.postWithTimeout('/auth/loginByPassword', {
+    phone: data.phoneNumber,
     password: data.password,
     role: data.role
   });
