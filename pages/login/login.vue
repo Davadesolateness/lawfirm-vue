@@ -304,7 +304,6 @@ async function handleLogin() {
 
     // 登录成功，保存用户信息和token
     isLoggedIn.value = true;
-    debugger
     // 存储登录信息到本地
     cacheManager.setCache('token', userInfo.token);
     cacheManager.setCache('userInfo', userInfo);

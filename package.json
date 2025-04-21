@@ -17,6 +17,7 @@
     "@dcloudio/uni-ui": "github:dcloudio/uni-ui",
     "axios": "^1.8.4",
     "better-mock": "^0.3.7",
+    "dayjs": "^1.11.10",
     "element-plus": "^2.9.6",
     "mockjs": "^1.1.0",
     "uuid": "^11.1.0",

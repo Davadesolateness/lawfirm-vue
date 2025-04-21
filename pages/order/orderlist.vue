@@ -132,13 +132,6 @@
   </PageLayout>
 </template>
 
-<script>
-export default {
-  name: "orderList",
-
-}
-</script>
-
 <script setup>
 import PageLayout from "@/components/custom/tabbarlayout.vue";
 import { ref, computed, onMounted } from 'vue';
@@ -326,7 +319,6 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
-@import '@/uni_modules/theme/index.scss';
 
 .container {
   padding: 20rpx;
