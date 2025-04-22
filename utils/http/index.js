@@ -140,10 +140,13 @@ class HttpRequest {
         return new Promise((resolve, reject) => {
             const uploadTask = uni.uploadFile({
                 url: this.config.baseURL + url,
-                filePath,
+                filePath: filePath,
                 name: options.name || 'file',
                 formData: options.formData || {},
-                header: options.header || {},  // 依赖全局header合并
+                header: {
+                    ...options.header,
+                    Authorization: `Bearer ${token}`
+                }, // 依赖全局header合并
                 success: (res) => {
                     try {
                         const data = JSON.parse(res.data)

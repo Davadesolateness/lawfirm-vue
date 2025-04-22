@@ -4,7 +4,13 @@
       <!-- 用户信息区 -->
       <view class="user-header">
         <view class="user-info">
-          <image class="avatar" :src="userInfo.avatar" mode="aspectFill"/>
+          <!-- 修改头像功能 -->
+          <view class="avatar-container" @click="showAvatarOptions">
+            <image class="avatar" :src="userInfo.avatar" mode="aspectFill"/>
+            <view class="avatar-edit-icon">
+              <text class="edit-icon">📷</text>
+            </view>
+          </view>
           <view class="user-meta">
             <!-- 企业用户 -->
             <view v-if="isCorporateuser">
@@ -101,15 +107,34 @@
         <button class="el-button--text" @click="adminPage">管理员</button>
       </view>
     </view>
+
+    <!-- 头像操作弹窗 -->
+    <uni-popup ref="avatarPopup" type="bottom">
+      <view class="popup-content">
+        <view class="popup-title">修改头像</view>
+        <view class="popup-item" @click="chooseImage('album')">
+          <text class="popup-icon">🖼️</text>
+          <text class="popup-text">从相册选择</text>
+        </view>
+        <view class="popup-item" @click="chooseImage('camera')">
+          <text class="popup-icon">📷</text>
+          <text class="popup-text">拍照</text>
+        </view>
+        <view class="popup-item cancel" @click="closeAvatarPopup">取消</view>
+      </view>
+    </uni-popup>
   </PageLayout>
 </template>
 
 <script setup>
 import {onMounted, reactive, ref} from "vue"
 import {navigateTo, navigateToUrl} from "@/utils/navigateTo"
-import {apiGetCorporateDetails, apiGetIndividualDetails, apiGetUserInfoById} from "@/api/userapi"
+import {apiGetCorporateDetails, apiGetIndividualDetails, apiUpdateAvatar} from "@/api/userapi"
 import PageLayout from "@/components/custom/tabbarlayout.vue"
 import {cacheManager} from "@/utils/store"
+
+// 头像弹窗引用
+const avatarPopup = ref(null)
 
 // 格式化日期函数
 const formatDate = (date) => {
@@ -210,12 +235,6 @@ async function fetchIndividualUserDetails() {
   }
 }
 
-// 获取用户信息
-const getUserInfoById = async () => {
-  const data = await apiGetUserInfoById("444")
-  Object.assign(userInfo, data)
-}
-
 // 判断用户类型
 function judgeUserType(userType) {
   if (userType == "corporate") {
@@ -238,6 +257,112 @@ function modifyUserInfo() {
 
 function adminPage() {
   navigateToUrl("/pages/admin/admin")
+}
+
+// 显示头像操作弹窗
+function showAvatarOptions() {
+  avatarPopup.value.open('bottom')
+}
+
+// 关闭头像操作弹窗
+function closeAvatarPopup() {
+  avatarPopup.value.close()
+}
+
+// 选择图片
+function chooseImage(sourceType) {
+  closeAvatarPopup()
+
+  // 确保已获取用户ID
+  if (!userInfo.userId) {
+    uni.showToast({
+      title: '用户信息错误，请重新登录',
+      icon: 'none'
+    })
+    return
+  }
+
+  const source = sourceType === 'camera' ? ['camera'] : ['album']
+
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['compressed'],
+    sourceType: source,
+    success: async (res) => {
+      try {
+        // 增加文件类型和大小验证
+        const file = res.tempFiles[0]
+        if (!file.type.startsWith('image/')) {
+          throw new Error('请选择图片文件')
+        }
+        if (file.size > 2 * 1024 * 1024) { // 2MB限制
+          throw new Error('图片大小不能超过2MB')
+        }
+
+        await uploadAvatar(userInfo.userId, res.tempFilePaths[0])
+      } catch (error) {
+        handleUploadError(error)
+      }
+    },
+    fail: handleUploadError
+  })
+}
+
+// 上传方法
+ function uploadAvatar(userId, filePath) {
+  try {
+    uni.showLoading({title: '上传中...', mask: true})
+
+    http.uploadFile('/user/uploadAvatar', filePath, {
+      formatDate: {userId}
+    })
+
+    const result = JSON.parse(uploadResult.data)
+    if (result.code !== 200) {
+      throw new Error(result.message || '上传失败')
+    }
+
+    //await updateAvatarUrl(userId, result.data.url)
+    uni.showToast({title: '头像更新成功', icon: 'success'})
+  } catch (error) {
+    handleUploadError(error)
+  } finally {
+    uni.hideLoading()
+  }
+}
+
+// 更新头像URL（强化参数验证）
+async function updateAvatarUrl(userId, avatarUrl) {
+  if (!userId || !avatarUrl) {
+    throw new Error('参数错误')
+  }
+
+  try {
+    const result = await apiUpdateAvatar(userId, avatarUrl)
+    if (result.code !== 200) {
+      throw new Error(result.message || '更新失败')
+    }
+
+    // 更新本地数据
+    userInfo.avatar = avatarUrl
+    const cachedInfo = cacheManager.getCache("userInfo")
+    if (cachedInfo) {
+      cachedInfo.avatar = avatarUrl
+      cacheManager.setCache("userInfo", cachedInfo)
+    }
+  } catch (error) {
+    throw error
+  }
+}
+
+// 统一错误处理
+function handleUploadError(error) {
+  console.error('上传失败:', error)
+  uni.showToast({
+    title: error.message || '操作失败',
+    icon: 'none',
+    duration: 3000
+  })
 }
 </script>
 
@@ -263,13 +388,36 @@ function adminPage() {
     align-items: center;
     margin-bottom: 32rpx;
 
-    .avatar {
-      width: 128rpx;
-      height: 128rpx;
-      border-radius: 50%;
-      border: 2rpx solid rgba(255, 255, 255, 0.8);
+    .avatar-container {
+      position: relative;
       margin-right: 24rpx;
-      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+
+      .avatar {
+        width: 128rpx;
+        height: 128rpx;
+        border-radius: 50%;
+        border: 2rpx solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+      }
+
+      .avatar-edit-icon {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 40rpx;
+        height: 40rpx;
+        background: #4A67FF;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2rpx solid #fff;
+
+        .edit-icon {
+          color: #fff;
+          font-size: 24rpx;
+        }
+      }
     }
 
     .user-meta {
@@ -387,19 +535,21 @@ function adminPage() {
 
     .date-row {
       display: flex;
-      flex-direction: row;
-      align-items: center;
+      align-items: center; /* 保持垂直居中 */
       gap: 16rpx;
       padding: 16rpx;
       background: white;
       border-radius: 12rpx;
       box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-  
+      flex-wrap: nowrap; /* 禁止换行 */
+      overflow-x: auto; /* 允许横向滚动（极端情况备用） */
+
       .date-label {
         display: flex;
         align-items: center;
         gap: 8rpx;
-        white-space: nowrap;
+        white-space: nowrap; /* 禁止标签换行 */
+        flex-shrink: 0; /* 禁止压缩 */
 
         .icon {
           font-size: 32rpx;
@@ -410,19 +560,20 @@ function adminPage() {
           font-size: 26rpx;
         }
       }
- 
+
       .date-values {
         display: flex;
         align-items: center;
-        flex-wrap: wrap;
         gap: 8rpx;
-  
+        white-space: nowrap; /* 强制日期不换行 */
+        flex-shrink: 0; /* 禁止压缩 */
+
         .date-value {
           color: #4A67FF;
           font-size: 28rpx;
           font-weight: 500;
         }
-  
+
         .date-separator {
           color: #999;
           font-size: 28rpx;
@@ -431,11 +582,10 @@ function adminPage() {
       }
     }
 
-    /* 移动端响应式 */
+    /* 移除移动端换行样式 */
     @media (max-width: 480px) {
       .date-row {
-        flex-wrap: wrap;
-        justify-content: center;
+        justify-content: flex-start; /* 左对齐代替居中 */
       }
     }
   }
@@ -490,5 +640,62 @@ function adminPage() {
   color: #4A67FF;
   border-radius: 12rpx;
   font-size: 28rpx;
+}
+
+/* 头像弹窗样式 */
+.popup-content {
+  padding: 24rpx;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+}
+
+.popup-title {
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #2c3e50;
+  padding: 16rpx 0 32rpx;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80rpx;
+    height: 4rpx;
+    background: #f0f4ff;
+    border-radius: 2rpx;
+  }
+}
+
+.popup-item {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 16rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+
+  .popup-icon {
+    font-size: 36rpx;
+    margin-right: 20rpx;
+  }
+
+  .popup-text {
+    color: #2c3e50;
+    font-size: 30rpx;
+  }
+
+  &.cancel {
+    margin-top: 24rpx;
+    border: none;
+    justify-content: center;
+    color: #999;
+    font-size: 30rpx;
+  }
+
+  &:active {
+    background: #f8f9ff;
+  }
 }
 </style>

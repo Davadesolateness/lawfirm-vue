@@ -32,3 +32,23 @@ export function apiGetCorporateDetails(id) {
         },
     }));
 }
+
+// 上传用户头像
+export function apiUploadAvatar(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    return http.post("/user/uploadAvatar", formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+}
+
+// 更新用户头像
+export function apiUpdateAvatar(userId, avatarUrl) {
+    return http.post("/user/updateAvatar", {
+        userId: userId,
+        avatarUrl: avatarUrl
+    });
+}

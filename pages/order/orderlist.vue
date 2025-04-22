@@ -1,10 +1,15 @@
 <template>
   <PageLayout>
     <view class="container">
+      <!-- 页面标题 -->
+      <view class="page-header">
+        <text class="page-title">法律咨询订单</text>
+      </view>
+      
       <!-- 搜索区域 -->
       <view class="search-container">
         <view class="search-box">
-          <uni-icons type="search" size="18" color="#999"></uni-icons>
+          <uni-icons type="search" size="18" color="#8696a7"></uni-icons>
           <input 
             type="text" 
             class="search-input" 
@@ -14,23 +19,10 @@
             @confirm="handleSearch"
           />
           <view v-if="searchKeyword" class="clear-icon" @click="clearSearch">
-            <uni-icons type="clear" size="14" color="#999"></uni-icons>
+            <uni-icons type="clear" size="14" color="#8696a7"></uni-icons>
           </view>
         </view>
         <view class="search-btn" @click="handleSearch">搜索</view>
-      </view>
-
-      <!-- 订单状态切换 -->
-      <view class="status-tabs">
-        <view 
-          v-for="(item, index) in statusItems" 
-          :key="index" 
-          class="status-tab" 
-          :class="{ active: currentStatus === index }"
-          @click="changeStatus(index)"
-        >
-          {{ item }}
-        </view>
       </view>
 
       <!-- 订单列表 -->
@@ -40,8 +32,8 @@
         </view>
         
         <view v-else-if="filteredOrders.length === 0" class="empty-result">
-          <uni-icons type="info" size="32" color="#cecece"></uni-icons>
-          <text class="empty-text">{{ searchKeyword ? '没有找到相关订单' : '暂无订单' }}</text>
+          <uni-icons type="info" size="32" color="#4A67FF"></uni-icons>
+          <text class="empty-text">{{ searchKeyword ? '没有找到相关订单' : '暂无订单记录' }}</text>
         </view>
         
         <template v-else>
@@ -52,7 +44,6 @@
           >
             <view class="order-header">
               <view class="order-id">订单编号：{{ order.orderId }}</view>
-              <view class="order-status" :class="'status-' + order.status">{{ order.statusText }}</view>
             </view>
             
             <view class="order-body">
@@ -68,64 +59,35 @@
               <!-- 订单详情 -->
               <view class="order-detail">
                 <view class="detail-item">
-                  <text class="detail-label">用户名：</text>
+                  <text class="detail-label">用户姓名</text>
                   <text class="detail-value">{{ order.userName }}</text>
                 </view>
                 <view class="detail-item">
-                  <text class="detail-label">费用类型：</text>
-                  <text class="detail-value">{{ order.feeType }}</text>
+                  <text class="detail-label">费用类型</text>
+                  <text class="detail-value">{{ order.orderType }}</text>
                 </view>
                 <view class="detail-item">
-                  <text class="detail-label">咨询时长：</text>
-                  <text class="detail-value">{{ order.duration }}分钟</text>
+                  <text class="detail-label">咨询时长</text>
+                  <text class="detail-value">{{ order.serviceDuration }}分钟</text>
                 </view>
                 <view class="detail-item">
-                  <text class="detail-label">咨询时间：</text>
-                  <text class="detail-value">{{ order.consultTime }}</text>
+                  <text class="detail-label">咨询时间</text>
+                  <text class="detail-value">{{ order.inputTime }}</text>
                 </view>
-                <view class="detail-item">
-                  <text class="detail-label">费用：</text>
+                <view class="detail-item fee-item">
+                  <text class="detail-label">服务费用</text>
                   <text class="detail-value price">¥{{ order.fee }}</text>
                 </view>
               </view>
             </view>
-            
-            <view class="order-footer">
-              <button 
-                v-if="order.status === 1" 
-                class="btn btn-primary" 
-                @click="payOrder(order.orderId)"
-              >
-                立即支付
-              </button>
-              <button 
-                v-if="order.status === 2" 
-                class="btn btn-outline" 
-                @click="cancelTheOrder(order.orderId)"
-              >
-                取消订单
-              </button>
-              <button 
-                v-if="order.status === 3" 
-                class="btn btn-outline" 
-                @click="commentOrder(order.orderId)"
-              >
-                评价服务
-              </button>
-              <button 
-                class="btn btn-text" 
-                @click="viewOrderDetail(order.orderId)"
-              >
-                查看详情
-              </button>
-            </view>
+
           </view>
           
           <!-- 加载更多 -->
           <view v-if="hasMore" class="load-more" @click="loadMore">
             <text>加载更多</text>
           </view>
-          <view v-else class="no-more">没有更多了</view>
+          <view v-else class="no-more">没有更多数据</view>
         </template>
       </view>
     </view>
@@ -135,26 +97,66 @@
 <script setup>
 import PageLayout from "@/components/custom/tabbarlayout.vue";
 import { ref, computed, onMounted } from 'vue';
-import { wxPay,  ORDER_STATUS,  } from '@/utils/pay';
+import { apiGetUserOrders, apiSearchOrders } from '@/api/orderapi.js';
+import { cacheManager } from '@/utils/store';
+
+// 当前用户ID (实际应用中应该从用户状态或存储中获取)
+const userId = ref(null);
 
 // 搜索
 const searchKeyword = ref('');
 const loading = ref(false);
 const hasMore = ref(true);
-
-// 订单状态
-const currentStatus = ref(0);
-const statusItems = ['全部', '待支付', '进行中', '已完成', '已取消'];
+const pageNum = ref(1);
+const pageSize = ref(10);
 
 // 订单列表
 const orderList = ref([]);
 
+// 获取用户ID
+function getUserId() {
+  // 从缓存或全局状态中获取用户ID
+  // 这里仅作示例，实际实现需要根据你的用户状态管理方式调整
+  const userInfo = cacheManager.getCache('userInfo');
+  if (userInfo && userInfo.userId) {
+    userId.value = userInfo.userId;
+  } else {
+    // 没有用户ID时的处理逻辑，如跳转登录页
+    console.warn('用户未登录或无法获取用户ID');
+  }
+}
+
 // 处理搜索
 function handleSearch() {
   loading.value = true;
-  setTimeout(() => {
-    loading.value = false;
-  }, 500);
+  pageNum.value = 1; // 重置页码
+  
+  // 有搜索关键词时使用搜索API
+  if (searchKeyword.value) {
+    apiSearchOrders({
+      keyword: searchKeyword.value,
+      pageNum: pageNum.value,
+      pageSize: pageSize.value
+    }).then(res => {
+      if (res.code === 200 && res.data) {
+        orderList.value = formatOrders(res.data.list || []);
+        hasMore.value = res.data.hasNextPage || false;
+      } else {
+        orderList.value = [];
+        hasMore.value = false;
+        console.error('搜索订单失败:', res.message);
+      }
+    }).catch(err => {
+      console.error('搜索订单异常:', err);
+      orderList.value = [];
+      hasMore.value = false;
+    }).finally(() => {
+      loading.value = false;
+    });
+  } else {
+    // 无搜索关键词时加载所有订单
+    loadOrders();
+  }
 }
 
 function clearSearch() {
@@ -162,22 +164,56 @@ function clearSearch() {
   handleSearch();
 }
 
-// 切换订单状态
-function changeStatus(index) {
-  currentStatus.value = index;
-  loadOrders();
+// 格式化订单数据，增加前端展示所需字段
+function formatOrders(orders) {
+  return orders.map(order => {
+    // 计算或转换UI显示数据
+    const formattedOrder = {
+      ...order,
+      // 处理咨询时间格式
+      consultTime: formatDateTime(order.inputTime),
+      // 处理费用类型展示
+      feeType: order.orderType === 'lawyer_service' ? '咨询服务费' : '其他费用',
+      // 处理时长
+      duration: order.serviceDuration || 0,
+      // 处理显示费用
+      fee: order.purchaseAmount || 0,
+      // 默认头像
+      lawyerAvatar: order.lawyerAvatar || '/static/images/default-avatar.png',
+      // 填充缺失的UI显示字段
+      lawyerName: order.lawyerName || '未分配律师',
+      lawyerTitle: order.lawyerTitle || '律师',
+      userName: order.userName || '未知用户'
+    };
+    return formattedOrder;
+  });
+}
+
+// 格式化日期时间
+function formatDateTime(dateTimeStr) {
+  if (!dateTimeStr) return '未设置';
+  
+  const date = new Date(dateTimeStr);
+  if (isNaN(date.getTime())) return dateTimeStr; // 日期无效则返回原字符串
+  
+  return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:${padZero(date.getMinutes())}`;
+}
+
+// 补零
+function padZero(num) {
+  return num < 10 ? `0${num}` : num;
 }
 
 // 过滤后的订单列表
 const filteredOrders = computed(() => {
   let result = orderList.value;
   
-  // 根据关键词搜索
+  // 根据关键词过滤
   if (searchKeyword.value) {
     const keyword = searchKeyword.value.toLowerCase();
     result = result.filter(order => 
-      order.userName.toLowerCase().includes(keyword) || 
-      order.lawyerName.toLowerCase().includes(keyword)
+      (order.userName && order.userName.toLowerCase().includes(keyword)) || 
+      (order.lawyerName && order.lawyerName.toLowerCase().includes(keyword))
     );
   }
   
@@ -186,172 +222,168 @@ const filteredOrders = computed(() => {
 
 // 加载订单数据
 function loadOrders() {
+  if (!userId.value) {
+    console.warn('无法加载订单：用户ID不存在');
+    return;
+  }
+  
   loading.value = true;
   
-  // 根据选择的状态获取对应的订单
-  const statusMapping = {
-    0: undefined, // 全部
-    1: ORDER_STATUS.PENDING_PAYMENT, // 待支付
-    2: ORDER_STATUS.IN_PROGRESS, // 进行中
-    3: ORDER_STATUS.COMPLETED, // 已完成
-    4: ORDER_STATUS.CANCELLED // 已取消
-  };
-  
-  // 获取订单列表
-  const status = statusMapping[currentStatus.value];
-  //const orders = getOrders(status);
-  
-  // 模拟网络请求延迟
-  setTimeout(() => {
-    orderList.value = orders;
-    hasMore.value = false; // 假设已加载所有数据
-    loading.value = false;
-  }, 500);
+  apiGetUserOrders(userId.value)
+    .then(res => {
+        orderList.value = formatOrders(res || []);
+        hasMore.value = false; // 根据接口返回判断是否有更多数据
+    })
+    .catch(err => {
+      console.error('获取订单列表异常:', err);
+      orderList.value = [];
+    })
+    .finally(() => {
+      loading.value = false;
+    });
 }
 
 // 加载更多订单
 function loadMore() {
-  if (!hasMore.value) return;
+  if (!hasMore.value || loading.value) return;
   
   loading.value = true;
-  setTimeout(() => {
-    // 这里可以添加实际的加载逻辑
-    hasMore.value = false;
-    loading.value = false;
-  }, 1000);
-}
-
-// 支付订单
-function payOrder(orderId) {
-  const order = orderList.value.find(item => item.orderId === orderId);
-  if (!order) {
-    uni.showToast({
-      title: '订单不存在',
-      icon: 'none'
-    });
-    return;
-  }
+  pageNum.value++;
   
-  // 调用微信支付
-  wxPay({
-    orderId: order.orderId,
-    totalFee: order.fee,
-    description: `${order.feeType} - ${order.lawyerName}`,
-    success: (res) => {
-      uni.showToast({
-        title: '支付成功',
-        icon: 'success'
-      });
-      
-      // 刷新订单列表
-      loadOrders();
-      
-      // 支付成功后跳转到律师详情页
-      setTimeout(() => {
-        uni.navigateTo({
-          url: `/pages/lawyer/lawyerinfo?lawyerId=${order.lawyerId || 1}`
-        });
-      }, 1500);
-    },
-    fail: (err) => {
-      console.error('支付失败', err);
-    }
-  });
-}
+  // 根据是否有搜索关键词决定使用哪个API
+  const apiMethod = searchKeyword.value ? apiSearchOrders : apiGetUserOrders;
+  const params = searchKeyword.value ? {
+    keyword: searchKeyword.value,
+    pageNum: pageNum.value,
+    pageSize: pageSize.value
+  } : userId.value;
 
-// 取消订单
-function cancelTheOrder(orderId) {
-  uni.showModal({
-    title: '提示',
-    content: '确定要取消该订单吗？',
-    success: function(res) {
-      if (res.confirm) {
-        // 调用取消订单函数
-        //const result = cancelTheOrder(orderId);
+  apiMethod(params)
+    .then(res => {
+      if (res.code === 200 && res.data) {
+        // 处理不同API返回的数据结构
+        const newOrders = searchKeyword.value ? (res.data.list || []) : (res.data || []);
+        const formattedOrders = formatOrders(newOrders);
         
-        if (result) {
-          uni.showToast({
-            title: '订单已取消',
-            icon: 'success'
-          });
-          
-          // 刷新订单列表
-          loadOrders();
-        }
+        // 追加新订单到列表
+        orderList.value = [...orderList.value, ...formattedOrders];
+        
+        // 更新是否有更多数据的状态
+        hasMore.value = searchKeyword.value ? (res.data.hasNextPage || false) : false;
+      } else {
+        console.error('加载更多订单失败:', res.message);
+        hasMore.value = false;
       }
-    }
-  });
-}
-
-// 评价订单
-function commentOrder(orderId) {
-  uni.navigateTo({
-    url: `/pages/order/comment?orderId=${orderId}`
-  });
-}
-
-// 查看订单详情
-function viewOrderDetail(orderId) {
-  uni.navigateTo({
-    url: `/pages/order/detail?orderId=${orderId}`
-  });
-}
-
-// 模拟完成订单（仅用于测试）
-function completeOrder(orderId) {
-  const result = updateOrderStatus(orderId, ORDER_STATUS.COMPLETED);
-  
-  if (result) {
-    uni.showToast({
-      title: '订单已完成',
-      icon: 'success'
+    })
+    .catch(err => {
+      console.error('加载更多订单异常:', err);
+      hasMore.value = false;
+    })
+    .finally(() => {
+      loading.value = false;
     });
-    
-    // 刷新订单列表
-    loadOrders();
-  }
 }
 
 onMounted(() => {
-  // 初始化加载数据
+  // 获取用户ID并初始化加载数据
+  getUserId();
   loadOrders();
 });
+
+// 如果API尚未实现或开发环境，使用以下模拟数据（正式环境需删除）
+// 仅用于开发阶段展示，API实现后自动切换
+const mockOrders = [
+  {
+    orderId: '202304150001',
+    userId: 1,
+    userName: '张先生',
+    userType: 'individual',
+    orderType: 'lawyer_service',
+    lawyerName: '李律师',
+    lawyerTitle: '高级律师',
+    lawyerAvatar: '/static/images/lawyer1.png',
+    serviceDuration: 30,
+    purchaseAmount: 300,
+    orderStatus: 'completed',
+    inputTime: '2023-04-15 14:30:00'
+  },
+  {
+    orderId: '202304160002',
+    userId: 1,
+    userName: '张先生',
+    userType: 'individual',
+    orderType: 'lawyer_service',
+    lawyerName: '王律师',
+    lawyerTitle: '资深律师',
+    lawyerAvatar: '/static/images/lawyer2.png',
+    serviceDuration: 60,
+    purchaseAmount: 500,
+    orderStatus: 'completed',
+    inputTime: '2023-04-16 10:15:00'
+  }
+];
 </script>
 
-<style lang="scss">
-
+<style lang="scss" scoped>
+/* 基础容器 */
 .container {
-  padding: 20rpx;
-  background-color: var(--bg-color);
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafb;
+  padding: 24rpx;
+}
+
+/* 页面标题 */
+.page-header {
+  margin-bottom: 32rpx;
+  .page-title {
+    font-size: 36rpx;
+    font-weight: 600;
+    color: #2c3e50;
+    position: relative;
+    display: inline-block;
+    padding-bottom: 16rpx;
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 64rpx;
+      height: 4rpx;
+      background: #4A67FF;
+      border-radius: 2rpx;
+    }
+  }
 }
 
 /* 搜索区域样式 */
 .search-container {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
   display: flex;
   align-items: center;
-  padding: 20rpx;
-  background-color: #fff;
-  border-radius: 12rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
-  margin-bottom: 20rpx;
 }
 
 .search-box {
   flex: 1;
   display: flex;
   align-items: center;
-  background-color: #f5f7fa;
-  border-radius: 8rpx;
-  padding: 12rpx 20rpx;
-  height: 68rpx;
+  background-color: #f8f9ff;
+  border-radius: 12rpx;
+  padding: 16rpx 24rpx;
+  height: 72rpx;
+  border: 1rpx solid rgba(74, 103, 255, 0.1);
 }
 
 .search-input {
   flex: 1;
-  height: 68rpx;
+  height: 72rpx;
   font-size: 28rpx;
-  color: #333;
+  color: #2d3436;
   margin-left: 16rpx;
 }
 
@@ -361,196 +393,151 @@ onMounted(() => {
 
 .search-btn {
   margin-left: 20rpx;
-  padding: 0 30rpx;
-  height: 68rpx;
-  line-height: 68rpx;
-  background: linear-gradient(135deg, #4A90E2, #2979FF);
+  padding: 0 32rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  background: #4A67FF;
   color: #fff;
   font-size: 28rpx;
-  border-radius: 8rpx;
-  text-align: center;
-}
-
-/* 状态切换选项卡 */
-.status-tabs {
-  display: flex;
-  background-color: #fff;
   border-radius: 12rpx;
-  margin-bottom: 20rpx;
-  padding: 0 10rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
-  overflow-x: auto;
-  white-space: nowrap;
-}
+  text-align: center;
+  font-weight: 500;
+  letter-spacing: 1rpx;
+  transition: all 0.2s;
+  box-shadow: 0 4rpx 12rpx rgba(74, 103, 255, 0.2);
 
-.status-tab {
-  padding: 24rpx 30rpx;
-  font-size: 28rpx;
-  color: var(--text-secondary);
-  position: relative;
-  transition: all 0.3s;
-  
-  &.active {
-    color: var(--primary-color);
-    font-weight: 500;
-    
-    &::after {
-      content: '';
-      position: absolute;
-      left: 50%;
-      bottom: 0;
-      transform: translateX(-50%);
-      width: 40rpx;
-      height: 4rpx;
-      background-color: var(--primary-color);
-      border-radius: 2rpx;
-    }
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+    box-shadow: 0 2rpx 8rpx rgba(74, 103, 255, 0.2);
   }
 }
 
 /* 订单卡片样式 */
 .order-card {
-  background-color: #fff;
-  border-radius: 12rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
-  margin-bottom: 20rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  margin-bottom: 24rpx;
   overflow: hidden;
+  transition: all 0.3s;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  
+  &:hover {
+    transform: translateY(-2rpx);
+    box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
+  }
 }
 
 .order-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20rpx 30rpx;
-  border-bottom: 1rpx solid var(--border-color);
-  
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e6ecfa 100%);
+
   .order-id {
-    font-size: 24rpx;
-    color: var(--text-secondary);
-  }
-  
-  .order-status {
-    font-size: 24rpx;
+    font-size: 28rpx;
+    color: #2c3e50;
     font-weight: 500;
-    
-    &.status-1 {
-      color: #ff9900;
-    }
-    
-    &.status-2 {
-      color: #2979FF;
-    }
-    
-    &.status-3 {
-      color: #4CD964;
-    }
-    
-    &.status-4 {
-      color: var(--text-tertiary);
-    }
   }
 }
 
 .order-body {
-  padding: 30rpx;
+  padding: 32rpx;
 }
 
 .lawyer-info {
   display: flex;
   align-items: center;
-  margin-bottom: 30rpx;
-  
+  margin-bottom: 32rpx;
+  padding-bottom: 24rpx;
+  border-bottom: 1rpx dashed #f0f0f0;
+
   .lawyer-avatar {
-    width: 100rpx;
-    height: 100rpx;
+    width: 108rpx;
+    height: 108rpx;
     border-radius: 50%;
-    margin-right: 20rpx;
+    margin-right: 24rpx;
+    border: 2rpx solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
   }
-  
+
   .lawyer-detail {
     flex: 1;
-    
+
     .lawyer-name {
       font-size: 32rpx;
       font-weight: 600;
-      color: var(--text-primary);
+      color: #2d3436;
       margin-bottom: 8rpx;
     }
-    
+
     .lawyer-title {
-      font-size: 24rpx;
-      color: var(--text-secondary);
+      font-size: 26rpx;
+      color: #4A67FF;
+      background: rgba(74, 103, 255, 0.1);
+      display: inline-block;
+      padding: 6rpx 20rpx;
+      border-radius: 32rpx;
     }
   }
 }
 
 .order-detail {
-  background-color: #f9fafb;
-  border-radius: 8rpx;
-  padding: 20rpx 24rpx;
-  
+  background: #f8f9ff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+
   .detail-item {
     display: flex;
-    margin-bottom: 16rpx;
-    
+    margin-bottom: 20rpx;
+
     &:last-child {
       margin-bottom: 0;
     }
-    
+
+    &.fee-item {
+      padding-top: 16rpx;
+      border-top: 1rpx dashed #f0f0f0;
+      margin-top: 8rpx;
+    }
+
     .detail-label {
       width: 160rpx;
       font-size: 26rpx;
-      color: var(--text-secondary);
+      color: #666;
+      position: relative;
+      padding-left: 20rpx;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 6rpx;
+        height: 6rpx;
+        border-radius: 50%;
+        background: #4A67FF;
+      }
     }
-    
+
     .detail-value {
       flex: 1;
       font-size: 26rpx;
-      color: var(--text-primary);
-      
+      color: #2d3436;
+
       &.price {
-        color: var(--price-color);
+        color: #4A67FF;
         font-weight: 600;
+        font-size: 30rpx;
       }
     }
   }
 }
 
 .order-footer {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 20rpx 30rpx;
-  border-top: 1rpx solid var(--border-color);
-  gap: 16rpx;
-  
-  .btn {
-    padding: 0 30rpx;
-    height: 64rpx;
-    line-height: 64rpx;
-    font-size: 26rpx;
-    border-radius: 32rpx;
-  }
-  
-  .btn-primary {
-    background: linear-gradient(135deg, #4A90E2, #2979FF);
-    color: #fff;
-  }
-  
-  .btn-outline {
-    border: 1rpx solid var(--border-color);
-    color: var(--text-secondary);
-  }
-  
-  .btn-text {
-    color: var(--text-secondary);
-    background: none;
-    border: none;
-    
-    &::after {
-      border: none;
-    }
-  }
+  padding: 24rpx 32rpx;
+  border-top: 1rpx solid #f0f0f0;
+  min-height: 20rpx;
 }
 
 /* 空状态和加载状态 */
@@ -558,7 +545,7 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 60rpx 0;
+  padding: 80rpx 0;
 }
 
 .empty-result {
@@ -566,28 +553,32 @@ onMounted(() => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 100rpx 0;
+  padding: 120rpx 0;
+  background: #fff;
+  border-radius: 20rpx;
+  margin-top: 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
 }
 
 .empty-text {
-  margin-top: 20rpx;
-  color: var(--text-tertiary);
+  margin-top: 24rpx;
+  color: #718096;
   font-size: 28rpx;
 }
 
 .loading {
   text-align: center;
   font-size: 28rpx;
-  color: var(--text-tertiary);
-  padding: 20rpx 0;
+  color: #4A67FF;
+  padding: 24rpx 0;
   position: relative;
-  
+
   &::after {
     content: "";
     display: inline-block;
     width: 20rpx;
     height: 20rpx;
-    border: 3rpx solid var(--text-tertiary);
+    border: 3rpx solid #4A67FF;
     border-radius: 50%;
     border-top-color: transparent;
     animation: spin 0.8s linear infinite;
@@ -598,16 +589,29 @@ onMounted(() => {
 
 .load-more {
   text-align: center;
-  padding: 30rpx 0;
+  padding: 32rpx 0;
   font-size: 28rpx;
-  color: var(--primary-color);
+  color: #4A67FF;
+  background: #fff;
+  border-radius: 20rpx;
+  margin-top: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.8;
+  }
 }
 
 .no-more {
   text-align: center;
-  padding: 30rpx 0;
+  padding: 32rpx 0;
   font-size: 28rpx;
-  color: var(--text-tertiary);
+  color: #718096;
+  background: #fff;
+  border-radius: 20rpx;
+  margin-top: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 }
 
 @keyframes spin {
