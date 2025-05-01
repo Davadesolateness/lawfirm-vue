@@ -7,24 +7,6 @@
         <view class="banner-sub">严选真实律师 1对私密咨询 未服务可退款</view>
       </view>
 
-      <!-- 搜索框 -->
-      <view class="search-container">
-        <view class="search-box">
-          <uni-icons type="search" size="18" color="#999"></uni-icons>
-          <input 
-            type="text" 
-            class="search-input" 
-            placeholder="搜索律师名称、专长领域" 
-            confirm-type="search"
-            v-model="searchKeyword"
-            @confirm="handleSearch"
-          />
-          <view v-if="searchKeyword" class="clear-icon" @click="clearSearch">
-            <uni-icons type="clear" size="14" color="#999"></uni-icons>
-          </view>
-        </view>
-        <view class="search-btn" @click="handleSearch">搜索</view>
-      </view>
 
       <!-- 服务导航 -->
       <view class="service-nav">
@@ -90,7 +72,8 @@ function clearSearch() {
 function handleConsult(item) {
   navigateToUrl('/components/lawyer/lawyerlist')
 }
-function login(){
+
+function login() {
   navigateToUrl('/pages/login/login')
 }
 
@@ -106,16 +89,16 @@ const currentRole = ref('普通用户');
 // 切换用户角色
 function switchRole(role) {
   setUserType(role);
-  
+
   // 更新当前显示的角色名称
-  if(role === USER_TYPES.USER) {
+  if (role === USER_TYPES.USER) {
     currentRole.value = '普通用户';
-  } else if(role === USER_TYPES.LAWYER) {
+  } else if (role === USER_TYPES.LAWYER) {
     currentRole.value = '律师用户';
-  } else if(role === USER_TYPES.ADMIN) {
+  } else if (role === USER_TYPES.ADMIN) {
     currentRole.value = '管理员';
   }
-  
+
   // 刷新页面以重新加载tabBar
   setTimeout(() => {
     uni.reLaunch({
@@ -127,11 +110,11 @@ function switchRole(role) {
 // 页面加载时获取当前用户角色
 onMounted(() => {
   const userType = getUserType();
-  if(userType === USER_TYPES.USER) {
+  if (userType === USER_TYPES.USER) {
     currentRole.value = '普通用户';
-  } else if(userType === USER_TYPES.LAWYER) {
+  } else if (userType === USER_TYPES.LAWYER) {
     currentRole.value = '律师用户';
-  } else if(userType === USER_TYPES.ADMIN) {
+  } else if (userType === USER_TYPES.ADMIN) {
     currentRole.value = '管理员';
   }
 });
@@ -190,7 +173,7 @@ function filteredLawyers() {
     background-color: #f9fafb;
     box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
     transition: all 0.3s ease;
-    
+
     &:hover {
       transform: translateY(-2rpx);
       box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
@@ -249,7 +232,7 @@ function filteredLawyers() {
   line-height: 1.5;
   flex: 1;
   transition: all 0.2s ease;
-  
+
   &:active {
     opacity: 0.9;
     transform: scale(0.98);
@@ -291,55 +274,13 @@ function filteredLawyers() {
   border-radius: 44rpx;
   box-shadow: 0 6rpx 16rpx rgba(41, 121, 255, 0.2);
   transition: all 0.3s ease;
-  
+
   &:active {
     transform: scale(0.98);
     box-shadow: 0 3rpx 8rpx rgba(41, 121, 255, 0.15);
   }
 }
 
-/* 搜索框样式 */
-.search-container {
-  display: flex;
-  align-items: center;
-  padding: 20rpx;
-  background-color: #fff;
-  margin: 20rpx;
-  border-radius: 12rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
-}
 
-.search-box {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  background-color: #f5f7fa;
-  border-radius: 8rpx;
-  padding: 12rpx 20rpx;
-  height: 68rpx;
-}
 
-.search-input {
-  flex: 1;
-  height: 68rpx;
-  font-size: 28rpx;
-  color: #333;
-  margin-left: 16rpx;
-}
-
-.clear-icon {
-  padding: 10rpx;
-}
-
-.search-btn {
-  margin-left: 20rpx;
-  padding: 0 30rpx;
-  height: 68rpx;
-  line-height: 68rpx;
-  background: linear-gradient(135deg, #4A90E2, #2979FF);
-  color: #fff;
-  font-size: 28rpx;
-  border-radius: 8rpx;
-  text-align: center;
-}
 </style>

@@ -14,18 +14,23 @@
     </scroll-view>
   </view>
 
-  <!-- 搜索组件 -->
-  <view class="search-wrapper">
+  <!-- 搜索框 -->
+  <view class="search-container">
     <view class="search-box">
       <uni-icons type="search" size="18" color="#999"></uni-icons>
       <input
+          type="text"
           class="search-input"
-          v-model="searchKeyword"
           placeholder="搜索律师名称、专长领域"
+          confirm-type="search"
+          v-model="searchKeyword"
           @input="debounceSearch"
       />
-      <uni-icons v-if="searchKeyword" type="clear" size="18" color="#999" @click="clearSearch"></uni-icons>
+      <view v-if="searchKeyword" class="clear-icon" @click="clearSearch">
+        <uni-icons type="clear" size="14" color="#999"></uni-icons>
+      </view>
     </view>
+    <view class="search-btn" @click="searchLawyers">搜索</view>
   </view>
 
   <view class="lawyer-list">
@@ -35,7 +40,7 @@
     </view>
 
     <!-- 无搜索结果 -->
-    <view v-else-if="noMore && searchKeyword" class="empty-result">
+    <view v-else-if="filterLawyerList.length === 0 && searchKeyword" class="empty-result">
       <uni-icons type="info" size="32" color="#cecece"></uni-icons>
       <text class="empty-text">没有找到"{{ searchKeyword }}"相关的律师</text>
     </view>
@@ -77,6 +82,10 @@
       <view v-else-if="filterLawyerList.length > 0" class="list-footer">
         <view class="no-more">没有更多了</view>
       </view>
+      <view v-else-if="filterLawyerList.length === 0 && !loading" class="empty-result">
+        <uni-icons type="info" size="32" color="#cecece"></uni-icons>
+        <text class="empty-text">暂无律师信息</text>
+      </view>
     </template>
   </view>
 </template>
@@ -84,8 +93,14 @@
 
 <script setup>
 import {navigateToUrl} from "@/utils/navigateTo";
-import {computed, ref, watch, onMounted} from "vue";
-import {apiGetAllLawyers} from "@/api/lawyerapi"
+import {computed, ref, watch, onMounted, onBeforeUnmount} from "vue";
+import {apiGetAllLawyers, apiSearchLawyers} from "@/api/lawyerapi" // 新增搜索接口
+
+// 分页参数
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const isSearchMode = ref(false) // 是否搜索模式
 
 
 // 接收搜索关键词参数
@@ -104,6 +119,7 @@ const categories = ref([
   '退费纠纷', '交通事故', '房产纠纷', '征地拆迁',
   '离婚纠纷', '债务协商', '更多领域'
 ]);
+const commonCategories = ['刑事案件', '经济纠纷', '劳动纠纷', '工伤纠纷', '退费纠纷', '交通事故', '房产纠纷', '征地拆迁', '离婚纠纷', '债务协商'];
 const currentTag = ref('全部'); // 当前选中的标签
 const lawyerList = ref([]); // 律师列表数据
 
@@ -114,6 +130,8 @@ const noMore = ref(false);
 // 选择标签
 function selectTag(tagValue) {
   currentTag.value = tagValue;
+  // 选择标签后立即执行搜索
+  searchLawyers();
 }
 
 // 监听外部搜索关键词变化
@@ -123,32 +141,72 @@ watch(() => props.externalSearchKeyword, (newValue) => {
 });
 
 // 加载所有律师数据
-const fetchLawyers = async () => {
+const fetchLawyers = async (loadMore = false) => {
   try {
-    debugger
-    loading.value = true;
-    let response = apiGetAllLawyers()
+    if (loading.value || (noMore.value && loadMore)) return
 
+    loading.value = true
+    if (!loadMore) {
+      currentPage.value = 1
+      lawyerList.value = []
+      noMore.value = false; // 重置加载状态
+    }
 
-    if (response && Array.isArray(response)) {
-      lawyerList.value = response.map(lawyer => ({
+    const params = {
+      page: currentPage.value,
+      pageSize: pageSize.value,
+      keyword: searchKeyword.value
+    }
+    // 处理专业领域
+    if (currentTag.value !== '全部') {
+      if (currentTag.value === '更多领域') {
+        // "更多领域"分类逻辑：排除常见领域的律师
+        params.excludeSpecialties = commonCategories;
+      } else {
+        // 常规分类
+        params.specialty = currentTag.value;
+      }
+    }
+
+    console.log('请求参数:', JSON.stringify(params));
+    const response = await apiSearchLawyers(params)
+    console.log('响应数据:', JSON.stringify(response));
+
+    if (response && response.data) {
+      total.value = response.total || 0
+      const processedData = (response.data || []).map(lawyer => ({
         ...lawyer,
-        // 默认值和转换处理
         avatar: '/static/avatar-default.png',
         consultCount: lawyer.consultCount || 0,
         price: lawyer.price || 48
-      }));
+      }))
+
+      console.log('处理后的数据:', processedData.length, '条');
+
+      if (loadMore) {
+        lawyerList.value = [...lawyerList.value, ...processedData]
+      } else {
+        lawyerList.value = processedData
+      }
+
+      noMore.value = lawyerList.value.length >= total.value
+      if (!noMore.value) {
+        currentPage.value++
+      }
+      
+      console.log('当前列表数据:', lawyerList.value.length, '条，总数:', total.value);
+    } else {
+      console.error('接口返回异常:', response);
+      uni.showToast({title: '数据加载异常', icon: 'none'})
     }
   } catch (error) {
-    console.error('获取律师列表失败:', error);
-    uni.showToast({
-      title: '获取律师列表失败',
-      icon: 'none'
-    });
+    console.error('获取数据失败:', error)
+    uni.showToast({title: '加载失败', icon: 'none'})
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
+
 
 // 格式化专长信息
 const formatExpertise = (lawyer) => {
@@ -163,8 +221,23 @@ const formatExpertise = (lawyer) => {
 
 // 格式化地理位置
 const formatLocation = (lawyer) => {
-  // 根据实际字段调整
-  return `${lawyer.provinceCode || ''}${lawyer.cityCode || ''}${lawyer.districtCode || ''}`;
+  // 将编码转换为可读地址，这里需要根据实际的省市区编码映射
+  // 简化处理：如果没有编码，返回默认值
+  if (!lawyer.provinceCode && !lawyer.cityCode && !lawyer.districtCode) {
+    return '未知地区';
+  }
+
+  // 这里可以根据实际情况从缓存或配置中获取省市区名称
+  // 简化示例：
+  const provinces = {'330000': '浙江省'};
+  const cities = {'330100': '杭州市'};
+  const districts = {'330102': '上城区'};
+
+  const province = provinces[lawyer.provinceCode] || lawyer.provinceCode || '';
+  const city = cities[lawyer.cityCode] || lawyer.cityCode || '';
+  const district = districts[lawyer.districtCode] || lawyer.districtCode || '';
+
+  return `${province} ${city} ${district}`.trim();
 };
 
 // 防抖函数
@@ -184,56 +257,52 @@ const clearSearch = () => {
 
 // 搜索律师
 const searchLawyers = async () => {
-  loading.value = true;
+  isSearchMode.value = !!searchKeyword.value || currentTag.value !== '全部';
+  await fetchLawyers(false); // 传入false强制重新从第一页开始加载
+}
 
-  try {
-    if (searchKeyword.value.trim()) {
-      // 如果后端有搜索接口，使用后端搜索
-      // 这里模拟前端搜索，实际项目中应该调用后端接口
-      await new Promise(resolve => setTimeout(resolve, 500)); // 模拟搜索延迟
-    } else {
-      // 没有搜索关键词时加载全部数据
-      if (lawyerList.value.length === 0) {
-        await fetchLawyers();
-      }
-    }
-  } catch (error) {
-    console.error('搜索律师失败:', error);
-    uni.showToast({
-      title: '搜索律师失败',
-      icon: 'none'
-    });
-  } finally {
-    loading.value = false;
+// 监视currentTag变化
+watch(() => currentTag.value, (newValue, oldValue) => {
+  // 避免初始化时的无意义调用
+  if (oldValue !== undefined) {
+    console.log(`标签从 "${oldValue}" 切换到 "${newValue}"`);
+    searchLawyers();
   }
-};
-
-// 计算属性：过滤律师列表
-const filterLawyerList = computed(() => {
-  let result = [...lawyerList.value];
-
-  // 如果选择了特定标签，先按标签过滤
-  if (currentTag.value !== '全部') {
-    result = result.filter((lawyer) => {
-      const expertise = formatExpertise(lawyer);
-      return expertise.includes(currentTag.value);
-    });
-  }
-
-  // 如果有搜索关键词，再按关键词过滤
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase();
-    result = result.filter((lawyer) =>
-        (lawyer.lawyerName && lawyer.lawyerName.toLowerCase().includes(keyword)) ||
-        (formatExpertise(lawyer).toLowerCase().includes(keyword))
-    );
-  }
-
-  // 更新无数据状态
-  noMore.value = result.length === 0;
-
-  return result;
 });
+
+// 滚动监听
+const handleScroll = () => {
+  // 获取可见区域高度
+  const windowHeight = uni.getSystemInfoSync().windowHeight
+  // 获取滚动位置
+  const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+  // 获取内容总高度
+  const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
+
+  // 当滚动到距离底部50px时，加载更多
+  if (scrollHeight - scrollTop - windowHeight < 50) {
+    if (!noMore.value && !loading.value) {
+      fetchLawyers(true)
+    }
+  }
+}
+
+// 挂载时添加滚动监听
+onMounted(() => {
+  fetchLawyers() // 初始加载所有律师数据
+  window.addEventListener('scroll', handleScroll)
+})
+
+// 卸载时移除监听
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
+
+// 计算属性
+const filterLawyerList = computed(() => {
+  return lawyerList.value
+})
+
 
 // 页面跳转
 function handleClick(lawyer) {
@@ -330,6 +399,8 @@ defineExpose({
   height: calc(100vh - 640rpx);
   padding: 0 20rpx;
   background-color: var(--bg-color);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .lawyer-card {
@@ -489,6 +560,51 @@ defineExpose({
   margin-top: 20rpx;
   color: var(--text-tertiary);
   font-size: 28rpx;
+}
+
+/* 搜索框样式 */
+.search-container {
+  display: flex;
+  align-items: center;
+  padding: 20rpx;
+  background-color: #fff;
+  margin: 20rpx;
+  border-radius: 12rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.search-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background-color: #f5f7fa;
+  border-radius: 8rpx;
+  padding: 12rpx 20rpx;
+  height: 68rpx;
+}
+
+.search-input {
+  flex: 1;
+  height: 68rpx;
+  font-size: 28rpx;
+  color: #333;
+  margin-left: 16rpx;
+}
+
+.clear-icon {
+  padding: 10rpx;
+}
+
+.search-btn {
+  margin-left: 20rpx;
+  padding: 0 30rpx;
+  height: 68rpx;
+  line-height: 68rpx;
+  background: linear-gradient(135deg, #4A90E2, #2979FF);
+  color: #fff;
+  font-size: 28rpx;
+  border-radius: 8rpx;
+  text-align: center;
 }
 
 @keyframes spin {
