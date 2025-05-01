@@ -18,11 +18,11 @@
   <view class="search-wrapper">
     <view class="search-box">
       <uni-icons type="search" size="18" color="#999"></uni-icons>
-      <input 
-        class="search-input" 
-        v-model="searchKeyword" 
-        placeholder="搜索律师名称、专长领域" 
-        @input="debounceSearch"
+      <input
+          class="search-input"
+          v-model="searchKeyword"
+          placeholder="搜索律师名称、专长领域"
+          @input="debounceSearch"
       />
       <uni-icons v-if="searchKeyword" type="clear" size="18" color="#999" @click="clearSearch"></uni-icons>
     </view>
@@ -33,13 +33,13 @@
     <view v-if="loading" class="loading-container">
       <view class="loading">搜索中...</view>
     </view>
-    
+
     <!-- 无搜索结果 -->
     <view v-else-if="noMore && searchKeyword" class="empty-result">
       <uni-icons type="info" size="32" color="#cecece"></uni-icons>
       <text class="empty-text">没有找到"{{ searchKeyword }}"相关的律师</text>
     </view>
-    
+
     <!-- 搜索结果列表 -->
     <template v-else>
       <view
@@ -69,7 +69,7 @@
           <text class="consult-type">电话咨询</text>
         </view>
       </view>
-      
+
       <!-- 底部状态显示 -->
       <view v-if="filterLawyerList.length > 0 && !noMore" class="list-footer">
         <view class="loading">加载更多中...</view>
@@ -83,9 +83,10 @@
 
 
 <script setup>
-import { navigateToUrl } from "@/utils/navigateTo";
-import { computed, ref, watch, onMounted } from "vue";
-import { request } from "@/utils/request";
+import {navigateToUrl} from "@/utils/navigateTo";
+import {computed, ref, watch, onMounted} from "vue";
+import {apiGetAllLawyers} from "@/api/lawyerapi"
+
 
 // 接收搜索关键词参数
 const props = defineProps({
@@ -124,12 +125,11 @@ watch(() => props.externalSearchKeyword, (newValue) => {
 // 加载所有律师数据
 const fetchLawyers = async () => {
   try {
+    debugger
     loading.value = true;
-    const response = await request({
-      url: '/lawyer/getAllLawyers',
-      method: 'GET'
-    });
-    
+    let response = apiGetAllLawyers()
+
+
     if (response && Array.isArray(response)) {
       lawyerList.value = response.map(lawyer => ({
         ...lawyer,
@@ -154,9 +154,9 @@ const fetchLawyers = async () => {
 const formatExpertise = (lawyer) => {
   if (lawyer.lawyerSpecialtyRelationVolist && lawyer.lawyerSpecialtyRelationVolist.length > 0) {
     return lawyer.lawyerSpecialtyRelationVolist
-      .map(relation => relation.lawyerSpecialtyVo?.specialtyName)
-      .filter(Boolean)
-      .join('、');
+        .map(relation => relation.lawyerSpecialtyVo?.specialtyName)
+        .filter(Boolean)
+        .join('、');
   }
   return lawyer.lawyerIntroduction || '专业律师';
 };
@@ -185,7 +185,7 @@ const clearSearch = () => {
 // 搜索律师
 const searchLawyers = async () => {
   loading.value = true;
-  
+
   try {
     if (searchKeyword.value.trim()) {
       // 如果后端有搜索接口，使用后端搜索
@@ -211,7 +211,7 @@ const searchLawyers = async () => {
 // 计算属性：过滤律师列表
 const filterLawyerList = computed(() => {
   let result = [...lawyerList.value];
-  
+
   // 如果选择了特定标签，先按标签过滤
   if (currentTag.value !== '全部') {
     result = result.filter((lawyer) => {
@@ -219,19 +219,19 @@ const filterLawyerList = computed(() => {
       return expertise.includes(currentTag.value);
     });
   }
-  
+
   // 如果有搜索关键词，再按关键词过滤
   if (searchKeyword.value) {
     const keyword = searchKeyword.value.toLowerCase();
-    result = result.filter((lawyer) => 
-      (lawyer.lawyerName && lawyer.lawyerName.toLowerCase().includes(keyword)) || 
-      (formatExpertise(lawyer).toLowerCase().includes(keyword))
+    result = result.filter((lawyer) =>
+        (lawyer.lawyerName && lawyer.lawyerName.toLowerCase().includes(keyword)) ||
+        (formatExpertise(lawyer).toLowerCase().includes(keyword))
     );
   }
-  
+
   // 更新无数据状态
   noMore.value = result.length === 0;
-  
+
   return result;
 });
 
