@@ -6,77 +6,77 @@
       <text class="app-name">律师咨询平台</text>
       <text class="app-slogan">专业法律咨询，一键直达</text>
     </view>
-
+    
     <!-- 登录表单区域 -->
     <view class="login-form">
       <!-- 登录方式切换 -->
       <view class="login-tabs">
-        <view
-            class="tab-item"
-            :class="{ active: loginType === 'phone' }"
-            @click="loginType = 'phone'"
+        <view 
+          class="tab-item" 
+          :class="{ active: loginType === 'phone' }" 
+          @click="loginType = 'phone'"
         >
           手机号登录
         </view>
-        <view
-            class="tab-item"
-            :class="{ active: loginType === 'account' }"
-            @click="loginType = 'account'"
+        <view 
+          class="tab-item" 
+          :class="{ active: loginType === 'account' }" 
+          @click="loginType = 'account'"
         >
           账号密码登录
         </view>
       </view>
-
+      
       <!-- 手机号登录表单 -->
       <view v-if="loginType === 'phone'" class="form-content">
         <view class="input-group">
           <uni-icons type="phone" size="20" color="#999"></uni-icons>
-          <input
-              type="number"
-              v-model="phoneNumber"
-              maxlength="11"
-              placeholder="请输入手机号码"
-              @blur="validatePhoneNumber"
+          <input 
+            type="number" 
+            v-model="phoneNumber" 
+            maxlength="11" 
+            placeholder="请输入手机号码" 
+            @blur="validatePhoneNumber"
           />
         </view>
         <text v-if="phoneError" class="error-tip">{{ phoneError }}</text>
-
+        
         <view class="input-group verification-code">
           <uni-icons type="locked" size="20" color="#999"></uni-icons>
-          <input
-              type="number"
-              v-model="verificationCode"
-              maxlength="6"
-              placeholder="请输入验证码"
+          <input 
+            type="number" 
+            v-model="verificationCode" 
+            maxlength="6" 
+            placeholder="请输入验证码" 
           />
-          <view
-              class="send-code-btn"
-              :class="{ disabled: isSending || !isPhoneValid }"
-              @click="sendVerificationCodeForUser"
+          <view 
+            class="send-code-btn" 
+            :class="{ disabled: isSending || !isPhoneValid }" 
+            @click="sendVerificationCodeForUser"
           >
             {{ sendBtnText }}
           </view>
         </view>
       </view>
-
+      
       <!-- 账号密码登录表单 -->
       <view v-else class="form-content">
         <view class="input-group">
           <uni-icons type="person" size="20" color="#999"></uni-icons>
-          <input
-              type="text"
-              v-model="phoneNumber"
-              placeholder="请输入手机号"
+          <input 
+            type="text" 
+            v-model="phoneNumber"
+            placeholder="请输入账号/手机号" 
           />
         </view>
-
+        
         <view class="input-group">
           <uni-icons type="locked" size="20" color="#999"></uni-icons>
-          <input
-              :type="showPassword ? 'text' : 'password'"
-              v-model="password"
-              placeholder="请输入密码"
-              @blur="validatePassword"
+          <input 
+            :type="showPassword ? 'text' : 'password'" 
+            v-model="password" 
+            placeholder="请输入密码" 
+            @blur="validatePassword"
           />
           <view class="password-toggle" @click="showPassword = !showPassword">
             <uni-icons :type="showPassword ? 'eye-slash' : 'eye'" size="20" color="#999"></uni-icons>
@@ -84,48 +84,48 @@
         </view>
         <text v-if="passwordError" class="error-tip">{{ passwordError }}</text>
       </view>
-
+      
       <!-- 用户角色选择 -->
       <view class="role-selection">
         <view class="role-label">您的身份：</view>
         <view class="role-options">
-          <view
-              class="role-item"
-              :class="{ active: selectedRole === 'user' }"
-              @click="selectedRole = 'user'"
+          <view 
+            class="role-item" 
+            :class="{ active: selectedRole === 'user' }"
+            @click="selectedRole = 'user'"
           >
             <uni-icons type="person" size="16" :color="selectedRole === 'user' ? '#2979FF' : '#999'"></uni-icons>
             <text>我是用户</text>
           </view>
-          <view
-              class="role-item"
-              :class="{ active: selectedRole === 'lawyer' }"
-              @click="selectedRole = 'lawyer'"
+          <view 
+            class="role-item" 
+            :class="{ active: selectedRole === 'lawyer' }"
+            @click="selectedRole = 'lawyer'"
           >
             <uni-icons type="staff" size="16" :color="selectedRole === 'lawyer' ? '#2979FF' : '#999'"></uni-icons>
             <text>我是律师</text>
           </view>
-          <view
-              class="role-item"
-              :class="{ active: selectedRole === 'admin' }"
-              @click="selectedRole = 'admin'"
+          <view 
+            class="role-item" 
+            :class="{ active: selectedRole === 'admin' }"
+            @click="selectedRole = 'admin'"
           >
             <uni-icons type="gear" size="16" :color="selectedRole === 'admin' ? '#2979FF' : '#999'"></uni-icons>
             <text>管理员</text>
           </view>
         </view>
       </view>
-
+      
       <!-- 登录按钮 -->
       <button class="login-btn" @click="handleLogin">登录</button>
-
+      
       <!-- 辅助功能区 -->
       <view class="helper-links">
         <text @click="goToRegister">注册账号</text>
         <text @click="goToResetPassword">忘记密码</text>
       </view>
     </view>
-
+    
     <!-- 其他登录方式 -->
     <view class="other-login">
       <view class="divider">
@@ -137,10 +137,7 @@
         </view>
       </view>
       <view class="agreement">
-        登录即表示同意
-        <text class="link">《用户协议》</text>
-        和
-        <text class="link">《隐私政策》</text>
+        登录即表示同意<text class="link">《用户协议》</text>和<text class="link">《隐私政策》</text>
       </view>
     </view>
   </view>
@@ -149,8 +146,9 @@
 <script setup>
 import {computed, onMounted, ref} from 'vue';
 import {setUserType, USER_TYPES} from '@/utils/store/userManager';
-import {loginByPassword, phoneLogin, sendVerificationCode, wechatLogin} from '@/api/login';
+import {accountLogin, phoneLogin, sendVerificationCode, wechatLogin} from '@/api/login';
 import {cacheManager} from '@/utils/store';
+import { navigateToUrl } from '@/utils/navigateTo'
 
 // 登录方式
 const loginType = ref('phone'); // 'phone' 或 'account'
@@ -164,6 +162,7 @@ const countdown = ref(0);
 const isSending = ref(false);
 
 // 账号密码登录相关
+const username = ref('');
 const password = ref('');
 const passwordError = ref('');
 const showPassword = ref(false);
@@ -192,13 +191,13 @@ function validatePhoneNumber() {
     phoneError.value = '请输入手机号码';
     return false;
   }
-
+  
   const phoneRegex = /^1[3-9]\d{9}$/;
   if (!phoneRegex.test(phoneNumber.value)) {
     phoneError.value = '请输入有效的手机号码';
     return false;
   }
-
+  
   phoneError.value = '';
   return true;
 }
@@ -209,12 +208,12 @@ function validatePassword() {
     passwordError.value = '请输入密码';
     return false;
   }
-
+  
   if (password.value.length < 6) {
     passwordError.value = '密码长度至少为6位';
     return false;
   }
-
+  
   passwordError.value = '';
   return true;
 }
@@ -222,18 +221,19 @@ function validatePassword() {
 // 发送验证码
 async function sendVerificationCodeForUser() {
   if (isSending.value || !isPhoneValid.value) return;
+  
   if (!validatePhoneNumber()) return;
-
+  
   isSending.value = true;
   countdown.value = 60;
-
+  
   try {
     await sendVerificationCode(phoneNumber.value);
     uni.showToast({
       title: '验证码已发送',
       icon: 'success'
     });
-
+    
     // 倒计时
     const timer = setInterval(() => {
       countdown.value--;
@@ -256,7 +256,7 @@ async function handleLogin() {
   // 验证表单
   if (loginType.value === 'phone') {
     if (!validatePhoneNumber()) return;
-
+    
     if (!verificationCode.value) {
       uni.showToast({
         title: '请输入验证码',
@@ -272,14 +272,15 @@ async function handleLogin() {
       });
       return;
     }
-
+    
     if (!validatePassword()) return;
   }
-
+  
   // 显示加载
   uni.showLoading({
     title: '登录中...'
   });
+
   try {
     let response;
     if (loginType.value === 'phone') {
@@ -289,8 +290,8 @@ async function handleLogin() {
         role: selectedRole.value
       });
     } else {
-      response = await loginByPassword({
-        phoneNumber: phoneNumber.value,
+      response = await accountLogin({
+        phone: phoneNumber.value,
         password: password.value,
         role: selectedRole.value
       });
@@ -308,12 +309,13 @@ async function handleLogin() {
     cacheManager.setCache('token', userInfo.token);
     cacheManager.setCache('userInfo', userInfo);
 
+
     uni.hideLoading();
     uni.showToast({
       title: '登录成功',
       icon: 'success'
     });
-
+    
     // 登录成功后重定向
     redirectAfterLogin();
   } catch (error) {
@@ -330,7 +332,7 @@ async function handleWechatLogin() {
   uni.showLoading({
     title: '正在登录...'
   });
-
+  
   // 检查是否支持微信登录
   if (!uni.canIUse('getUserProfile')) {
     uni.hideLoading();
@@ -351,7 +353,7 @@ async function handleWechatLogin() {
         fail: reject
       });
     });
-
+    
     // 获取微信登录凭证
     const loginRes = await new Promise((resolve, reject) => {
       uni.login({
@@ -360,33 +362,33 @@ async function handleWechatLogin() {
         fail: reject
       });
     });
-
+    
     // 调用微信登录接口
     const response = await wechatLogin({
       code: loginRes.code,
       userInfo: userProfile.userInfo,
       role: selectedRole.value
     });
-
-    const userInfo = response.data;
-
+    
+    const { token, userData } = response.data;
+    
     // 保存登录信息
-    uni.setStorageSync('token', userInfo.value.token);
-    uni.setStorageSync('userInfo', userInfo);
-
+    uni.setStorageSync('token', token);
+    uni.setStorageSync('userInfo', JSON.stringify(userData));
+    
     // 设置用户类型
     setUserType(USER_TYPES.USER);
-
+    
     // 更新状态
     isLoggedIn.value = true;
     userInfo.value = userData;
-
+    
     uni.hideLoading();
     uni.showToast({
       title: '登录成功',
       icon: 'success'
     });
-
+    
     // 登录成功后重定向
     redirectAfterLogin();
   } catch (error) {
@@ -402,18 +404,18 @@ async function handleWechatLogin() {
 // 登录成功后重定向
 function redirectAfterLogin() {
   // 根据用户角色重定向到不同页面
-  switch (selectedRole.value) {
+  switch(selectedRole.value) {
     case 'user':
-      uni.reLaunch({url: '/pages/index/index'});
+      uni.reLaunch({ url: '/pages/index/index' });
       break;
     case 'lawyer':
-      uni.reLaunch({url: '/pages/lawyer/lawyerinfo'});
+      uni.reLaunch({ url: '/pages/lawyer/lawyerinfo' });
       break;
     case 'admin':
-      uni.reLaunch({url: '/pages/admin/admin'});
+      uni.reLaunch({ url: '/pages/admin/admin' });
       break;
     default:
-      uni.reLaunch({url: '/pages/index/index'});
+      uni.reLaunch({ url: '/pages/index/index' });
   }
 }
 
@@ -424,21 +426,19 @@ function goToRegister() {
   });
 }
 
-// 跳转到忘记密码页面
+// 跳转到修改密码页面
 function goToResetPassword() {
-  uni.navigateTo({
-    url: '/pages/login/reset'
-  });
+  navigateToUrl("/pages/login/resetpassword");
 }
 
 // 检查是否已登录
 function checkLoginStatus() {
-  let token = cacheManager.getCache('token');
-  let savedUserInfo = cacheManager.getCache('userInfo');
+  const token = uni.getStorageSync('token');
+  const savedUserInfo = uni.getStorageSync('userInfo');
 
   if (token && savedUserInfo) {
     try {
-      userInfo = savedUserInfo;
+      userInfo.value = JSON.parse(savedUserInfo);
       isLoggedIn.value = true;
     } catch (e) {
       console.error('Parse userInfo error:', e);
@@ -453,6 +453,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
+@import '@/uni_modules/theme/index.scss';
 
 .login-container {
   min-height: 100vh;
@@ -468,20 +469,20 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   padding: 60rpx 0;
-
+  
   .logo-image {
     width: 160rpx;
     height: 160rpx;
     margin-bottom: 30rpx;
   }
-
+  
   .app-name {
     font-size: 36rpx;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 16rpx;
   }
-
+  
   .app-slogan {
     font-size: 28rpx;
     color: var(--text-secondary);
@@ -499,18 +500,18 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   margin-bottom: 40rpx;
-
+  
   .tab-item {
     padding: 20rpx 30rpx;
     margin: 0 20rpx;
     font-size: 30rpx;
     color: var(--text-secondary);
     position: relative;
-
+    
     &.active {
       color: var(--primary-color);
       font-weight: 500;
-
+      
       &::after {
         content: '';
         position: absolute;
@@ -539,18 +540,18 @@ onMounted(() => {
   border-radius: 12rpx;
   padding: 24rpx 30rpx;
   margin-bottom: 30rpx;
-
+  
   uni-icons {
     margin-right: 20rpx;
   }
-
+  
   input {
     flex: 1;
     height: 48rpx;
     font-size: 28rpx;
     color: var(--text-primary);
   }
-
+  
   &.verification-code {
     position: relative;
     padding-right: 200rpx;
@@ -567,7 +568,7 @@ onMounted(() => {
   font-size: 26rpx;
   padding: 6rpx 20rpx;
   border-left: 1rpx solid #ddd;
-
+  
   &.disabled {
     color: var(--text-tertiary);
   }
@@ -589,18 +590,18 @@ onMounted(() => {
 /* 角色选择 */
 .role-selection {
   margin: 20rpx 0 40rpx;
-
+  
   .role-label {
     font-size: 28rpx;
     color: var(--text-secondary);
     margin-bottom: 20rpx;
   }
-
+  
   .role-options {
     display: flex;
     justify-content: space-between;
   }
-
+  
   .role-item {
     flex: 1;
     display: flex;
@@ -611,28 +612,28 @@ onMounted(() => {
     background-color: #f5f7fa;
     margin: 0 10rpx;
     transition: all 0.3s;
-
+    
     &:first-child {
       margin-left: 0;
     }
-
+    
     &:last-child {
       margin-right: 0;
     }
-
+    
     uni-icons {
       margin-bottom: 10rpx;
     }
-
+    
     text {
       font-size: 26rpx;
       color: var(--text-secondary);
     }
-
+    
     &.active {
       background-color: rgba(41, 121, 255, 0.1);
       border: 1rpx solid rgba(41, 121, 255, 0.2);
-
+      
       text {
         color: var(--primary-color);
         font-weight: 500;
@@ -662,7 +663,7 @@ onMounted(() => {
   justify-content: space-between;
   margin-top: 30rpx;
   padding: 0 20rpx;
-
+  
   text {
     font-size: 28rpx;
     color: var(--text-secondary);
@@ -673,14 +674,14 @@ onMounted(() => {
 .other-login {
   margin-top: auto;
   padding: 60rpx 0;
-
+  
   .divider {
     display: flex;
     align-items: center;
     color: var(--text-tertiary);
     font-size: 26rpx;
     margin-bottom: 40rpx;
-
+    
     &::before,
     &::after {
       content: "";
@@ -688,21 +689,21 @@ onMounted(() => {
       height: 1rpx;
       background-color: #eee;
     }
-
+    
     &::before {
       margin-right: 20rpx;
     }
-
+    
     &::after {
       margin-left: 20rpx;
     }
   }
-
+  
   .social-login {
     display: flex;
     justify-content: center;
   }
-
+  
   .social-icon {
     width: 80rpx;
     height: 80rpx;
@@ -711,18 +712,18 @@ onMounted(() => {
     justify-content: center;
     align-items: center;
     margin: 0 30rpx;
-
+    
     &.wechat {
       background: linear-gradient(135deg, #44B549, #4FB854);
     }
   }
-
+  
   .agreement {
     text-align: center;
     font-size: 24rpx;
     color: var(--text-tertiary);
     margin-top: 40rpx;
-
+    
     .link {
       color: var(--primary-color);
     }

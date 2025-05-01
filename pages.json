@@ -110,6 +110,20 @@
         "navigationBarTitleText": "通话页面",
         "enablePullDownRefresh": false
       }
+    },
+    {
+      "path": "pages/login/register/register",
+      "style": {
+        "navigationBarTitleText": "注册账户",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/login/resetpassword",
+      "style": {
+        "navigationBarTitleText": "修改密码",
+        "enablePullDownRefresh": false
+      }
     }
   ],
   "tabBar": {
