@@ -14,6 +14,20 @@
     </scroll-view>
   </view>
 
+  <!-- 搜索组件 -->
+  <view class="search-wrapper">
+    <view class="search-box">
+      <uni-icons type="search" size="18" color="#999"></uni-icons>
+      <input 
+        class="search-input" 
+        v-model="searchKeyword" 
+        placeholder="搜索律师名称、专长领域" 
+        @input="debounceSearch"
+      />
+      <uni-icons v-if="searchKeyword" type="clear" size="18" color="#999" @click="clearSearch"></uni-icons>
+    </view>
+  </view>
+
   <view class="lawyer-list">
     <!-- 搜索中状态 -->
     <view v-if="loading" class="loading-container">
@@ -30,28 +44,28 @@
     <template v-else>
       <view
           v-for="(lawyer, index) in filterLawyerList"
-          :key="index"
+          :key="lawyer.id"
           class="lawyer-card"
           @click="handleClick(lawyer)"
       >
         <view class="lawyer-header">
-          <image :src="lawyer.avatar" class="avatar"/>
+          <image :src="lawyer.avatar || '/static/avatar-default.png'" class="avatar"/>
           <view class="lawyer-info">
             <view class="name-line">
-              <text class="name">{{ lawyer.name }}</text>
+              <text class="name">{{ lawyer.lawyerName }}</text>
               <text class="cert-badge">律师认证</text>
               <text v-if="lawyer.recommend" class="recommend-badge">平台优选</text>
             </view>
             <view class="stats">
-              <text>咨询人数 {{ lawyer.consultCount }}</text>
-              <text class="score">用户评分 {{ lawyer.score }}</text>
+              <text>咨询人数 {{ lawyer.consultCount || 0 }}</text>
+              <text class="score">用户评分 {{ lawyer.rating || '暂无' }}</text>
             </view>
-            <view class="expertise">{{ lawyer.expertise }}</view>
-            <view class="location">{{ lawyer.location }}</view>
+            <view class="expertise">{{ formatExpertise(lawyer) }}</view>
+            <view class="location">{{ formatLocation(lawyer) }}</view>
           </view>
         </view>
         <view class="price-line">
-          <text class="price">¥{{ lawyer.price }}/30分钟</text>
+          <text class="price">¥{{ lawyer.price || 0 }}/30分钟</text>
           <text class="consult-type">电话咨询</text>
         </view>
       </view>
@@ -69,132 +83,28 @@
 
 
 <script setup>
-import {navigateToUrl} from "@/utils/navigateTo";
-import {computed, ref, watch} from "vue";
+import { navigateToUrl } from "@/utils/navigateTo";
+import { computed, ref, watch, onMounted } from "vue";
+import { request } from "@/utils/request";
 
 // 接收搜索关键词参数
 const props = defineProps({
-  searchKeyword: {
+  externalSearchKeyword: {
     type: String,
     default: ''
   }
 });
+
+// 搜索关键词
+const searchKeyword = ref('');
 
 const categories = ref([
   '全部', '刑事案件', '经济纠纷', '劳动纠纷', '工伤纠纷',
   '退费纠纷', '交通事故', '房产纠纷', '征地拆迁',
   '离婚纠纷', '债务协商', '更多领域'
 ]);
-const currentTag = ref('全部');// 当前选中的标签
-const lawyerList = [
-  {
-    id: 1,
-    name: '魏会然',
-    avatar: '/static/avatar1.png',
-    consultCount: 75,
-    score: 4.9,
-    expertise: '工伤纠纷、交通事故、刑事案件、劳动纠纷、工伤纠纷、离婚纠纷',
-    location: '北京朝阳区',
-    price: 68,
-    recommend: true
-  },
-  {
-    id: 2,
-    name: '何巧玲',
-    avatar: '/static/avatar2.png',
-    consultCount: 1312,
-    score: 5.0,
-    expertise: '退费纠纷、交通事故、经济纠纷',
-    location: '北京朝阳区',
-    price: 48
-  },
-  {
-    id: 3,
-    name: '李秀华',
-    avatar: '/static/avatar1.png',
-    consultCount: 75,
-    score: 4.9,
-    expertise: '合同纠纷、房产纠纷',
-    location: '北京朝阳区',
-    price: 68,
-    recommend: true
-  },
-  {
-    id: 4,
-    name: '张立强',
-    avatar: '/static/avatar2.png',
-    consultCount: 1312,
-    score: 5.0,
-    expertise: '合同纠纷、房产纠纷',
-    location: '北京朝阳区',
-    price: 48
-  },
-  {
-    id: 5,
-    name: '王天明',
-    avatar: '/static/avatar1.png',
-    consultCount: 75,
-    score: 4.9,
-    expertise: '征地拆迁',
-    location: '北京朝阳区',
-    price: 68,
-    recommend: true
-  },
-  {
-    id: 6,
-    name: '赵晓峰',
-    avatar: '/static/avatar2.png',
-    consultCount: 1312,
-    score: 5.0,
-    expertise: '征地拆迁',
-    location: '北京朝阳区',
-    price: 48
-  },
-  {
-    id: 7,
-    name: '钱爱华',
-    avatar: '/static/avatar1.png',
-    consultCount: 75,
-    score: 4.9,
-    expertise: '债务协商',
-    location: '北京朝阳区',
-    price: 68,
-    recommend: true
-  },
-  {
-    id: 8,
-    name: '孙丽娜',
-    avatar: '/static/avatar2.png',
-    consultCount: 1312,
-    score: 5.0,
-    expertise: '债务协商',
-    location: '北京朝阳区',
-    price: 48
-  },
-  {
-    id: 9,
-    name: '周海涛',
-    avatar: '/static/avatar1.png',
-    consultCount: 75,
-    score: 4.9,
-    expertise: '合同纠纷、',
-    location: '北京朝阳区',
-    price: 68,
-    recommend: true
-  },
-  {
-    id: 10,
-    name: '吴文静',
-    avatar: '/static/avatar2.png',
-    consultCount: 1312,
-    score: 5.0,
-    expertise: '合同纠纷、交通事故',
-    location: '北京朝阳区',
-    price: 48
-  },
-
-  // 其他律师数据...
-];
+const currentTag = ref('全部'); // 当前选中的标签
+const lawyerList = ref([]); // 律师列表数据
 
 // 定义搜索状态
 const loading = ref(false);
@@ -205,27 +115,117 @@ function selectTag(tagValue) {
   currentTag.value = tagValue;
 }
 
-// 监听搜索关键词变化
-watch(() => props.searchKeyword, (newValue) => {
-  console.log('搜索关键词变化：', newValue);
-  // 可以在这里执行其他搜索相关的逻辑
+// 监听外部搜索关键词变化
+watch(() => props.externalSearchKeyword, (newValue) => {
+  searchKeyword.value = newValue;
+  searchLawyers();
 });
 
-// 计算属性：过滤律师列表 - 增加搜索功能
+// 加载所有律师数据
+const fetchLawyers = async () => {
+  try {
+    loading.value = true;
+    const response = await request({
+      url: '/lawyer/getAllLawyers',
+      method: 'GET'
+    });
+    
+    if (response && Array.isArray(response)) {
+      lawyerList.value = response.map(lawyer => ({
+        ...lawyer,
+        // 默认值和转换处理
+        avatar: '/static/avatar-default.png',
+        consultCount: lawyer.consultCount || 0,
+        price: lawyer.price || 48
+      }));
+    }
+  } catch (error) {
+    console.error('获取律师列表失败:', error);
+    uni.showToast({
+      title: '获取律师列表失败',
+      icon: 'none'
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 格式化专长信息
+const formatExpertise = (lawyer) => {
+  if (lawyer.lawyerSpecialtyRelationVolist && lawyer.lawyerSpecialtyRelationVolist.length > 0) {
+    return lawyer.lawyerSpecialtyRelationVolist
+      .map(relation => relation.lawyerSpecialtyVo?.specialtyName)
+      .filter(Boolean)
+      .join('、');
+  }
+  return lawyer.lawyerIntroduction || '专业律师';
+};
+
+// 格式化地理位置
+const formatLocation = (lawyer) => {
+  // 根据实际字段调整
+  return `${lawyer.provinceCode || ''}${lawyer.cityCode || ''}${lawyer.districtCode || ''}`;
+};
+
+// 防抖函数
+let searchTimeout = null;
+const debounceSearch = () => {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    searchLawyers();
+  }, 500);
+};
+
+// 清除搜索
+const clearSearch = () => {
+  searchKeyword.value = '';
+  searchLawyers();
+};
+
+// 搜索律师
+const searchLawyers = async () => {
+  loading.value = true;
+  
+  try {
+    if (searchKeyword.value.trim()) {
+      // 如果后端有搜索接口，使用后端搜索
+      // 这里模拟前端搜索，实际项目中应该调用后端接口
+      await new Promise(resolve => setTimeout(resolve, 500)); // 模拟搜索延迟
+    } else {
+      // 没有搜索关键词时加载全部数据
+      if (lawyerList.value.length === 0) {
+        await fetchLawyers();
+      }
+    }
+  } catch (error) {
+    console.error('搜索律师失败:', error);
+    uni.showToast({
+      title: '搜索律师失败',
+      icon: 'none'
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 计算属性：过滤律师列表
 const filterLawyerList = computed(() => {
-  let result = lawyerList;
+  let result = [...lawyerList.value];
   
   // 如果选择了特定标签，先按标签过滤
   if (currentTag.value !== '全部') {
-    result = result.filter((lawyer) => lawyer.expertise.includes(currentTag.value));
+    result = result.filter((lawyer) => {
+      const expertise = formatExpertise(lawyer);
+      return expertise.includes(currentTag.value);
+    });
   }
   
   // 如果有搜索关键词，再按关键词过滤
-  if (props.searchKeyword) {
-    const keyword = props.searchKeyword.toLowerCase();
+  if (searchKeyword.value) {
+    const keyword = searchKeyword.value.toLowerCase();
     result = result.filter((lawyer) => 
-      lawyer.name.toLowerCase().includes(keyword) || 
-      lawyer.expertise.toLowerCase().includes(keyword)
+      (lawyer.lawyerName && lawyer.lawyerName.toLowerCase().includes(keyword)) || 
+      (formatExpertise(lawyer).toLowerCase().includes(keyword))
     );
   }
   
@@ -235,27 +235,23 @@ const filterLawyerList = computed(() => {
   return result;
 });
 
-// 导出搜索方法，允许父组件调用
-const searchLawyers = (keyword) => {
-  loading.value = true;
-  // 这里可以添加模拟搜索的逻辑，例如延时效果
-  setTimeout(() => {
-    loading.value = false;
-  }, 500);
-};
+// 页面跳转
+function handleClick(lawyer) {
+  // 跳转到律师详情页
+  navigateToUrl(`/pages/lawyer/lawyerinfo?lawyerId=${lawyer.id}`);
+}
+
+// 组件挂载时加载数据
+onMounted(() => {
+  fetchLawyers();
+});
 
 // 暴露方法供父组件调用
 defineExpose({
   searchLawyers
 });
-
-function handleClick(item) {
-  // 跳转到律师详情页
-  navigateToUrl(`/pages/lawyer/lawyerinfo?lawyerId=${item.id}`);
-}
 </script>
 
-<
 <style scoped>
 /* 颜色变量 */
 :root {
@@ -268,6 +264,28 @@ function handleClick(item) {
   --text-tertiary: #999;
   --bg-color: #f9f9f9;
   --card-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+}
+
+/* 搜索框样式 */
+.search-wrapper {
+  padding: 20rpx;
+  background: #fff;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 8rpx;
+  padding: 12rpx 20rpx;
+}
+
+.search-input {
+  flex: 1;
+  height: 36rpx;
+  font-size: 28rpx;
+  margin: 0 16rpx;
 }
 
 /* 分类标签优化 */
@@ -338,7 +356,7 @@ function handleClick(item) {
   border-radius: 50%;
   flex-shrink: 0;
   aspect-ratio: 1/1;
-  background: #f5f5f5/* url('/static/avatar-placeholder.png')*/ no-repeat center/60%;
+  background: #f5f5f5 no-repeat center/60%;
 }
 
 .lawyer-info {
