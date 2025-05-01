@@ -18,7 +18,7 @@ export function apiGetUserInfoById(id) {
 export function apiGetIndividualDetails(id) {
     return http.get("/user/getIndividualDetails", id, ({
         data: {
-            id: id
+            userId: id
         },
 
     }));

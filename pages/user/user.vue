@@ -7,9 +7,6 @@
           <!-- 修改头像功能 -->
           <view class="avatar-container" @click="showAvatarOptions">
             <image class="avatar" :src="userInfo.avatar" mode="aspectFill"/>
-            <view class="avatar-edit-icon">
-              <text class="edit-icon">📷</text>
-            </view>
           </view>
           <view class="user-meta">
             <!-- 企业用户 -->
@@ -77,8 +74,6 @@
                 </view>
               </view>
             </view>
-
-
           </view>
         </view>
       </view>
@@ -130,6 +125,8 @@
 import {onMounted, reactive, ref} from "vue"
 import {navigateTo, navigateToUrl} from "@/utils/navigateTo"
 import {apiGetCorporateDetails, apiGetIndividualDetails, apiUpdateAvatar} from "@/api/userapi"
+import {apiUploadUserAvatar} from "@/api/imageapi"
+
 import PageLayout from "@/components/custom/tabbarlayout.vue"
 import {cacheManager} from "@/utils/store"
 
@@ -203,7 +200,6 @@ function initUserInfo() {
     else if (userInfo.userType === 'individual' && !userInfo.fullName) {
       fetchIndividualUserDetails();
     }
-
   }
 }
 
@@ -211,10 +207,8 @@ function initUserInfo() {
 async function fetchCorporateUserDetails() {
   try {
     const response = await apiGetCorporateDetails(userInfo.userId);
-
     // 合并对象
     Object.assign(userInfo, response);
-
     console.log("企业用户信息加载完成", userInfo);
   } catch (error) {
     console.error("获取企业信息失败:", error);
@@ -225,10 +219,8 @@ async function fetchCorporateUserDetails() {
 async function fetchIndividualUserDetails() {
   try {
     const response = await apiGetIndividualDetails(userInfo.userId);
-
     // 合并对象
     Object.assign(userInfo, response);
-
     console.log("个人用户信息加载完成", userInfo);
   } catch (error) {
     console.error("获取个人详情失败", error);
@@ -281,7 +273,6 @@ function chooseImage(sourceType) {
     })
     return
   }
-
   const source = sourceType === 'camera' ? ['camera'] : ['album']
 
   uni.chooseImage({
@@ -295,8 +286,8 @@ function chooseImage(sourceType) {
         if (!file.type.startsWith('image/')) {
           throw new Error('请选择图片文件')
         }
-        if (file.size > 2 * 1024 * 1024) { // 2MB限制
-          throw new Error('图片大小不能超过2MB')
+        if (file.size > 4 * 1024 * 1024) { // 2MB限制
+          throw new Error('图片大小不能超过4MB')
         }
 
         await uploadAvatar(userInfo.userId, res.tempFilePaths[0])
@@ -309,20 +300,36 @@ function chooseImage(sourceType) {
 }
 
 // 上传方法
- function uploadAvatar(userId, filePath) {
+async function uploadAvatar(userId, filePath) {
   try {
     uni.showLoading({title: '上传中...', mask: true})
+    
+    // 这里调用接口上传头像文件
+    let uploadResult = await apiUploadUserAvatar('/image/uploadAvatar', filePath, userId);
 
-    http.uploadFile('/user/uploadAvatar', filePath, {
-      formatDate: {userId}
-    })
-
-    const result = JSON.parse(uploadResult.data)
-    if (result.code !== 200) {
-      throw new Error(result.message || '上传失败')
+    if (uploadResult.code !== 200) {
+      throw new Error('上传失败，请重试')
     }
-
-    //await updateAvatarUrl(userId, result.data.url)
+    
+    // 处理返回的图片二进制数据
+    if (uploadResult.data && uploadResult.data.imageData) {
+      // 二进制数据需要解析为Base64
+      const base64Image = arrayBufferToBase64(uploadResult.data.imageData);
+      const imageFormat = uploadResult.data.type === 'png' ? 'image/png' : 'image/jpeg';
+      const dataUrl = `data:${imageFormat};base64,${base64Image}`;
+      
+      // 更新本地数据
+      userInfo.avatar = dataUrl + '?t=' + Date.now(); // 添加时间戳避免缓存
+    } else if (uploadResult.data && uploadResult.data.url) {
+      // 如果后端返回了URL，则使用URL
+      userInfo.avatar = uploadResult.data.url + '?t=' + Date.now();
+    } else {
+      throw new Error('获取头像数据失败');
+    }
+    
+    // 更新缓存
+    cacheManager.setCache("userInfo", {avatar: userInfo.avatar})
+    
     uni.showToast({title: '头像更新成功', icon: 'success'})
   } catch (error) {
     handleUploadError(error)
@@ -331,27 +338,36 @@ function chooseImage(sourceType) {
   }
 }
 
-// 更新头像URL（强化参数验证）
+// 将ArrayBuffer转换为Base64
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  
+  return uni.btoa(binary); // btoa是将二进制数据编码为Base64的方法
+}
+
+// 更新头像URL
 async function updateAvatarUrl(userId, avatarUrl) {
   if (!userId || !avatarUrl) {
     throw new Error('参数错误')
   }
 
   try {
-    const result = await apiUpdateAvatar(userId, avatarUrl)
-    if (result.code !== 200) {
-      throw new Error(result.message || '更新失败')
-    }
+    // 调用更新接口
+    const result = await apiUpdateAvatar({userId, avatarUrl})
 
     // 更新本地数据
-    userInfo.avatar = avatarUrl
-    const cachedInfo = cacheManager.getCache("userInfo")
-    if (cachedInfo) {
-      cachedInfo.avatar = avatarUrl
-      cacheManager.setCache("userInfo", cachedInfo)
-    }
+    userInfo.avatar = avatarUrl + '?t=' + Date.now() // 添加时间戳避免缓存
+    cacheManager.updateCache("userInfo", {avatar: userInfo.avatar})
+
   } catch (error) {
-    throw error
+    console.error('头像更新失败:', error)
+    throw new Error('头像更新失败，请重试')
   }
 }
 
@@ -398,25 +414,6 @@ function handleUploadError(error) {
         border-radius: 50%;
         border: 2rpx solid rgba(255, 255, 255, 0.8);
         box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-      }
-
-      .avatar-edit-icon {
-        position: absolute;
-        right: 0;
-        bottom: 0;
-        width: 40rpx;
-        height: 40rpx;
-        background: #4A67FF;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2rpx solid #fff;
-
-        .edit-icon {
-          color: #fff;
-          font-size: 24rpx;
-        }
       }
     }
 
@@ -535,21 +532,21 @@ function handleUploadError(error) {
 
     .date-row {
       display: flex;
-      align-items: center; /* 保持垂直居中 */
+      align-items: center;
       gap: 16rpx;
       padding: 16rpx;
       background: white;
       border-radius: 12rpx;
       box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-      flex-wrap: nowrap; /* 禁止换行 */
-      overflow-x: auto; /* 允许横向滚动（极端情况备用） */
+      flex-wrap: nowrap;
+      overflow-x: auto;
 
       .date-label {
         display: flex;
         align-items: center;
         gap: 8rpx;
-        white-space: nowrap; /* 禁止标签换行 */
-        flex-shrink: 0; /* 禁止压缩 */
+        white-space: nowrap;
+        flex-shrink: 0;
 
         .icon {
           font-size: 32rpx;
@@ -565,8 +562,8 @@ function handleUploadError(error) {
         display: flex;
         align-items: center;
         gap: 8rpx;
-        white-space: nowrap; /* 强制日期不换行 */
-        flex-shrink: 0; /* 禁止压缩 */
+        white-space: nowrap;
+        flex-shrink: 0;
 
         .date-value {
           color: #4A67FF;
@@ -579,13 +576,6 @@ function handleUploadError(error) {
           font-size: 28rpx;
           margin: 0 4rpx;
         }
-      }
-    }
-
-    /* 移除移动端换行样式 */
-    @media (max-width: 480px) {
-      .date-row {
-        justify-content: flex-start; /* 左对齐代替居中 */
       }
     }
   }

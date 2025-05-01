@@ -137,6 +137,8 @@ class HttpRequest {
     // 上传文件
     // 修改后的uploadFile方法（移除手动Token处理）
     uploadFile(url, filePath, options = {}) {
+        const token = getToken()
+        debugger
         return new Promise((resolve, reject) => {
             const uploadTask = uni.uploadFile({
                 url: this.config.baseURL + url,
