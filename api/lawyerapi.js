@@ -15,6 +15,7 @@ export function apiGetAllLawyers() {
 }
 
 // 搜索律师
-export function apiSearchLawyers() {
-    return http.get("/lawyer/getSearchLawyers",null,null);
+// 搜索律师
+export function apiSearchLawyers(params) {
+    return http.post("/lawyer/searchLawyers", params);
 }

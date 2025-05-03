@@ -7,6 +7,9 @@
           <!-- 修改头像功能 -->
           <view class="avatar-container" @click="showAvatarOptions">
             <image class="avatar" :src="userInfo.avatar" mode="aspectFill"/>
+            <view v-if="isAvatarLoading" class="avatar-loading">
+              <uni-icons type="spinner-cycle" size="24" color="#ffffff"></uni-icons>
+            </view>
           </view>
           <view class="user-meta">
             <!-- 企业用户 -->
@@ -124,14 +127,16 @@
 <script setup>
 import {onMounted, reactive, ref} from "vue"
 import {navigateTo, navigateToUrl} from "@/utils/navigateTo"
-import {apiGetCorporateDetails, apiGetIndividualDetails, apiUpdateAvatar} from "@/api/userapi"
-import {apiUploadUserAvatar} from "@/api/imageapi"
+import {apiGetCorporateDetails, apiGetIndividualDetails} from "@/api/userapi"
+import {apiUploadUserAvatar, apiGetAvatarById} from "@/api/imageapi"
 
 import PageLayout from "@/components/custom/tabbarlayout.vue"
 import {cacheManager} from "@/utils/store"
 
 // 头像弹窗引用
 const avatarPopup = ref(null)
+// 头像加载状态
+const isAvatarLoading = ref(false)
 
 // 格式化日期函数
 const formatDate = (date) => {
@@ -181,7 +186,9 @@ const membership = ref({
 onMounted(async () => {
   await initUserInfo()
   judgeUserType(userInfo.userType)
+
 })
+
 
 // 初始化用户信息
 function initUserInfo() {
@@ -209,6 +216,14 @@ async function fetchCorporateUserDetails() {
     const response = await apiGetCorporateDetails(userInfo.userId);
     // 合并对象
     Object.assign(userInfo, response);
+
+    // 处理头像数据
+    if (response.imageData && response.type) {
+      const imageType = response.type === 'image/jpg' ? 'image/jpeg' : response.type;
+      userInfo.avatar = `data:${imageType};base64,${response.imageData}`;
+      console.log("企业用户头像加载完成");
+    }
+
     console.log("企业用户信息加载完成", userInfo);
   } catch (error) {
     console.error("获取企业信息失败:", error);
@@ -221,6 +236,14 @@ async function fetchIndividualUserDetails() {
     const response = await apiGetIndividualDetails(userInfo.userId);
     // 合并对象
     Object.assign(userInfo, response);
+
+    // 处理头像数据
+    if (response.imageData && response.type) {
+      const imageType = response.type === 'image/jpg' ? 'image/jpeg' : response.type;
+      userInfo.avatar = `data:${imageType};base64,${response.imageData}`;
+      console.log("个人用户头像加载完成");
+    }
+
     console.log("个人用户信息加载完成", userInfo);
   } catch (error) {
     console.error("获取个人详情失败", error);
@@ -264,7 +287,6 @@ function closeAvatarPopup() {
 // 选择图片
 function chooseImage(sourceType) {
   closeAvatarPopup()
-
   // 确保已获取用户ID
   if (!userInfo.userId) {
     uni.showToast({
@@ -302,74 +324,84 @@ function chooseImage(sourceType) {
 // 上传方法
 async function uploadAvatar(userId, filePath) {
   try {
+    isAvatarLoading.value = true;
     uni.showLoading({title: '上传中...', mask: true})
-    
+
+    console.log('开始上传头像:', filePath);
+
     // 这里调用接口上传头像文件
     let uploadResult = await apiUploadUserAvatar('/image/uploadAvatar', filePath, userId);
 
+    console.log('上传返回结果类型:', uploadResult.code, typeof uploadResult.data?.imageData);
+    debugger
     if (uploadResult.code !== 200) {
-      throw new Error('上传失败，请重试')
+      throw new Error(uploadResult.message || '上传失败，请重试')
     }
-    
-    // 处理返回的图片二进制数据
+
+    // 处理返回的图片数据
     if (uploadResult.data && uploadResult.data.imageData) {
-      // 二进制数据需要解析为Base64
-      const base64Image = arrayBufferToBase64(uploadResult.data.imageData);
-      const imageFormat = uploadResult.data.type === 'png' ? 'image/png' : 'image/jpeg';
-      const dataUrl = `data:${imageFormat};base64,${base64Image}`;
-      
-      // 更新本地数据
-      userInfo.avatar = dataUrl + '?t=' + Date.now(); // 添加时间戳避免缓存
-    } else if (uploadResult.data && uploadResult.data.url) {
-      // 如果后端返回了URL，则使用URL
-      userInfo.avatar = uploadResult.data.url + '?t=' + Date.now();
-    } else {
-      throw new Error('获取头像数据失败');
+      const imageType = uploadResult.data.type === 'image/jpg' ? 'image/jpeg' : uploadResult.data.type;
+      userInfo.avatar = `data:${imageType};base64,${uploadResult.data.imageData}`;
+      console.log('成功设置Base64图像，文件类型:', imageType);
     }
-    
-    // 更新缓存
-    cacheManager.setCache("userInfo", {avatar: userInfo.avatar})
-    
+
     uni.showToast({title: '头像更新成功', icon: 'success'})
   } catch (error) {
     handleUploadError(error)
   } finally {
+    isAvatarLoading.value = false;
     uni.hideLoading()
   }
 }
 
-// 将ArrayBuffer转换为Base64
-function arrayBufferToBase64(buffer) {
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  const len = bytes.byteLength;
-  
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  
-  return uni.btoa(binary); // btoa是将二进制数据编码为Base64的方法
-}
-
-// 更新头像URL
-async function updateAvatarUrl(userId, avatarUrl) {
-  if (!userId || !avatarUrl) {
-    throw new Error('参数错误')
-  }
-
+// 将图片数据转换为可显示的URL
+async function convertImageDataToUrl(imageData, imageType) {
   try {
-    // 调用更新接口
-    const result = await apiUpdateAvatar({userId, avatarUrl})
+    // 检查图像数据
+    if (!imageData) {
+      console.error('没有接收到图像数据');
+      return null;
+    }
 
-    // 更新本地数据
-    userInfo.avatar = avatarUrl + '?t=' + Date.now() // 添加时间戳避免缓存
-    cacheManager.updateCache("userInfo", {avatar: userInfo.avatar})
+    console.log('图像数据类型:', typeof imageData);
 
+    // 如果已经是Base64字符串
+    if (typeof imageData === 'string') {
+      const imageFormat = imageType || 'jpeg';
+      return `data:image/${imageFormat};base64,${imageData}`;
+    }
+
+    // 如果是二进制数据，尝试使用Blob URL (H5环境)
+    try {
+      // 确保数据是Uint8Array格式
+      let uint8Array;
+      if (imageData instanceof Uint8Array) {
+        uint8Array = imageData;
+      } else if (Array.isArray(imageData)) {
+        uint8Array = new Uint8Array(imageData);
+      } else if (imageData instanceof ArrayBuffer) {
+        uint8Array = new Uint8Array(imageData);
+      } else if (typeof imageData === 'object') {
+        // 尝试将对象转换为数组
+        uint8Array = new Uint8Array(Object.values(imageData));
+      } else {
+        throw new Error('不支持的图像数据类型');
+      }
+
+      const mimeType = imageType ? `image/${imageType}` : 'image/jpeg';
+      const blob = new Blob([uint8Array], {type: mimeType});
+      return URL.createObjectURL(blob);
+    } catch (blobError) {
+      console.error('Blob URL创建失败:', blobError);
+    }
   } catch (error) {
-    console.error('头像更新失败:', error)
-    throw new Error('头像更新失败，请重试')
+    console.error('转换图片数据失败:', error);
   }
+
+  // 使用后端API URL作为后备方案
+  return null;
 }
+
 
 // 统一错误处理
 function handleUploadError(error) {
@@ -687,5 +719,32 @@ function handleUploadError(error) {
   &:active {
     background: #f8f9ff;
   }
+}
+
+/* 新增加载样式 */
+.avatar-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 优化头像过渡效果 */
+.avatar {
+  transition: opacity 0.3s ease;
+}
+
+.avatar[src] {
+  opacity: 1;
+}
+
+.avatar:not([src]) {
+  opacity: 0.5;
 }
 </style>
