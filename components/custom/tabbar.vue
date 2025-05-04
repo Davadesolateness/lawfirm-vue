@@ -52,12 +52,12 @@
       </view>
       <view class="tab-item" :class="{ active: currentPage === 'lawyer' }" @click="navTo('/pages/lawyer/lawyerinfo')">
         <image :src="currentPage === 'lawyer' ? '/static/images/home_active.png' : '/static/images/home.png'"></image>
-        <text>律师主页</text>
-      </view>
-      <view class="tab-item" :class="{ active: currentPage === 'user' }" @click="navTo('/pages/user/user')">
-        <image :src="currentPage === 'user' ? '/static/images/user_active.png' : '/static/images/user.png'"></image>
         <text>我的</text>
       </view>
+<!--      <view class="tab-item" :class="{ active: currentPage === 'user' }" @click="navTo('/pages/user/user')">
+        <image :src="currentPage === 'user' ? '/static/images/user_active.png' : '/static/images/user.png'"></image>
+        <text>我的</text>
+      </view>-->
     </view>
 
     <!-- 管理员导航栏 -->
@@ -90,35 +90,18 @@ export default {
   data() {
     return {
       USER_TYPES: USER_TYPES,
+      userType: USER_TYPES.INDIVIDUAL, // 设置默认值为个人用户
       currentPage: 'index'
     };
   },
   created() {
     // 初始化时获取用户类型
-    this.fetchUserType();
+    this.userType = getUserType();
+    
     // 根据当前路径设置当前页面标识
     this.setCurrentPage();
-    
-    // 添加页面显示事件监听器，每次页面显示时都重新获取用户类型
-    uni.$on('app-show', this.fetchUserType);
-  },
-  beforeDestroy() {
-    // 移除事件监听器
-    uni.$off('app-show', this.fetchUserType);
   },
   methods: {
-    // 获取用户类型
-    fetchUserType() {
-      // 优先从全局状态获取
-      if (getApp().globalData && getApp().globalData.userType) {
-        this.userType = getApp().globalData.userType;
-      } else {
-        // 从存储中获取
-        this.userType = getUserType();
-      }
-      console.log('TabBar当前用户类型:', this.userType);
-    },
-    
     // 设置当前页面标识
     setCurrentPage() {
       const pages = getCurrentPages();

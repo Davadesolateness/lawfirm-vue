@@ -124,12 +124,6 @@ onMounted(() => {
   }
 });
 
-function filteredLawyers() {
-  if (this.currentTag === 'all') {
-    return this.lawyers;
-  }
-  return this.lawyers.filter((lawyer) => lawyer.category === this.currentTag);
-}
 </script>
 <!-- ... existing template and script 部分 ... -->
 

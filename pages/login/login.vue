@@ -308,16 +308,20 @@ async function handleLogin() {
     userInfo = response;
 
     // 设置用户类型
+    let userType;
     if (selectedRole.value === 'individual') {
-      setUserType(USER_TYPES.INDIVIDUAL);
+      userType = USER_TYPES.INDIVIDUAL;
     } else if (selectedRole.value === 'corporate') {
-      setUserType(USER_TYPES.CORPORATE);
+      userType = USER_TYPES.CORPORATE;
     } else if (selectedRole.value === 'lawyer') {
-      setUserType(USER_TYPES.LAWYER);
+      userType = USER_TYPES.LAWYER;
     } else if (selectedRole.value === 'admin') {
-      setUserType(USER_TYPES.ADMIN);
+      userType = USER_TYPES.ADMIN;
     }
-
+    
+    // 设置用户类型（这是唯一确定的，之后不会变）
+    setUserType(userType);
+    
     // 登录成功，保存用户信息和token
     isLoggedIn.value = true;
     // 存储登录信息到本地
@@ -391,17 +395,20 @@ async function handleWechatLogin() {
     uni.setStorageSync('userInfo', JSON.stringify(userData));
     
     // 设置用户类型
+    let userType;
     if (selectedRole.value === 'individual') {
-      setUserType(USER_TYPES.INDIVIDUAL);
+      userType = USER_TYPES.INDIVIDUAL;
     } else if (selectedRole.value === 'corporate') {
-      setUserType(USER_TYPES.CORPORATE);
+      userType = USER_TYPES.CORPORATE;
     } else if (selectedRole.value === 'lawyer') {
-      setUserType(USER_TYPES.LAWYER);
+      userType = USER_TYPES.LAWYER;
     } else if (selectedRole.value === 'admin') {
-      setUserType(USER_TYPES.ADMIN);
+      userType = USER_TYPES.ADMIN;
     }
     
-    // 更新状态
+    setUserType(userType);
+    
+    // 登录成功，保存用户信息和token
     isLoggedIn.value = true;
     userInfo.value = userData;
     
