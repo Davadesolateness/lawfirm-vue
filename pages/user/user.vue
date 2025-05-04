@@ -193,7 +193,6 @@ onMounted(async () => {
 // 初始化用户信息
 function initUserInfo() {
   const cachedInfo = cacheManager.getCache("userInfo")
-
   if (cachedInfo) {
     Object.assign(userInfo, cachedInfo)
   }

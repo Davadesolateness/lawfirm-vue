@@ -1,25 +1,40 @@
 <template>
-  <view class="page-container">
-    <view class="page-content">
+  <view class="container">
+    <!-- 页面内容区域 -->
+    <view class="content-area">
       <slot></slot>
     </view>
-    <CustomTabBar></CustomTabBar>
+    
+    <!-- 自定义TabBar -->
+    <custom-tab-bar v-if="showTabBar"></custom-tab-bar>
   </view>
 </template>
 
-<script setup>
-import CustomTabBar from '@/components/custom/tabbar'
+<script>
+import CustomTabBar from '@/components/custom/TabBar.vue';
+
+export default {
+  components: {
+    CustomTabBar
+  },
+  props: {
+    showTabBar: {
+      type: Boolean,
+      default: true
+    }
+  }
+}
 </script>
 
-<style>
-.page-container {
+<style lang="scss">
+.container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-.page-content {
+.content-area {
   flex: 1;
-  padding-bottom: 50px; /* 为底部tabBar预留空间 */
+  padding-bottom: 100rpx; /* 预留TabBar的高度 */
 }
 </style> 

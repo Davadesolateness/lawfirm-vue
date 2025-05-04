@@ -91,11 +91,19 @@
         <view class="role-options">
           <view 
             class="role-item" 
-            :class="{ active: selectedRole === 'user' }"
-            @click="selectedRole = 'user'"
+            :class="{ active: selectedRole === 'individual' }"
+            @click="selectedRole = 'individual'"
           >
-            <uni-icons type="person" size="16" :color="selectedRole === 'user' ? '#2979FF' : '#999'"></uni-icons>
-            <text>我是用户</text>
+            <uni-icons type="person" size="16" :color="selectedRole === 'individual' ? '#2979FF' : '#999'"></uni-icons>
+            <text>个人用户</text>
+          </view>
+          <view 
+            class="role-item" 
+            :class="{ active: selectedRole === 'corporate' }"
+            @click="selectedRole = 'corporate'"
+          >
+            <uni-icons type="shop" size="16" :color="selectedRole === 'corporate' ? '#2979FF' : '#999'"></uni-icons>
+            <text>法人用户</text>
           </view>
           <view 
             class="role-item" 
@@ -152,7 +160,7 @@ import { navigateToUrl } from '@/utils/navigateTo'
 
 // 登录方式
 const loginType = ref('phone'); // 'phone' 或 'account'
-const selectedRole = ref('user'); // 'user', 'lawyer', 'admin'
+const selectedRole = ref('individual'); // 'individual', 'corporate', 'lawyer', 'admin'
 
 // 手机号登录相关
 const phoneNumber = ref('');
@@ -299,16 +307,22 @@ async function handleLogin() {
 
     userInfo = response;
 
-    if (selectedRole.value.toUpperCase() == "")
-        // 设置用户类型
-      setUserType(USER_TYPES[selectedRole.value.toUpperCase()]);
+    // 设置用户类型
+    if (selectedRole.value === 'individual') {
+      setUserType(USER_TYPES.INDIVIDUAL);
+    } else if (selectedRole.value === 'corporate') {
+      setUserType(USER_TYPES.CORPORATE);
+    } else if (selectedRole.value === 'lawyer') {
+      setUserType(USER_TYPES.LAWYER);
+    } else if (selectedRole.value === 'admin') {
+      setUserType(USER_TYPES.ADMIN);
+    }
 
     // 登录成功，保存用户信息和token
     isLoggedIn.value = true;
     // 存储登录信息到本地
     cacheManager.setCache('token', userInfo.token);
     cacheManager.setCache('userInfo', userInfo);
-
 
     uni.hideLoading();
     uni.showToast({
@@ -377,7 +391,15 @@ async function handleWechatLogin() {
     uni.setStorageSync('userInfo', JSON.stringify(userData));
     
     // 设置用户类型
-    setUserType(USER_TYPES.USER);
+    if (selectedRole.value === 'individual') {
+      setUserType(USER_TYPES.INDIVIDUAL);
+    } else if (selectedRole.value === 'corporate') {
+      setUserType(USER_TYPES.CORPORATE);
+    } else if (selectedRole.value === 'lawyer') {
+      setUserType(USER_TYPES.LAWYER);
+    } else if (selectedRole.value === 'admin') {
+      setUserType(USER_TYPES.ADMIN);
+    }
     
     // 更新状态
     isLoggedIn.value = true;
@@ -405,7 +427,10 @@ async function handleWechatLogin() {
 function redirectAfterLogin() {
   // 根据用户角色重定向到不同页面
   switch(selectedRole.value) {
-    case 'user':
+    case 'individual':
+      uni.reLaunch({ url: '/pages/index/index' });
+      break;
+    case 'corporate':
       uni.reLaunch({ url: '/pages/index/index' });
       break;
     case 'lawyer':

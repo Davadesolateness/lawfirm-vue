@@ -26,7 +26,8 @@
       <view class="role-switcher">
         <text class="role-title">测试用户角色切换：</text>
         <view class="role-buttons">
-          <button class="role-btn" @click="switchRole(USER_TYPES.USER)">普通用户</button>
+          <button class="role-btn" @click="switchRole(USER_TYPES.INDIVIDUAL)">个人用户</button>
+          <button class="role-btn" @click="switchRole(USER_TYPES.CORPORATE)">法人用户</button>
           <button class="role-btn" @click="switchRole(USER_TYPES.LAWYER)">律师用户</button>
           <button class="role-btn" @click="switchRole(USER_TYPES.ADMIN)">管理员</button>
         </view>
@@ -48,7 +49,7 @@
 import {ref, onMounted} from 'vue';
 import {navigateToUrl} from "@/utils/navigateTo";
 import LawyerList from "@/components/lawyer/lawyerlist";
-import PageLayout from "@/components/custom/tabbarlayout";
+import PageLayout from "@/components/page-layout/tabbarlayout.vue";
 import {getUserType, setUserType, USER_TYPES} from "@/utils/store/userManager";
 
 // 搜索相关
@@ -91,8 +92,10 @@ function switchRole(role) {
   setUserType(role);
 
   // 更新当前显示的角色名称
-  if (role === USER_TYPES.USER) {
-    currentRole.value = '普通用户';
+  if (role === USER_TYPES.INDIVIDUAL) {
+    currentRole.value = '个人用户';
+  } else if (role === USER_TYPES.CORPORATE) {
+    currentRole.value = '法人用户';
   } else if (role === USER_TYPES.LAWYER) {
     currentRole.value = '律师用户';
   } else if (role === USER_TYPES.ADMIN) {
@@ -110,8 +113,10 @@ function switchRole(role) {
 // 页面加载时获取当前用户角色
 onMounted(() => {
   const userType = getUserType();
-  if (userType === USER_TYPES.USER) {
-    currentRole.value = '普通用户';
+  if (userType === USER_TYPES.INDIVIDUAL) {
+    currentRole.value = '个人用户';
+  } else if (userType === USER_TYPES.CORPORATE) {
+    currentRole.value = '法人用户';
   } else if (userType === USER_TYPES.LAWYER) {
     currentRole.value = '律师用户';
   } else if (userType === USER_TYPES.ADMIN) {
