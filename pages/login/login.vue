@@ -289,6 +289,7 @@ function restoreUserFromCache() {
   // 检查token是否存在（指定该用户ID获取token）
   let token = cacheManager.getToken(userId);
   debugger
+  token = null;
   if (!token) {
     // token不存在，清除可能的无效数据
     clearCurrentUserCache(userId);

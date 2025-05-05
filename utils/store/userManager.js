@@ -50,6 +50,10 @@ export const getUserInfo = () => {
 // 获取用户类型
 export const getUserType = () => {
     try {
+        // 获取缓存中当前登录用户的id
+        const userId = uni.getStorageSync('current_user_id');
+        // 设置为用户前缀 获取该用户的缓存信息
+        cacheManager.setUserPrefix(userId)
         const userInfo = cacheManager.getCache('userInfo');
         // 判断返回的用户类型
         if (userInfo && userInfo.userType) {
@@ -60,10 +64,10 @@ export const getUserType = () => {
                 return userInfo.userType;
             }
         }
-        return USER_TYPES.INDIVIDUAL; // 默认为个人用户
+        return null; // 默认为null
     } catch (e) {
         console.error('获取用户类型失败', e);
-        return USER_TYPES.INDIVIDUAL; // 默认为个人用户
+        return null; // 默认为个人用户
     }
 };
 

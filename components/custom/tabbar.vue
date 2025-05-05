@@ -50,12 +50,8 @@
         <image :src="currentPage === 'order' ? '/static/images/user_active.png' : '/static/images/user.png'"></image>
         <text>我的订单</text>
       </view>
-      <view class="tab-item" :class="{ active: currentPage === 'lawyer' }" @click="navTo('/pages/lawyer/lawyerinfo')">
-        <image :src="currentPage === 'lawyer' ? '/static/images/home_active.png' : '/static/images/home.png'"></image>
-        <text>我的</text>
-      </view>
-      <view class="tab-item" :class="{ active: currentPage === 'user' }" @click="navTo('/pages/lawyer/lawyer')">
-        <image :src="currentPage === 'user' ? '/static/images/user_active.png' : '/static/images/user.png'"></image>
+      <view class="tab-item" :class="{ active: currentPage === 'lawyer' }" @click="navTo('/pages/lawyer/lawyer')">
+        <image :src="currentPage === 'lawyer' ? '/static/images/user_active.png' : '/static/images/user.png'"></image>
         <text>我的</text>
       </view>-
     </view>
@@ -97,19 +93,20 @@ export default {
   created() {
     // 初始化时获取用户类型
     this.userType = getUserType();
-    
+
     // 根据当前路径设置当前页面标识
     this.setCurrentPage();
   },
   methods: {
     // 设置当前页面标识
     setCurrentPage() {
+
       const pages = getCurrentPages();
       if (pages.length > 0) {
         const currentPage = pages[pages.length - 1].route;
         if (currentPage.includes('/index/')) {
           this.currentPage = 'index';
-        } else if (currentPage.includes('/lawyer/')) {
+        } else if (currentPage.includes('lawyer/lawyer')) {
           this.currentPage = 'lawyer';
         } else if (currentPage.includes('/order/')) {
           this.currentPage = 'order';
