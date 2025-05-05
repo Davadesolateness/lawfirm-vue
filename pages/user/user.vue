@@ -332,7 +332,7 @@ async function uploadAvatar(userId, filePath) {
     let uploadResult = await apiUploadUserAvatar('/image/uploadAvatar', filePath, userId);
 
     console.log('上传返回结果类型:', uploadResult.code, typeof uploadResult.data?.imageData);
-    debugger
+
     if (uploadResult.code !== 200) {
       throw new Error(uploadResult.message || '上传失败，请重试')
     }

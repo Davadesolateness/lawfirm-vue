@@ -1,16 +1,17 @@
 import http from "@/utils/http/index";
 
 
-// 上传用户头像
+// 上传法人、个人用户头像
 export function apiUploadUserAvatar(url,filePath,userId) {
     return http.uploadFile(url, filePath, {
         formData: {userId}
     });
 }
 
-export function apiUploadLawyerAvatar(url,filePath,lawyerId) {
+// 上传律师用户头像
+export function apiUploadLawyerAvatar(url,filePath,userId) {
     return http.uploadFile(url, filePath, {
-        formData: {lawyerId}
+        formData: {userId}
     });
 }
 

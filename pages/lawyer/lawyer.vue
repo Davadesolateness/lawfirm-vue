@@ -38,7 +38,7 @@
           <text class="card-title">个人简介</text>
           <view class="decorative-line"></view>
         </view>
-        <text class="content-text">{{ lawyerInfo.introduction || '暂无个人简介' }}</text>
+        <text class="content-text">{{ lawyerInfo.lawyerIntroduction || '暂无个人简介' }}</text>
       </view>
 
       <!-- 功能列表 -->
@@ -94,6 +94,7 @@ const isAvatarLoading = ref(false);
 
 // 响应式数据
 const lawyerInfo = reactive({
+  userId:  '',
   lawyerId: '',
   avatar: '',
   lawyerName: '',
@@ -101,7 +102,8 @@ const lawyerInfo = reactive({
   lawFirm: '',
   workYears: '',
   specialtyNames: '',
-  introduction: ''
+  lawyerIntroduction: '',
+  lawyerDetails: ''
 });
 
 // 生命周期
@@ -119,6 +121,8 @@ async function initLawyerInfo() {
   if (cachedInfo && cachedInfo.userId) {
     // 使用用户ID作为律师ID获取律师信息
     await fetchLawyerDetails();
+    // 这是当前登录用户的id 使用此id上传图片
+    lawyerInfo.userId = cachedInfo.userId;
   } else {
     console.error("未找到律师信息，无法获取律师详情");
     uni.showToast({
@@ -137,10 +141,13 @@ async function fetchLawyerDetails() {
 
     // 合并对象
     Object.assign(lawyerInfo, response);
+    lawyerInfo.lawyerId = response.id;
 
     // 处理头像数据
-    if (response.avatar) {
-      lawyerInfo.avatar = response.avatar;
+    if (response.imageData && response.imageType) {
+      const imageType = response.imageType === 'image/jpg' ? 'image/jpeg' : response.imageType;
+      lawyerInfo.avatar = `data:${imageType};base64,${response.imageData}`;
+      console.log("律师个人用户头像加载完成");
     }
 
     console.log("律师信息加载完成", lawyerInfo);
@@ -188,7 +195,7 @@ function closeAvatarPopup() {
 function chooseImage(sourceType) {
   closeAvatarPopup();
   // 确保已获取律师ID
-  if (!lawyerInfo.lawyerid) {
+  if (!lawyerInfo.userId) {
     uni.showToast({
       title: '用户信息错误，请重新登录',
       icon: 'none'
@@ -213,7 +220,7 @@ function chooseImage(sourceType) {
           throw new Error('图片大小不能超过4MB');
         }
 
-        await uploadAvatar(lawyerInfo.lawyerid, res.tempFilePaths[0]);
+        await uploadAvatar(lawyerInfo.userId, res.tempFilePaths[0]);
       } catch (error) {
         handleUploadError(error);
       }
@@ -223,7 +230,7 @@ function chooseImage(sourceType) {
 }
 
 // 上传方法
-async function uploadAvatar(lawyerId, filePath) {
+async function uploadAvatar(userId, filePath) {
   try {
     isAvatarLoading.value = true;
     uni.showLoading({ title: '上传中...', mask: true });
@@ -231,7 +238,7 @@ async function uploadAvatar(lawyerId, filePath) {
     console.log('开始上传律师头像:', filePath);
 
     // 这里调用接口上传头像文件 - 需要更换为对应的律师头像上传API
-    let uploadResult = await apiUploadLawyerAvatar('/image/uploadLawyerAvatar', filePath, lawyerId);
+    let uploadResult = await apiUploadLawyerAvatar('/image/uploadAvatar', filePath, userId);
 
     if (uploadResult.code !== 200) {
       throw new Error(uploadResult.message || '上传失败，请重试');
