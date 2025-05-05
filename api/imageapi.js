@@ -15,6 +15,13 @@ export function apiUploadLawyerAvatar(url,filePath,userId) {
     });
 }
 
+// 上传管理员头像
+export function apiUploadAdminAvatar(url,filePath,userId) {
+    return http.uploadFile(url, filePath, {
+        formData: {userId}
+    });
+}
+
 
 // 根据ID获取头像
 export function apiGetAvatarById(userId) {

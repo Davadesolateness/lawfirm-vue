@@ -1,278 +1,477 @@
 <template>
   <PageLayout>
-    <view class="admin-container">
-      <!-- 垂直排列管理模块 -->
-      <scroll-view class="management-list" scroll-y>
-        <!-- 用户管理 -->
-        <view class="management-card">
-          <view class="card-header" @click="toggleUserManagement">
-            <text class="title">👥 用户管理</text>
-            <uni-icons :type="isExpanded ? 'arrowup' : 'arrowdown'" size="20" color="#666"></uni-icons>
-          </view>
-          <view v-if="isExpanded" class="options-menu">
-            <view class="menu-item" @click="addUser">
-              <uni-icons type="plus-filled" size="16" color="#666"></uni-icons>
-              <text>新增用户</text>
+    <view class="container">
+      <!-- 管理员信息区 -->
+      <view class="admin-header">
+        <view class="admin-info">
+          <!-- 头像区域 -->
+          <view class="avatar-container" @click="showAvatarOptions">
+            <image class="avatar" :src="adminInfo.avatar || '/static/default-avatar.png'" mode="aspectFill"/>
+            <view v-if="isAvatarLoading" class="avatar-loading">
+              <uni-icons type="spinner-cycle" size="24" color="#ffffff"></uni-icons>
             </view>
+          </view>
+          <view class="admin-meta">
+            <text class="username">{{ adminInfo.adminName || '管理员' }}</text>
+            <view class="admin-tag">{{ getLevelText(adminInfo.adminLevel) }}</view>
           </view>
         </view>
 
-        <!-- 律师管理 -->
-        <view class="management-card">
-          <view class="card-header" @click="toggleLawyerManagement">
-            <text class="title">⚖️ 律师管理</text>
-            <uni-icons :type="isLawyerExpanded ? 'arrowup' : 'arrowdown'" size="20" color="#666"></uni-icons>
+        <!-- 管理员权限卡片 -->
+        <view class="permission-card">
+          <view class="card-header">
+            <text class="card-title">管理权限</text>
+            <view class="decorative-line"></view>
           </view>
-          <view v-if="isLawyerExpanded" class="options-menu">
-            <view class="menu-item" @click="showLawyerForm">
-              <uni-icons type="plus-filled" size="16" color="#666"></uni-icons>
-              <text>增加律师信息</text>
-            </view>
-            <view class="menu-item" @click="editLawyer">
-              <uni-icons type="compose" size="16" color="#666"></uni-icons>
-              <text>修改律师信息</text>
-            </view>
+          <view class="permission-content">
+            <text class="info-item">管理级别：{{ getLevelText(adminInfo.adminLevel) }}</text>
+            <text class="info-item">上次登录：{{ formatDate(adminInfo.lastLoginTime) }}</text>
           </view>
         </view>
+      </view>
 
-        <!-- 审核模块 -->
-        <view class="management-card">
-          <view class="card-header" @click="toggleAuditManagement">
-            <text class="title">📝 信息审核</text>
-            <uni-icons :type="isAuditExpanded ? 'arrowup' : 'arrowdown'" size="20" color="#666"></uni-icons>
-          </view>
-          <view v-if="isAuditExpanded" class="options-menu">
-            <view class="menu-item" @click="auditUserInfo">
-              <uni-icons type="person" size="16" color="#666"></uni-icons>
-              <text>审核用户信息</text>
-            </view>
-            <view class="menu-item" @click="auditLawyerInfo">
-              <uni-icons type="contact" size="16" color="#666"></uni-icons>
-              <text>审核律师信息</text>
-            </view>
-          </view>
+      <!-- 功能列表 -->
+      <view class="func-list">
+        <view class="func-item" @click="modifyAdminInfo">
+          <text class="func-icon">✏️</text>
+          <text class="func-text">修改信息</text>
+          <text class="arrow">›</text>
         </view>
-
-        <!-- 福利管理 -->
-        <view class="management-card">
-          <view class="card-header" @click="toggleWelfareManagement">
-            <text class="title">🎁 福利发放</text>
-            <uni-icons :type="isWelfareExpanded ? 'arrowup' : 'arrowdown'" size="20" color="#666"></uni-icons>
-          </view>
-          <view v-if="isWelfareExpanded" class="options-menu">
-            <view class="menu-item" @click="issueMembership">
-              <uni-icons type="vip" size="16" color="#666"></uni-icons>
-              <text>发放会员</text>
-            </view>
-            <view class="menu-item" @click="issueConsultation">
-              <uni-icons type="chat" size="16" color="#666"></uni-icons>
-              <text>发放咨询次数</text>
-            </view>
-          </view>
+        <view class="func-item" @click="toPage('/pages/feedback/index')">
+          <text class="func-icon">📧</text>
+          <text class="func-text">意见反馈</text>
+          <text class="arrow">›</text>
         </view>
-
-        <!-- 公告管理 -->
-        <view class="management-card">
-          <view class="card-header" @click="toggleNoticeManagement">
-            <text class="title">📢 公告管理</text>
-            <uni-icons :type="isNoticeExpanded ? 'arrowup' : 'arrowdown'" size="20" color="#666"></uni-icons>
-          </view>
-          <view v-if="isNoticeExpanded" class="options-menu">
-            <view class="menu-item" @click="manageHomeNotice">
-              <uni-icons type="home" size="16" color="#666"></uni-icons>
-              <text>主页公告管理</text>
-            </view>
-            <view class="menu-item" @click="addActivity">
-              <uni-icons type="plus-filled" size="16" color="#666"></uni-icons>
-              <text>添加活动</text>
-            </view>
-          </view>
-        </view>
-
-        <!-- 权限管理 -->
-        <view class="management-card">
-          <view class="card-header" @click="togglePermissionManagement">
-            <text class="title">🔐 权限管理</text>
-            <uni-icons :type="isPermissionExpanded ? 'arrowup' : 'arrowdown'" size="20" color="#666"></uni-icons>
-          </view>
-          <view v-if="isPermissionExpanded" class="options-menu">
-            <view class="menu-item" @click="showRoleForm">
-              <uni-icons type="plus-filled" size="16" color="#666"></uni-icons>
-              <text>新建角色</text>
-            </view>
-            <view class="menu-item" @click="managePermissions">
-              <uni-icons type="gear" size="16" color="#666"></uni-icons>
-              <text>权限配置</text>
-            </view>
-          </view>
-        </view>
-      </scroll-view>
-
+      </view>
     </view>
+
+    <!-- 头像操作弹窗 -->
+    <uni-popup ref="avatarPopup" type="bottom">
+      <view class="popup-content">
+        <view class="popup-title">修改头像</view>
+        <view class="popup-item" @click="chooseImage('album')">
+          <text class="popup-icon">🖼️</text>
+          <text class="popup-text">从相册选择</text>
+        </view>
+        <view class="popup-item" @click="chooseImage('camera')">
+          <text class="popup-icon">📷</text>
+          <text class="popup-text">拍照</text>
+        </view>
+        <view class="popup-item cancel" @click="closeAvatarPopup">取消</view>
+      </view>
+    </uni-popup>
   </PageLayout>
 </template>
 
-<script setup>
-import {ref, reactive, computed} from 'vue';
-import {navigateTo, navigateToUrl} from "@/utils/navigateTo";
-import PageLayout from "@/components/custom/tabbarlayout.vue";
+<script setup >
+import { onMounted, reactive, ref } from "vue";
+import { navigateTo, navigateToUrl } from "@/utils/navigateTo";
+import PageLayout from "@/components/page-layout/tabbarlayout.vue";
+import { apiUploadAdminAvatar } from "@/api/imageapi";
+import { cacheManager } from "@/utils/store";
 
-// 展开状态管理
-const expandedStates = reactive({
-  user: false,
-  lawyer: false,
-  audit: false,
-  welfare: false,
-  notice: false,
-  permission: false
-})
+// 头像弹窗引用
+const avatarPopup = ref(null);
+// 头像加载状态
+const isAvatarLoading = ref(false);
 
+// 响应式数据
+const adminInfo = reactive({
+  adminId: '',
+  avatar: '',
+  adminName: '',
+  adminLevel: 1, // 1: 普通管理员, 2: 高级管理员, 3: 超级管理员
+  lastLoginTime: new Date()
+});
 
-const roleForm = reactive({
-  id: null,
-  name: ''
-})
+// 生命周期
+onMounted(async () => {
+  await initAdminInfo();
+});
 
-const selectedPermissions = ref([])
-const rolePopup = ref(null)
-
-// 切换展开状态的方法
-const toggleExpanded = (key) => {
-  expandedStates[key] = !expandedStates[key]
-}
-
-// 导出展开状态
-const isExpanded = computed(() => expandedStates.user)
-const isLawyerExpanded = computed(() => expandedStates.lawyer)
-const isAuditExpanded = computed(() => expandedStates.audit)
-const isWelfareExpanded = computed(() => expandedStates.welfare)
-const isNoticeExpanded = computed(() => expandedStates.notice)
-const isPermissionExpanded = computed(() => expandedStates.permission)
-
-// 切换方法
-const toggleUserManagement = () => toggleExpanded('user')
-const toggleLawyerManagement = () => toggleExpanded('lawyer')
-const toggleAuditManagement = () => toggleExpanded('audit')
-const toggleWelfareManagement = () => toggleExpanded('welfare')
-const toggleNoticeManagement = () => toggleExpanded('notice')
-const togglePermissionManagement = () => toggleExpanded('permission')
-
-// 角色管理方法
-const showRoleForm = (role = null) => {
-  if (role) {
-    roleForm.id = role.id
-    roleForm.name = role.name
-    selectedPermissions.value = [...role.permissions]
+// 初始化管理员信息
+async function initAdminInfo() {
+  // 获取缓存中的管理员信息
+  const userId = uni.getStorageSync('current_user_id');
+  cacheManager.setUserPrefix(userId);
+  const cachedInfo = cacheManager.getCache('adminInfo');
+  
+  if (cachedInfo) {
+    Object.assign(adminInfo, cachedInfo);
   } else {
-    roleForm.id = null
-    roleForm.name = ''
-    selectedPermissions.value = []
+    // 模拟测试数据
+    Object.assign(adminInfo, {
+      adminId: '1',
+      adminName: '系统管理员',
+      adminLevel: 3,
+      avatar: '/static/default-avatar.png',
+      lastLoginTime: new Date()
+    });
+    
+    // 存入缓存
+    cacheManager.setCache('adminInfo', adminInfo);
   }
-  rolePopup.value.open()
 }
 
-
-// 新增用户
-function addUser() {
-  navigateToUrl('/pages/user/adduserinfo/adduserinfo')
+// 获取管理员级别文本
+function getLevelText(level) {
+  const levels = {
+    1: '普通管理员',
+    2: '高级管理员',
+    3: '超级管理员'
+  };
+  return levels[level] || '未知级别';
 }
 
-// 增加律师
-function showLawyerForm() {
+// 格式化日期函数
+function formatDate(date) {
+  if (!date) return '未登录';
+
+  // 将字符串日期转换为Date对象
+  const dateObj = new Date(date);
+
+  // 检查日期是否有效
+  if (isNaN(dateObj.getTime())) {
+    return '无效日期';
+  }
+
+  // 获取年、月、日、时、分
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const hour = String(dateObj.getHours()).padStart(2, '0');
+  const minute = String(dateObj.getMinutes()).padStart(2, '0');
+
+  // 格式化为中文日期格式
+  return `${year}年${month}月${day}日 ${hour}:${minute}`;
+}
+
+// 页面跳转方法
+function toPage(url) {
+  navigateToUrl(url);
+}
+
+// 修改管理员信息
+function modifyAdminInfo() {
   navigateTo({
-    url: "/pages/lawyer/addlawyerinfo",
-    params: {
-      isEditMode: false
-    }
-  })
+    url: "/pages/admin/modifyadmininfo",
+    params: { adminId: adminInfo.adminId }
+  });
 }
 
-// 修改律师
-function editLawyer (){
-  navigateTo({
-    url: "/pages/lawyer/addlawyerinfo",
-    params: {
-      isEditMode: true,
-      lawyerId: "444"
-    }
-  })
+// 显示头像操作弹窗
+function showAvatarOptions() {
+  avatarPopup.value.open('bottom');
 }
-const auditUserInfo = () => console.log('审核用户信息')
-const auditLawyerInfo = () => console.log('审核律师信息')
-const issueMembership = () => console.log('发放会员')
-const issueConsultation = () => console.log('发放咨询次数')
-const manageHomeNotice = () => console.log('主页公告管理')
-const addActivity = () => console.log('添加活动')
-const managePermissions = () => console.log('管理权限')
+
+// 关闭头像操作弹窗
+function closeAvatarPopup() {
+  avatarPopup.value.close();
+}
+
+// 选择图片
+function chooseImage(sourceType) {
+  closeAvatarPopup();
+  // 确保已获取管理员ID
+  if (!adminInfo.adminId) {
+    uni.showToast({
+      title: '用户信息错误，请重新登录',
+      icon: 'none'
+    });
+    return;
+  }
+  
+  const source = sourceType === 'camera' ? ['camera'] : ['album'];
+
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['compressed'],
+    sourceType: source,
+    success: async (res) => {
+      try {
+        // 增加文件类型和大小验证
+        const file = res.tempFiles[0];
+        if (!file.type.startsWith('image/')) {
+          throw new Error('请选择图片文件');
+        }
+        if (file.size > 4 * 1024 * 1024) { // 4MB限制
+          throw new Error('图片大小不能超过4MB');
+        }
+
+        await uploadAvatar(adminInfo.adminId, res.tempFilePaths[0]);
+      } catch (error) {
+        handleUploadError(error);
+      }
+    },
+    fail: handleUploadError
+  });
+}
+
+// 上传方法
+async function uploadAvatar(adminId, filePath) {
+  try {
+    isAvatarLoading.value = true;
+    uni.showLoading({ title: '上传中...', mask: true });
+
+    console.log('开始上传管理员头像:', filePath);
+debugger
+    // 这里调用接口上传头像文件
+    // 注意：这里需要替换为实际的管理员头像上传API
+    let uploadResult = await apiUploadAdminAvatar('/image/uploadAvatar', filePath, adminId);
+
+    if (uploadResult.code !== 200) {
+      throw new Error(uploadResult.message || '上传失败，请重试');
+    }
+
+    // 处理返回的图片数据
+    if (uploadResult.data && uploadResult.data.imageData) {
+      const imageType = uploadResult.data.type === 'image/jpg' ? 'image/jpeg' : uploadResult.data.type;
+      adminInfo.avatar = `data:${imageType};base64,${uploadResult.data.imageData}`;
+    }
+
+    // 更新缓存
+    cacheManager.setCache('adminInfo', adminInfo);
+
+    uni.showToast({ title: '头像更新成功', icon: 'success' });
+  } catch (error) {
+    handleUploadError(error);
+  } finally {
+    isAvatarLoading.value = false;
+    uni.hideLoading();
+  }
+}
+
+// 统一错误处理
+function handleUploadError(error) {
+  console.error('上传失败:', error);
+  uni.showToast({
+    title: error.message || '操作失败',
+    icon: 'none',
+    duration: 3000
+  });
+}
 </script>
 
 <style lang="scss" scoped>
-.admin-container {
-  min-height: 100vh;
-  background: #f8f9fa;
+/* 基础容器 */
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafb;
   padding: 24rpx;
 }
 
-.management-list {
-  height: calc(100vh - 48rpx);
-}
-
-.management-card {
-  background: #ffffff;
-  border-radius: 16rpx;
+/* 管理员信息区 */
+.admin-header {
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0fa 100%);
+  padding: 32rpx;
+  border-radius: 24rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
 
-  &:hover {
-    transform: translateY(-2rpx);
-    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
-  }
-
-  .card-header {
+  .admin-info {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 24rpx;
-    cursor: pointer;
-    border-bottom: 1rpx solid #f0f0f0;
+    margin-bottom: 32rpx;
 
-    .title {
-      font-size: 32rpx;
-      font-weight: 500;
-      color: #333;
+    .avatar-container {
+      position: relative;
+      margin-right: 24rpx;
+
+      .avatar {
+        width: 128rpx;
+        height: 128rpx;
+        border-radius: 50%;
+        border: 2rpx solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+      }
+    }
+
+    .admin-meta {
+      .username {
+        color: #2d3436;
+        font-size: 36rpx;
+        font-weight: 600;
+        line-height: 1.4;
+      }
+
+      .admin-tag {
+        display: inline-block;
+        padding: 6rpx 20rpx;
+        border-radius: 32rpx;
+        font-size: 24rpx;
+        margin-top: 12rpx;
+        background: rgba(52, 152, 219, 0.1);
+        color: #3498db;
+      }
     }
   }
 }
 
-.options-menu {
-  padding: 16rpx 24rpx;
+/* 卡片通用样式 */
+.permission-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+
+  .card-header {
+    margin-bottom: 24rpx;
+
+    .card-title {
+      color: #2c3e50;
+      font-size: 32rpx;
+      font-weight: 600;
+    }
+
+    .decorative-line {
+      width: 48rpx;
+      height: 4rpx;
+      background: #3498db;
+      margin-top: 12rpx;
+    }
+  }
 }
 
-.menu-item {
+/* 管理员权限卡片 */
+.permission-card {
+  .permission-content {
+    .info-item {
+      display: block;
+      font-size: 28rpx;
+      color: #555;
+      padding: 12rpx 0;
+      border-bottom: 1rpx solid #f0f0f0;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+}
+
+/* 功能列表 */
+.func-list {
+  background: #fff;
+  border-radius: 20rpx;
+  margin-bottom: 24rpx;
+
+  .func-item {
+    padding: 28rpx 32rpx;
+    display: flex;
+    align-items: center;
+    border-bottom: 1rpx solid #f0f0f0;
+    transition: background 0.2s;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .func-icon {
+      font-size: 40rpx;
+      margin-right: 24rpx;
+      min-width: 40rpx;
+    }
+
+    .func-text {
+      flex: 1;
+      color: #444;
+      font-size: 30rpx;
+    }
+
+    .arrow {
+      color: #999;
+      font-size: 40rpx;
+    }
+
+    &:active {
+      background: #f8f9ff;
+    }
+  }
+}
+
+/* 头像弹窗样式 */
+.popup-content {
+  padding: 24rpx;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+}
+
+.popup-title {
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #2c3e50;
+  padding: 16rpx 0 32rpx;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80rpx;
+    height: 4rpx;
+    background: #f0f4ff;
+    border-radius: 2rpx;
+  }
+}
+
+.popup-item {
   display: flex;
   align-items: center;
-  padding: 20rpx;
-  color: #666;
-  transition: all 0.3s ease;
-  border-radius: 8rpx;
-  margin-bottom: 8rpx;
+  padding: 28rpx 16rpx;
+  border-bottom: 1rpx solid #f0f0f0;
 
-  &:hover {
-    background: #f5f7fa;
-    color: #4A67FF;
+  .popup-icon {
+    font-size: 36rpx;
+    margin-right: 20rpx;
   }
 
-  text {
-    margin-left: 16rpx;
-    font-size: 28rpx;
+  .popup-text {
+    color: #2c3e50;
+    font-size: 30rpx;
+  }
+
+  &.cancel {
+    margin-top: 24rpx;
+    border: none;
+    justify-content: center;
+    color: #999;
+    font-size: 30rpx;
+  }
+
+  &:active {
+    background: #f8f9ff;
   }
 }
 
-// 弹窗样式
-:deep(.uni-popup) {
-  .uni-popup__wrapper {
-    border-radius: 16rpx;
-  }
+/* 加载样式 */
+.avatar-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 优化头像过渡效果 */
+.avatar {
+  transition: opacity 0.3s ease;
+}
+
+.avatar[src] {
+  opacity: 1;
+}
+
+.avatar:not([src]) {
+  opacity: 0.5;
 }
 </style>

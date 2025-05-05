@@ -62,7 +62,6 @@
 <script setup>
 import {computed, ref} from "vue"
 import {onLoad} from "@dcloudio/uni-app";
-import {apiGetLawyerInfoById} from "@/api/lawyerapi";
 
 const isEditMode = ref(false); // 根据路由参数判断是否编辑模式
 let formData = ref({
@@ -96,9 +95,7 @@ function handleSubmit() {
 onLoad((data) => {
   if (data && data.isEditMode == "true") {
     isEditMode.value = true;
-    apiGetLawyerInfoById("444").then((data) => {
-      formData.value = {...data}; // 填充表单数据
-    })
+
   }
   console.log("----------" + isEditMode.value)
 });

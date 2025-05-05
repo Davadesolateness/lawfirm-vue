@@ -35,7 +35,7 @@
       }
     },
     {
-      "path": "pages/admin/admin",
+      "path": "pages/admin/managepanel",
       "style": {
         "navigationBarTitleText": "管理员页面",
         "enablePullDownRefresh": false
@@ -50,13 +50,6 @@
     },
     {
       "path": "pages/404/404",
-      "style": {
-        "navigationBarTitleText": "",
-        "enablePullDownRefresh": false
-      }
-    },
-    {
-      "path": "pages/index/index2",
       "style": {
         "navigationBarTitleText": "",
         "enablePullDownRefresh": false
@@ -129,6 +122,13 @@
       "path": "pages/lawyer/lawyer",
       "style": {
         "navigationBarTitleText": "律师个人信息",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/admin/admin",
+      "style": {
+        "navigationBarTitleText": "管理员信息",
         "enablePullDownRefresh": false
       }
     }

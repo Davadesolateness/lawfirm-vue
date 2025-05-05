@@ -62,16 +62,12 @@
         <image :src="currentPage === 'index' ? '/static/images/home_active.png' : '/static/images/home.png'"></image>
         <text>首页</text>
       </view>
-      <view class="tab-item" :class="{ active: currentPage === 'admin' }" @click="navTo('/pages/admin/admin')">
-        <image :src="currentPage === 'admin' ? '/static/images/home_active.png' : '/static/images/home.png'"></image>
+      <view class="tab-item" :class="{ active: currentPage === 'managepanel' }" @click="navTo('/pages/admin/managepanel')">
+        <image :src="currentPage === 'managepanel' ? '/static/images/home_active.png' : '/static/images/home.png'"></image>
         <text>管理面板</text>
       </view>
-      <view class="tab-item" :class="{ active: currentPage === 'lawyer' }" @click="navTo('/pages/lawyer/addlawyerinfo')">
-        <image :src="currentPage === 'lawyer' ? '/static/images/home_active.png' : '/static/images/home.png'"></image>
-        <text>律师管理</text>
-      </view>
-      <view class="tab-item" :class="{ active: currentPage === 'user' }" @click="navTo('/pages/user/user')">
-        <image :src="currentPage === 'user' ? '/static/images/user_active.png' : '/static/images/user.png'"></image>
+      <view class="tab-item" :class="{ active: currentPage === 'admin' }" @click="navTo('/pages/admin/admin')">
+        <image :src="currentPage === 'admin' ? '/static/images/user_active.png' : '/static/images/user.png'"></image>
         <text>我的</text>
       </view>
     </view>
@@ -112,10 +108,12 @@ export default {
           this.currentPage = 'order';
         } else if (currentPage.includes('/user/')) {
           this.currentPage = 'user';
-        } else if (currentPage.includes('/admin/')) {
+        } else if (currentPage.includes('admin/admin')) {
           this.currentPage = 'admin';
         } else if (currentPage.includes('/consult/')) {
           this.currentPage = 'consult';
+        }else if (currentPage.includes('admin/managepanel')) {
+          this.currentPage = 'managepanel';
         }
       }
     },

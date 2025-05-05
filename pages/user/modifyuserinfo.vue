@@ -33,7 +33,6 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import {onLoad} from "@dcloudio/uni-app";
-import {apiGetLawyerInfoById} from "@/api/lawyerapi";
 
 const form = reactive({
   avatar: '/static/default-avatar.png',
