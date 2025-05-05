@@ -172,7 +172,7 @@ function toPage(url) {
 function modifyLawyerInfo() {
   navigateTo({
     url: "/pages/lawyer/modifylawyerinfo",
-    params: { lawyerid: lawyerInfo.lawyerid }
+    params: { lawyerId: lawyerInfo.lawyerId }
   });
 }
 

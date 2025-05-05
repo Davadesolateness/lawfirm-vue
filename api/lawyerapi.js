@@ -22,7 +22,7 @@ export function apiSearchLawyers(params) {
 
 // 更新律师信息
 export function apiUpdateLawyerInfo(lawyerInfo) {
-    return http.post("/lawyer/updateLawyerInfo", lawyerInfo);
+    return http.post("/lawyer/updateLawyer", lawyerInfo);
 }
 
 // 获取律师订单历史
