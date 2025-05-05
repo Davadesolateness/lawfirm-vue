@@ -94,7 +94,7 @@
 <script setup>
 import {navigateToUrl} from "@/utils/navigateTo";
 import {computed, ref, watch, onMounted, onBeforeUnmount} from "vue";
-import {apiGetAllLawyers, apiSearchLawyers} from "@/api/lawyerapi" // 新增搜索接口
+import { apiSearchLawyers} from "@/api/lawyerapi" // 新增搜索接口
 
 // 分页参数
 const currentPage = ref(1)

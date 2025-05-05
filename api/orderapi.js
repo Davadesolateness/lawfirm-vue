@@ -12,6 +12,17 @@ export function apiGetUserOrders(userId) {
 }
 
 /**
+ * 获取律师的所有订单列表
+ * @param {Number} lawyerId - 律师ID
+ * @returns {Promise} - 返回订单列表数据的Promise
+ */
+export function apiGetLawyerOrders(lawyerId) {
+  return http.get("/order/getLawyerOrders", {
+    lawyerId: lawyerId
+  });
+}
+
+/**
  * 获取订单详情
  * @param {Number} orderId - 订单ID
  * @returns {Promise} - 返回订单详情数据的Promise
@@ -28,7 +39,7 @@ export function apiGetOrderDetail(orderId) {
  * @returns {Promise} - 返回搜索结果的Promise
  */
 export function apiSearchOrders(params) {
-  return http.post("/order/searchOrders", params);
+  return http.get("/order/searchOrders", params);
 }
 
 /**

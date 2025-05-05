@@ -5,18 +5,18 @@
       <view class="page-header">
         <text class="page-title">法律咨询订单</text>
       </view>
-      
+
       <!-- 搜索区域 -->
       <view class="search-container">
         <view class="search-box">
           <uni-icons type="search" size="18" color="#8696a7"></uni-icons>
-          <input 
-            type="text" 
-            class="search-input" 
-            placeholder="搜索用户名或律师名" 
-            confirm-type="search"
-            v-model="searchKeyword"
-            @confirm="handleSearch"
+          <input
+              type="text"
+              class="search-input"
+              placeholder="搜索用户名或律师名"
+              confirm-type="search"
+              v-model="searchKeyword"
+              @confirm="handleSearch"
           />
           <view v-if="searchKeyword" class="clear-icon" @click="clearSearch">
             <uni-icons type="clear" size="14" color="#8696a7"></uni-icons>
@@ -30,22 +30,22 @@
         <view v-if="loading" class="loading-container">
           <view class="loading">加载中...</view>
         </view>
-        
+
         <view v-else-if="filteredOrders.length === 0" class="empty-result">
           <uni-icons type="info" size="32" color="#4A67FF"></uni-icons>
           <text class="empty-text">{{ searchKeyword ? '没有找到相关订单' : '暂无订单记录' }}</text>
         </view>
-        
+
         <template v-else>
-          <view 
-            v-for="(order, index) in filteredOrders" 
-            :key="order.orderId" 
-            class="order-card"
+          <view
+              v-for="(order, index) in filteredOrders"
+              :key="order.orderId"
+              class="order-card"
           >
             <view class="order-header">
               <view class="order-id">订单编号：{{ order.orderId }}</view>
             </view>
-            
+
             <view class="order-body">
               <!-- 律师信息 -->
               <view class="lawyer-info">
@@ -55,7 +55,7 @@
                   <view class="lawyer-title">{{ order.lawyerTitle }}</view>
                 </view>
               </view>
-              
+
               <!-- 订单详情 -->
               <view class="order-detail">
                 <view class="detail-item">
@@ -82,7 +82,7 @@
             </view>
 
           </view>
-          
+
           <!-- 加载更多 -->
           <view v-if="hasMore" class="load-more" @click="loadMore">
             <text>加载更多</text>
@@ -96,12 +96,14 @@
 
 <script setup>
 import PageLayout from "@/components/custom/tabbarlayout.vue";
-import { ref, computed, onMounted } from 'vue';
-import { apiGetUserOrders, apiSearchOrders } from '@/api/orderapi.js';
-import { cacheManager } from '@/utils/store';
+import {ref, computed, onMounted} from 'vue';
+import {apiGetUserOrders, apiGetLawyerOrders, apiSearchOrders} from '@/api/orderapi.js';
+import {cacheManager} from '@/utils/store';
 
 // 当前用户ID (实际应用中应该从用户状态或存储中获取)
 const userId = ref(null);
+const userType = ref(null);
+const lawyerId = ref(null);
 
 // 搜索
 const searchKeyword = ref('');
@@ -113,16 +115,30 @@ const pageSize = ref(10);
 // 订单列表
 const orderList = ref([]);
 
-// 获取用户ID
-function getUserId() {
+// 获取用户信息
+function getUserInfo() {
+  // 初始化缓存key值
+  const cacheUserId = uni.getStorageSync('current_user_id');
+  // 设置为用户前缀 获取该用户的缓存信息
+  cacheManager.setUserPrefix(cacheUserId)
   // 从缓存或全局状态中获取用户ID
-  // 这里仅作示例，实际实现需要根据你的用户状态管理方式调整
   const userInfo = cacheManager.getCache('userInfo');
-  if (userInfo && userInfo.userId) {
+
+  if (userInfo) {
     userId.value = userInfo.userId;
+    userType.value = userInfo.userType;
+
+    // 如果是律师类型，设置lawyerId
+    if (userType.value === 'lawyer') {
+      lawyerId.value = userInfo.relatedEntityId || userInfo.lawyerId;
+    }
+
+    console.log('当前用户类型:', userType.value);
+    console.log('用户ID:', userId.value);
+    console.log('律师ID:', lawyerId.value);
   } else {
-    // 没有用户ID时的处理逻辑，如跳转登录页
-    console.warn('用户未登录或无法获取用户ID');
+    // 没有用户信息时的处理逻辑，如跳转登录页
+    console.warn('用户未登录或无法获取用户信息');
   }
 }
 
@@ -130,7 +146,7 @@ function getUserId() {
 function handleSearch() {
   loading.value = true;
   pageNum.value = 1; // 重置页码
-  
+  debugger
   // 有搜索关键词时使用搜索API
   if (searchKeyword.value) {
     apiSearchOrders({
@@ -138,9 +154,9 @@ function handleSearch() {
       pageNum: pageNum.value,
       pageSize: pageSize.value
     }).then(res => {
-      if (res.code === 200 && res.data) {
-        orderList.value = formatOrders(res.data.list || []);
-        hasMore.value = res.data.hasNextPage || false;
+      if (res) {
+        orderList.value = formatOrders(res || []);
+        hasMore.value = res.hasNextPage || false;
       } else {
         orderList.value = [];
         hasMore.value = false;
@@ -192,10 +208,10 @@ function formatOrders(orders) {
 // 格式化日期时间
 function formatDateTime(dateTimeStr) {
   if (!dateTimeStr) return '未设置';
-  
+
   const date = new Date(dateTimeStr);
   if (isNaN(date.getTime())) return dateTimeStr; // 日期无效则返回原字符串
-  
+
   return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:${padZero(date.getMinutes())}`;
 }
 
@@ -207,86 +223,138 @@ function padZero(num) {
 // 过滤后的订单列表
 const filteredOrders = computed(() => {
   let result = orderList.value;
-  
+
   // 根据关键词过滤
   if (searchKeyword.value) {
     const keyword = searchKeyword.value.toLowerCase();
-    result = result.filter(order => 
-      (order.userName && order.userName.toLowerCase().includes(keyword)) || 
-      (order.lawyerName && order.lawyerName.toLowerCase().includes(keyword))
+    result = result.filter(order =>
+        (order.userName && order.userName.toLowerCase().includes(keyword)) ||
+        (order.lawyerName && order.lawyerName.toLowerCase().includes(keyword))
     );
   }
-  
+
   return result;
 });
 
 // 加载订单数据
 function loadOrders() {
-  if (!userId.value) {
-    console.warn('无法加载订单：用户ID不存在');
+  if (!userType.value) {
+    console.warn('无法加载订单：用户类型不存在');
     return;
   }
-  
+
   loading.value = true;
-  
+
+  // 根据用户类型选择不同的API
+  if (userType.value === 'lawyer' && lawyerId.value) {
+    // 律师用户，使用律师ID查询
+    loadLawyerOrders();
+  } else if (userType.value === 'personal' || userType.value === 'company') {
+    // 个人或法人客户，使用用户ID查询
+    loadUserOrders();
+  } else {
+    console.warn('不支持的用户类型或缺少必要ID:', userType.value);
+    loading.value = false;
+  }
+}
+
+// 加载普通用户订单
+function loadUserOrders() {
+  if (!userId.value) {
+    console.warn('无法加载用户订单：用户ID不存在');
+    loading.value = false;
+    return;
+  }
+
+  console.log('加载用户订单:', userId.value);
+
   apiGetUserOrders(userId.value)
-    .then(res => {
+      .then(res => {
         orderList.value = formatOrders(res || []);
         hasMore.value = false; // 根据接口返回判断是否有更多数据
-    })
-    .catch(err => {
-      console.error('获取订单列表异常:', err);
-      orderList.value = [];
-    })
-    .finally(() => {
-      loading.value = false;
-    });
+      })
+      .catch(err => {
+        console.error('获取用户订单列表异常:', err);
+        orderList.value = [];
+      })
+      .finally(() => {
+        loading.value = false;
+      });
+}
+
+// 加载律师订单
+function loadLawyerOrders() {
+  if (!lawyerId.value) {
+    console.warn('无法加载律师订单：律师ID不存在');
+    loading.value = false;
+    return;
+  }
+
+  console.log('加载律师订单:', lawyerId.value);
+
+  apiGetLawyerOrders(lawyerId.value)
+      .then(res => {
+        orderList.value = formatOrders(res || []);
+        hasMore.value = false;
+      })
+      .catch(err => {
+        console.error('获取律师订单列表异常:', err);
+        orderList.value = [];
+      })
+      .finally(() => {
+        loading.value = false;
+      });
 }
 
 // 加载更多订单
 function loadMore() {
   if (!hasMore.value || loading.value) return;
-  
+
   loading.value = true;
   pageNum.value++;
-  
-  // 根据是否有搜索关键词决定使用哪个API
-  const apiMethod = searchKeyword.value ? apiSearchOrders : apiGetUserOrders;
-  const params = searchKeyword.value ? {
-    keyword: searchKeyword.value,
-    pageNum: pageNum.value,
-    pageSize: pageSize.value
-  } : userId.value;
 
-  apiMethod(params)
-    .then(res => {
-      if (res.code === 200 && res.data) {
-        // 处理不同API返回的数据结构
-        const newOrders = searchKeyword.value ? (res.data.list || []) : (res.data || []);
-        const formattedOrders = formatOrders(newOrders);
-        
-        // 追加新订单到列表
-        orderList.value = [...orderList.value, ...formattedOrders];
-        
-        // 更新是否有更多数据的状态
-        hasMore.value = searchKeyword.value ? (res.data.hasNextPage || false) : false;
-      } else {
-        console.error('加载更多订单失败:', res.message);
-        hasMore.value = false;
-      }
-    })
-    .catch(err => {
-      console.error('加载更多订单异常:', err);
-      hasMore.value = false;
-    })
-    .finally(() => {
-      loading.value = false;
-    });
+  // 根据是否有搜索关键词决定使用哪个API
+  if (searchKeyword.value) {
+    // 有搜索关键词，使用搜索API
+    const params = {
+      keyword: searchKeyword.value,
+      pageNum: pageNum.value,
+      pageSize: pageSize.value
+    };
+
+    apiSearchOrders(params)
+        .then(res => {
+          if (res.code === 200 && res.data) {
+            const newOrders = res.data.list || [];
+            const formattedOrders = formatOrders(newOrders);
+
+            // 追加新订单到列表
+            orderList.value = [...orderList.value, ...formattedOrders];
+
+            // 更新是否有更多数据的状态
+            hasMore.value = res.data.hasNextPage || false;
+          } else {
+            console.error('加载更多订单失败:', res.message);
+            hasMore.value = false;
+          }
+        })
+        .catch(err => {
+          console.error('加载更多订单异常:', err);
+          hasMore.value = false;
+        })
+        .finally(() => {
+          loading.value = false;
+        });
+  } else {
+    // 无搜索关键词，根据用户类型加载更多
+    loading.value = false; // 目前接口不支持分页，关闭加载状态
+    hasMore.value = false; // 设置没有更多数据
+  }
 }
 
 onMounted(() => {
-  // 获取用户ID并初始化加载数据
-  getUserId();
+  // 获取用户信息并初始化加载数据
+  getUserInfo();
   loadOrders();
 });
 
@@ -337,6 +405,7 @@ const mockOrders = [
 /* 页面标题 */
 .page-header {
   margin-bottom: 32rpx;
+
   .page-title {
     font-size: 36rpx;
     font-weight: 600;
@@ -344,6 +413,7 @@ const mockOrders = [
     position: relative;
     display: inline-block;
     padding-bottom: 16rpx;
+
     &::after {
       content: '';
       position: absolute;
@@ -421,7 +491,7 @@ const mockOrders = [
   overflow: hidden;
   transition: all 0.3s;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
-  
+
   &:hover {
     transform: translateY(-2rpx);
     box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.1);
