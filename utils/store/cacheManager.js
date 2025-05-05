@@ -74,6 +74,7 @@ class CacheManager {
   getCache(key, defaultValue = null) {
     try {
       const prefixedKey = this.getPrefixedKey(key);
+      console.log("prefixedKey为：" + prefixedKey)
       const cacheStr = uni.getStorageSync(prefixedKey);
       if (!cacheStr) return defaultValue;
 

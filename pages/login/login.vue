@@ -565,6 +565,7 @@ function logout() {
 
 // 页面加载时检查登录状态
 onMounted(() => {
+  debugger
   // 尝试从缓存恢复用户信息
   const restored = restoreUserFromCache();
   if (restored) {

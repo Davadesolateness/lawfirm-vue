@@ -12,8 +12,8 @@
             </view>
           </view>
           <view class="lawyer-meta">
-            <view class="username">{{ lawyerInfo.lawyername || '律师姓名' }}</view>
-            <view class="license">执业证号：{{ lawyerInfo.lawyerlicensenumber || '未设置' }}</view>
+            <view class="username">{{ lawyerInfo.lawyerName || '律师姓名' }}</view>
+            <view class="license">执业证号：{{ lawyerInfo.lawyerLicenseNumber || '未设置' }}</view>
             <view class="lawyer-tag">认证律师</view>
           </view>
         </view>
@@ -25,39 +25,9 @@
             <view class="decorative-line"></view>
           </view>
           <view class="qualification-content">
-            <text class="info-item">所属律所：{{ lawyerInfo.lawfirm || '未设置' }}</text>
-            <text class="info-item">执业年限：{{ lawyerInfo.practiceyears || '0' }}年</text>
-            <text class="info-item">擅长领域：{{ lawyerInfo.specialties || '未设置' }}</text>
-          </view>
-        </view>
-
-        <!-- 服务次数卡片 -->
-        <view class="service-card">
-          <view class="card-header">
-            <text class="card-title">服务统计</text>
-            <view class="decorative-line"></view>
-          </view>
-          <view class="service-content">
-            <view class="service-item highlight">
-              <view class="label-box">
-                <text class="icon">📞</text>
-                <text class="label">已完成咨询</text>
-              </view>
-              <text class="value">{{ lawyerInfo.consultcount || 0 }}次</text>
-            </view>
-
-            <!-- 接单率展示区域 -->
-            <view class="date-container">
-              <view class="date-row">
-                <view class="date-label">
-                  <text class="icon">📊</text>
-                  <text>接单率：</text>
-                </view>
-                <view class="value-box">
-                  <text class="rate-value">{{ lawyerInfo.acceptancerate || '98%' }}</text>
-                </view>
-              </view>
-            </view>
+            <text class="info-item">所属律所：{{ lawyerInfo.lawFirm || '未设置' }}</text>
+            <text class="info-item">执业年限：{{ lawyerInfo.workYears || '0' }}年</text>
+            <text class="info-item">擅长领域：{{ lawyerInfo.specialtyNames || '未设置' }}</text>
           </view>
         </view>
       </view>
@@ -128,12 +98,10 @@ const lawyerInfo = reactive({
   avatar: '',
   lawyerName: '',
   lawyerLicenseNumber: '',
-  lawfirm: '',
-  practiceyears: '',
-  specialties: '',
-  introduction: '',
-  consultcount: 0,
-  acceptancerate: '98%'
+  lawFirm: '',
+  workYears: '',
+  specialtyNames: '',
+  introduction: ''
 });
 
 // 生命周期
@@ -143,13 +111,14 @@ onMounted(async () => {
 
 // 初始化律师信息
 async function initLawyerInfo() {
-  const cachedInfo = cacheManager.getCache(lawyerInfo.lawyerId);
-  await fetchLawyerDetails();
-
-  if (cachedInfo && cachedInfo.lawyerId) {
+  // 获取缓存中当前登录用户的id
+  const userId = uni.getStorageSync('current_user_id');
+  // 设置为用户前缀 获取该用户的缓存信息
+  cacheManager.setUserPrefix(userId)
+  const cachedInfo = cacheManager.getCache('userInfo');
+  if (cachedInfo && cachedInfo.userId) {
     // 使用用户ID作为律师ID获取律师信息
     await fetchLawyerDetails();
-    debugger
   } else {
     console.error("未找到律师信息，无法获取律师详情");
     uni.showToast({
@@ -163,7 +132,6 @@ async function initLawyerInfo() {
 // 获取律师详细信息
 async function fetchLawyerDetails() {
   try {
-    debugger
     uni.showLoading({ title: '加载中...' });
     const response = await apiGetLawyerById("1");
 
@@ -365,7 +333,7 @@ function handleUploadError(error) {
 }
 
 /* 卡片通用样式 */
-.qualification-card, .service-card, .intro-card {
+.qualification-card, .intro-card {
   background: #fff;
   border-radius: 20rpx;
   padding: 24rpx;
@@ -413,86 +381,6 @@ function handleUploadError(error) {
     font-size: 28rpx;
     color: #555;
     line-height: 1.6;
-  }
-}
-
-/* 服务卡片 */
-.service-card {
-  .service-item.highlight {
-    background: #f8f9ff;
-    border-radius: 16rpx;
-    padding: 24rpx;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    .label-box {
-      display: flex;
-      align-items: center;
-      gap: 12rpx;
-
-      .icon {
-        font-size: 36rpx;
-      }
-
-      .label {
-        font-size: 28rpx;
-        color: #444;
-      }
-    }
-
-    .value {
-      color: #3498db;
-      font-size: 40rpx;
-      font-weight: 600;
-
-      &::after {
-        content: "次";
-        font-size: 28rpx;
-        color: #999;
-        margin-left: 4rpx;
-      }
-    }
-  }
-
-  .date-container {
-    margin-top: 24rpx;
-    background: #f8f9ff;
-    border-radius: 16rpx;
-    padding: 24rpx;
-
-    .date-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16rpx;
-      background: white;
-      border-radius: 12rpx;
-      box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-
-      .date-label {
-        display: flex;
-        align-items: center;
-        gap: 8rpx;
-
-        .icon {
-          font-size: 32rpx;
-        }
-
-        text {
-          color: #666;
-          font-size: 26rpx;
-        }
-      }
-
-      .value-box {
-        .rate-value {
-          color: #3498db;
-          font-size: 32rpx;
-          font-weight: 600;
-        }
-      }
-    }
   }
 }
 
