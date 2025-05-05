@@ -6,77 +6,77 @@
       <text class="app-name">律师咨询平台</text>
       <text class="app-slogan">专业法律咨询，一键直达</text>
     </view>
-    
+
     <!-- 登录表单区域 -->
     <view class="login-form">
       <!-- 登录方式切换 -->
       <view class="login-tabs">
-        <view 
-          class="tab-item" 
-          :class="{ active: loginType === 'phone' }" 
-          @click="loginType = 'phone'"
+        <view
+            class="tab-item"
+            :class="{ active: loginType === 'phone' }"
+            @click="loginType = 'phone'"
         >
           手机号登录
         </view>
-        <view 
-          class="tab-item" 
-          :class="{ active: loginType === 'account' }" 
-          @click="loginType = 'account'"
+        <view
+            class="tab-item"
+            :class="{ active: loginType === 'account' }"
+            @click="loginType = 'account'"
         >
           账号密码登录
         </view>
       </view>
-      
+
       <!-- 手机号登录表单 -->
       <view v-if="loginType === 'phone'" class="form-content">
         <view class="input-group">
           <uni-icons type="phone" size="20" color="#999"></uni-icons>
-          <input 
-            type="number" 
-            v-model="phoneNumber" 
-            maxlength="11" 
-            placeholder="请输入手机号码" 
-            @blur="validatePhoneNumber"
+          <input
+              type="number"
+              v-model="phoneNumber"
+              maxlength="11"
+              placeholder="请输入手机号码"
+              @blur="validatePhoneNumber"
           />
         </view>
         <text v-if="phoneError" class="error-tip">{{ phoneError }}</text>
-        
+
         <view class="input-group verification-code">
           <uni-icons type="locked" size="20" color="#999"></uni-icons>
-          <input 
-            type="number" 
-            v-model="verificationCode" 
-            maxlength="6" 
-            placeholder="请输入验证码" 
+          <input
+              type="number"
+              v-model="verificationCode"
+              maxlength="6"
+              placeholder="请输入验证码"
           />
-          <view 
-            class="send-code-btn" 
-            :class="{ disabled: isSending || !isPhoneValid }" 
-            @click="sendVerificationCodeForUser"
+          <view
+              class="send-code-btn"
+              :class="{ disabled: isSending || !isPhoneValid }"
+              @click="sendVerificationCodeForUser"
           >
             {{ sendBtnText }}
           </view>
         </view>
       </view>
-      
+
       <!-- 账号密码登录表单 -->
       <view v-else class="form-content">
         <view class="input-group">
           <uni-icons type="person" size="20" color="#999"></uni-icons>
-          <input 
-            type="text" 
-            v-model="phoneNumber"
-            placeholder="请输入账号/手机号" 
+          <input
+              type="text"
+              v-model="phoneNumber"
+              placeholder="请输入账号/手机号"
           />
         </view>
-        
+
         <view class="input-group">
           <uni-icons type="locked" size="20" color="#999"></uni-icons>
-          <input 
-            :type="showPassword ? 'text' : 'password'" 
-            v-model="password" 
-            placeholder="请输入密码" 
-            @blur="validatePassword"
+          <input
+              :type="showPassword ? 'text' : 'password'"
+              v-model="password"
+              placeholder="请输入密码"
+              @blur="validatePassword"
           />
           <view class="password-toggle" @click="showPassword = !showPassword">
             <uni-icons :type="showPassword ? 'eye-slash' : 'eye'" size="20" color="#999"></uni-icons>
@@ -84,56 +84,56 @@
         </view>
         <text v-if="passwordError" class="error-tip">{{ passwordError }}</text>
       </view>
-      
+
       <!-- 用户角色选择 -->
       <view class="role-selection">
         <view class="role-label">您的身份：</view>
         <view class="role-options">
-          <view 
-            class="role-item" 
-            :class="{ active: selectedRole === 'individual' }"
-            @click="selectedRole = 'individual'"
+          <view
+              class="role-item"
+              :class="{ active: selectedRole === 'individual' }"
+              @click="selectedRole = 'individual'"
           >
             <uni-icons type="person" size="16" :color="selectedRole === 'individual' ? '#2979FF' : '#999'"></uni-icons>
             <text>个人用户</text>
           </view>
-          <view 
-            class="role-item" 
-            :class="{ active: selectedRole === 'corporate' }"
-            @click="selectedRole = 'corporate'"
+          <view
+              class="role-item"
+              :class="{ active: selectedRole === 'corporate' }"
+              @click="selectedRole = 'corporate'"
           >
             <uni-icons type="shop" size="16" :color="selectedRole === 'corporate' ? '#2979FF' : '#999'"></uni-icons>
             <text>法人用户</text>
           </view>
-          <view 
-            class="role-item" 
-            :class="{ active: selectedRole === 'lawyer' }"
-            @click="selectedRole = 'lawyer'"
+          <view
+              class="role-item"
+              :class="{ active: selectedRole === 'lawyer' }"
+              @click="selectedRole = 'lawyer'"
           >
             <uni-icons type="staff" size="16" :color="selectedRole === 'lawyer' ? '#2979FF' : '#999'"></uni-icons>
             <text>我是律师</text>
           </view>
-          <view 
-            class="role-item" 
-            :class="{ active: selectedRole === 'admin' }"
-            @click="selectedRole = 'admin'"
+          <view
+              class="role-item"
+              :class="{ active: selectedRole === 'admin' }"
+              @click="selectedRole = 'admin'"
           >
             <uni-icons type="gear" size="16" :color="selectedRole === 'admin' ? '#2979FF' : '#999'"></uni-icons>
             <text>管理员</text>
           </view>
         </view>
       </view>
-      
+
       <!-- 登录按钮 -->
       <button class="login-btn" @click="handleLogin">登录</button>
-      
+
       <!-- 辅助功能区 -->
       <view class="helper-links">
         <text @click="goToRegister">注册账号</text>
         <text @click="goToResetPassword">忘记密码</text>
       </view>
     </view>
-    
+
     <!-- 其他登录方式 -->
     <view class="other-login">
       <view class="divider">
@@ -145,18 +145,21 @@
         </view>
       </view>
       <view class="agreement">
-        登录即表示同意<text class="link">《用户协议》</text>和<text class="link">《隐私政策》</text>
+        登录即表示同意
+        <text class="link">《用户协议》</text>
+        和
+        <text class="link">《隐私政策》</text>
       </view>
     </view>
   </view>
 </template>
 
 <script setup>
-import {computed, onMounted, ref} from 'vue';
+import {computed, onMounted, onUnmounted, ref} from 'vue';
 import {setUserType, USER_TYPES} from '@/utils/store/userManager';
 import {accountLogin, phoneLogin, sendVerificationCode, wechatLogin} from '@/api/login';
 import {cacheManager} from '@/utils/store';
-import { navigateToUrl } from '@/utils/navigateTo'
+import {navigateToUrl} from '@/utils/navigateTo'
 
 // 登录方式
 const loginType = ref('phone'); // 'phone' 或 'account'
@@ -199,13 +202,13 @@ function validatePhoneNumber() {
     phoneError.value = '请输入手机号码';
     return false;
   }
-  
+
   const phoneRegex = /^1[3-9]\d{9}$/;
   if (!phoneRegex.test(phoneNumber.value)) {
     phoneError.value = '请输入有效的手机号码';
     return false;
   }
-  
+
   phoneError.value = '';
   return true;
 }
@@ -216,12 +219,12 @@ function validatePassword() {
     passwordError.value = '请输入密码';
     return false;
   }
-  
+
   if (password.value.length < 6) {
     passwordError.value = '密码长度至少为6位';
     return false;
   }
-  
+
   passwordError.value = '';
   return true;
 }
@@ -229,19 +232,19 @@ function validatePassword() {
 // 发送验证码
 async function sendVerificationCodeForUser() {
   if (isSending.value || !isPhoneValid.value) return;
-  
+
   if (!validatePhoneNumber()) return;
-  
+
   isSending.value = true;
   countdown.value = 60;
-  
+
   try {
     await sendVerificationCode(phoneNumber.value);
     uni.showToast({
       title: '验证码已发送',
       icon: 'success'
     });
-    
+
     // 倒计时
     const timer = setInterval(() => {
       countdown.value--;
@@ -259,12 +262,93 @@ async function sendVerificationCodeForUser() {
   }
 }
 
+// 存储用户信息到缓存
+function storeUserCache(userData, token, role) {
+  if (!userData || !userData.userId) return;
+  
+  const userId = userData.userId;
+  // 设置用户前缀
+  cacheManager.setUserPrefix(userId);
+  
+  // 使用cacheManager存储用户信息
+  cacheManager.setCache('userInfo', userData);
+  cacheManager.setCache('userRole', role);
+  
+  // 设置token (与用户ID关联)
+  cacheManager.setToken(token, userId);
+  
+  // 记录当前登录用户ID
+  uni.setStorageSync('current_user_id', userId);
+}
+
+// 从缓存恢复用户信息
+function restoreUserFromCache() {
+  const userId = uni.getStorageSync('current_user_id');
+  if (!userId) return false;
+  
+  // 检查token是否存在（指定该用户ID获取token）
+  const token = cacheManager.getToken(userId);
+  if (!token) {
+    // token不存在，清除可能的无效数据
+    clearCurrentUserCache(userId);
+    return false;
+  }
+  
+  // 设置用户前缀
+  cacheManager.setUserPrefix(userId);
+  
+  // 尝试获取缓存数据
+  try {
+    const cachedUserInfo = cacheManager.getCache('userInfo');
+    
+    if (cachedUserInfo) {
+      userInfo = cachedUserInfo;
+      isLoggedIn.value = true;
+      
+      // 根据缓存中的角色设置selectedRole
+      const userRole = cacheManager.getCache('userRole');
+      if (userRole) {
+        selectedRole.value = userRole;
+      }
+      
+      return true;
+    }
+  } catch (error) {
+    console.error('恢复用户数据失败:', error);
+    clearCurrentUserCache(userId);
+  }
+  
+  return false;
+}
+
+// 清除当前用户缓存
+function clearCurrentUserCache(specificUserId = null) {
+  const userId = specificUserId || uni.getStorageSync('current_user_id');
+  
+  if (userId) {
+    // 设置用户前缀
+    cacheManager.setUserPrefix(userId);
+    
+    // 清除该用户的所有缓存
+    cacheManager.clearUserCache();
+  } else {
+    // 如果没有特定用户ID，尝试清除当前活跃用户的token
+    cacheManager.removeToken();
+  }
+  
+  // 移除当前用户ID
+  uni.removeStorageSync('current_user_id');
+  
+  isLoggedIn.value = false;
+  userInfo = null;
+}
+
 // 登录处理
 async function handleLogin() {
   // 验证表单
   if (loginType.value === 'phone') {
     if (!validatePhoneNumber()) return;
-    
+
     if (!verificationCode.value) {
       uni.showToast({
         title: '请输入验证码',
@@ -280,10 +364,10 @@ async function handleLogin() {
       });
       return;
     }
-    
+
     if (!validatePassword()) return;
   }
-  
+
   // 显示加载
   uni.showLoading({
     title: '登录中...'
@@ -318,22 +402,22 @@ async function handleLogin() {
     } else if (selectedRole.value === 'admin') {
       userType = USER_TYPES.ADMIN;
     }
-    
+
     // 设置用户类型（这是唯一确定的，之后不会变）
     setUserType(userType);
-    
-    // 登录成功，保存用户信息和token
+
+    // 存储用户缓存，使用唯一key
+    storeUserCache(userInfo, userInfo.token, selectedRole.value);
+
+    // 登录成功状态
     isLoggedIn.value = true;
-    // 存储登录信息到本地
-    cacheManager.setCache('token', userInfo.token);
-    cacheManager.setCache('userInfo', userInfo);
 
     uni.hideLoading();
     uni.showToast({
       title: '登录成功',
       icon: 'success'
     });
-    
+
     // 登录成功后重定向
     redirectAfterLogin();
   } catch (error) {
@@ -350,7 +434,7 @@ async function handleWechatLogin() {
   uni.showLoading({
     title: '正在登录...'
   });
-  
+
   // 检查是否支持微信登录
   if (!uni.canIUse('getUserProfile')) {
     uni.hideLoading();
@@ -371,7 +455,7 @@ async function handleWechatLogin() {
         fail: reject
       });
     });
-    
+
     // 获取微信登录凭证
     const loginRes = await new Promise((resolve, reject) => {
       uni.login({
@@ -380,20 +464,16 @@ async function handleWechatLogin() {
         fail: reject
       });
     });
-    
+
     // 调用微信登录接口
     const response = await wechatLogin({
       code: loginRes.code,
       userInfo: userProfile.userInfo,
       role: selectedRole.value
     });
-    
-    const { token, userData } = response.data;
-    
-    // 保存登录信息
-    uni.setStorageSync('token', token);
-    uni.setStorageSync('userInfo', JSON.stringify(userData));
-    
+
+    const {token, userData} = response.data;
+
     // 设置用户类型
     let userType;
     if (selectedRole.value === 'individual') {
@@ -405,19 +485,22 @@ async function handleWechatLogin() {
     } else if (selectedRole.value === 'admin') {
       userType = USER_TYPES.ADMIN;
     }
-    
+
     setUserType(userType);
-    
-    // 登录成功，保存用户信息和token
+
+    // 存储用户缓存，使用唯一key
+    storeUserCache(userData, token, selectedRole.value);
+
+    // 登录成功状态
     isLoggedIn.value = true;
-    userInfo.value = userData;
-    
+    userInfo = userData;
+
     uni.hideLoading();
     uni.showToast({
       title: '登录成功',
       icon: 'success'
     });
-    
+
     // 登录成功后重定向
     redirectAfterLogin();
   } catch (error) {
@@ -433,21 +516,21 @@ async function handleWechatLogin() {
 // 登录成功后重定向
 function redirectAfterLogin() {
   // 根据用户角色重定向到不同页面
-  switch(selectedRole.value) {
+  switch (selectedRole.value) {
     case 'individual':
-      uni.reLaunch({ url: '/pages/index/index' });
+      uni.reLaunch({url: '/pages/index/index'});
       break;
     case 'corporate':
-      uni.reLaunch({ url: '/pages/index/index' });
+      uni.reLaunch({url: '/pages/index/index'});
       break;
     case 'lawyer':
-      uni.reLaunch({ url: '/pages/lawyer/lawyerinfo' });
+      uni.reLaunch({url: '/pages/lawyer/lawyerinfo'});
       break;
     case 'admin':
-      uni.reLaunch({ url: '/pages/admin/admin' });
+      uni.reLaunch({url: '/pages/admin/admin'});
       break;
     default:
-      uni.reLaunch({ url: '/pages/index/index' });
+      uni.reLaunch({url: '/pages/index/index'});
   }
 }
 
@@ -463,24 +546,47 @@ function goToResetPassword() {
   navigateToUrl("/pages/login/resetpassword");
 }
 
-// 检查是否已登录
-function checkLoginStatus() {
-  const token = uni.getStorageSync('token');
-  const savedUserInfo = uni.getStorageSync('userInfo');
-
-  if (token && savedUserInfo) {
-    try {
-      userInfo.value = JSON.parse(savedUserInfo);
-      isLoggedIn.value = true;
-    } catch (e) {
-      console.error('Parse userInfo error:', e);
+// 退出登录
+function logout() {
+  uni.showModal({
+    title: '提示',
+    content: '确定要退出登录吗？',
+    success: (res) => {
+      if (res.confirm) {
+        // 清除当前用户缓存
+        clearCurrentUserCache();
+        uni.reLaunch({
+          url: '/pages/login/login'
+        });
+      }
     }
-  }
+  });
 }
 
 // 页面加载时检查登录状态
 onMounted(() => {
-  checkLoginStatus();
+  // 尝试从缓存恢复用户信息
+  const restored = restoreUserFromCache();
+  if (restored) {
+    // 如果成功恢复用户信息，重定向到对应页面
+    redirectAfterLogin();
+  }
+
+  // 监听小程序隐藏事件
+  uni.$on('app-hide', () => {
+    // 小程序隐藏/关闭时不清除缓存，只在用户主动登出时清除
+  });
+
+  // 监听小程序退出事件
+  uni.$on('app-unload', () => {
+    // 应用完全退出时不清除缓存，只在用户主动登出时清除
+  });
+});
+
+// 在页面卸载时取消事件监听
+onUnmounted(() => {
+  uni.$off('app-hide');
+  uni.$off('app-unload');
 });
 </script>
 
@@ -501,20 +607,20 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   padding: 60rpx 0;
-  
+
   .logo-image {
     width: 160rpx;
     height: 160rpx;
     margin-bottom: 30rpx;
   }
-  
+
   .app-name {
     font-size: 36rpx;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 16rpx;
   }
-  
+
   .app-slogan {
     font-size: 28rpx;
     color: var(--text-secondary);
@@ -532,18 +638,18 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   margin-bottom: 40rpx;
-  
+
   .tab-item {
     padding: 20rpx 30rpx;
     margin: 0 20rpx;
     font-size: 30rpx;
     color: var(--text-secondary);
     position: relative;
-    
+
     &.active {
       color: var(--primary-color);
       font-weight: 500;
-      
+
       &::after {
         content: '';
         position: absolute;
@@ -572,18 +678,18 @@ onMounted(() => {
   border-radius: 12rpx;
   padding: 24rpx 30rpx;
   margin-bottom: 30rpx;
-  
+
   uni-icons {
     margin-right: 20rpx;
   }
-  
+
   input {
     flex: 1;
     height: 48rpx;
     font-size: 28rpx;
     color: var(--text-primary);
   }
-  
+
   &.verification-code {
     position: relative;
     padding-right: 200rpx;
@@ -600,7 +706,7 @@ onMounted(() => {
   font-size: 26rpx;
   padding: 6rpx 20rpx;
   border-left: 1rpx solid #ddd;
-  
+
   &.disabled {
     color: var(--text-tertiary);
   }
@@ -622,18 +728,18 @@ onMounted(() => {
 /* 角色选择 */
 .role-selection {
   margin: 20rpx 0 40rpx;
-  
+
   .role-label {
     font-size: 28rpx;
     color: var(--text-secondary);
     margin-bottom: 20rpx;
   }
-  
+
   .role-options {
     display: flex;
     justify-content: space-between;
   }
-  
+
   .role-item {
     flex: 1;
     display: flex;
@@ -644,28 +750,28 @@ onMounted(() => {
     background-color: #f5f7fa;
     margin: 0 10rpx;
     transition: all 0.3s;
-    
+
     &:first-child {
       margin-left: 0;
     }
-    
+
     &:last-child {
       margin-right: 0;
     }
-    
+
     uni-icons {
       margin-bottom: 10rpx;
     }
-    
+
     text {
       font-size: 26rpx;
       color: var(--text-secondary);
     }
-    
+
     &.active {
       background-color: rgba(41, 121, 255, 0.1);
       border: 1rpx solid rgba(41, 121, 255, 0.2);
-      
+
       text {
         color: var(--primary-color);
         font-weight: 500;
@@ -695,7 +801,7 @@ onMounted(() => {
   justify-content: space-between;
   margin-top: 30rpx;
   padding: 0 20rpx;
-  
+
   text {
     font-size: 28rpx;
     color: var(--text-secondary);
@@ -706,14 +812,14 @@ onMounted(() => {
 .other-login {
   margin-top: auto;
   padding: 60rpx 0;
-  
+
   .divider {
     display: flex;
     align-items: center;
     color: var(--text-tertiary);
     font-size: 26rpx;
     margin-bottom: 40rpx;
-    
+
     &::before,
     &::after {
       content: "";
@@ -721,21 +827,21 @@ onMounted(() => {
       height: 1rpx;
       background-color: #eee;
     }
-    
+
     &::before {
       margin-right: 20rpx;
     }
-    
+
     &::after {
       margin-left: 20rpx;
     }
   }
-  
+
   .social-login {
     display: flex;
     justify-content: center;
   }
-  
+
   .social-icon {
     width: 80rpx;
     height: 80rpx;
@@ -744,18 +850,18 @@ onMounted(() => {
     justify-content: center;
     align-items: center;
     margin: 0 30rpx;
-    
+
     &.wechat {
       background: linear-gradient(135deg, #44B549, #4FB854);
     }
   }
-  
+
   .agreement {
     text-align: center;
     font-size: 24rpx;
     color: var(--text-tertiary);
     margin-top: 40rpx;
-    
+
     .link {
       color: var(--primary-color);
     }

@@ -75,7 +75,7 @@ import { ref, computed } from "vue"
 import { onShow } from "@dcloudio/uni-app"
 import PageLayout from "@/components/custom/tabbarlayout"
 import ConsultPopup from "@/components/consult-popup/consult-popup"
-import { apiGetLawyerInfoById } from "@/api/lawyerapi"
+import { apiGetLawyerById } from "@/api/lawyerapi"
 
 const basePrice = 38 // 基础价格
 const lawyerInfo = ref({})
@@ -89,7 +89,7 @@ const guaranteeTags = ['隐私保护', '平台认证', '服务保障', '不满�
 // 初始化律师信息
 const initLawyerInfo = async () => {
   try {
-    const data = await apiGetLawyerInfoById("444")
+    const data = await apiGetLawyerById("444")
     lawyerInfo.value = data
   } catch (error) {
     uni.showToast({ title: '信息加载失败', icon: 'none' })

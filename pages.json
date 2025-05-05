@@ -124,6 +124,13 @@
         "navigationBarTitleText": "修改密码",
         "enablePullDownRefresh": false
       }
+    },
+    {
+      "path": "pages/lawyer/lawyer",
+      "style": {
+        "navigationBarTitleText": "律师个人信息",
+        "enablePullDownRefresh": false
+      }
     }
   ],
   "tabBar": {

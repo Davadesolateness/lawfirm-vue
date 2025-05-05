@@ -2,7 +2,7 @@
 import store from '@/store'
 */
 import { HTTP_STATUS } from './config'
-import { getToken } from '../store/cacheManager'
+import { cacheManager } from '../store/cacheManager'
 import { handleError } from './error'
 
 // 请求拦截器
@@ -14,7 +14,7 @@ export const requestInterceptor = {
         }
 
         // 自动携带 Token
-        const token = getToken()
+        const token = cacheManager.getToken()
         // 如果有token且配置没有明确指定不需要认证
         if (token && !config.custom.noAuth) {
             config.header = {

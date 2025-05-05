@@ -1,6 +1,6 @@
 import {BASE_CONFIG} from './config'
 import {requestInterceptor, responseInterceptor} from './interceptor'
-import {getCache, getToken, setCache, setToken} from '@/utils/store/cacheManager'
+import {cacheManager} from '@/utils/store/cacheManager'
 
 class HttpRequest {
     constructor() {
@@ -24,7 +24,7 @@ class HttpRequest {
 
         // 自动添加Token逻辑
         if (!config.custom.noAuth) {
-            const token = getToken()
+            const token = cacheManager.getToken()
             if (token) {
                 config.header = {
                     ...config.header,
@@ -137,7 +137,7 @@ class HttpRequest {
     // 上传文件
     // 修改后的uploadFile方法（移除手动Token处理）
     uploadFile(url, filePath, options = {}) {
-        const token = getToken()
+        const token = cacheManager.getToken()
         return new Promise((resolve, reject) => {
             const uploadTask = uni.uploadFile({
                 url: this.config.baseURL + url,
@@ -217,7 +217,7 @@ class HttpRequest {
         const cacheTime = options.cacheTime || 5 * 60 * 1000 // 默认缓存5分钟
 
         // 检查是否有缓存
-        const cachedData = getCache(cacheKey)
+        const cachedData = cacheManager.getCache(cacheKey)
         if (cachedData) {
             return cachedData
         }
@@ -225,7 +225,7 @@ class HttpRequest {
         // 无缓存，发起请求
         const response = await this.post(url, data, options)
         // 缓存响应数据
-        setCache(cacheKey, response, cacheTime)
+        cacheManager.setCache(cacheKey, response, cacheTime)
         return response
     }
 
@@ -233,7 +233,7 @@ class HttpRequest {
     handleLoginResponse(response) {
         if (response && response.token) {
             // 设置token
-            setToken(response.token, response.tokenExpireTime);
+            cacheManager.setToken(response.token, response.tokenExpireTime);
             console.log('Token已保存:', response.token);
         } else {
             console.warn('响应中没有找到token');

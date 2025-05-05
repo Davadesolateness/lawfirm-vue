@@ -128,7 +128,7 @@
 import {onMounted, reactive, ref} from "vue"
 import {navigateTo, navigateToUrl} from "@/utils/navigateTo"
 import {apiGetCorporateDetails, apiGetIndividualDetails} from "@/api/userapi"
-import {apiUploadUserAvatar, apiGetAvatarById} from "@/api/imageapi"
+import {apiUploadUserAvatar} from "@/api/imageapi"
 
 import PageLayout from "@/components/custom/tabbarlayout.vue"
 import {cacheManager} from "@/utils/store"

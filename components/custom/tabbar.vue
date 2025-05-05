@@ -54,10 +54,10 @@
         <image :src="currentPage === 'lawyer' ? '/static/images/home_active.png' : '/static/images/home.png'"></image>
         <text>我的</text>
       </view>
-<!--      <view class="tab-item" :class="{ active: currentPage === 'user' }" @click="navTo('/pages/user/user')">
+      <view class="tab-item" :class="{ active: currentPage === 'user' }" @click="navTo('/pages/lawyer/lawyer')">
         <image :src="currentPage === 'user' ? '/static/images/user_active.png' : '/static/images/user.png'"></image>
         <text>我的</text>
-      </view>-->
+      </view>-
     </view>
 
     <!-- 管理员导航栏 -->
