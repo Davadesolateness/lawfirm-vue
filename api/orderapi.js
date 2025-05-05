@@ -2,23 +2,26 @@ import http from "@/utils/http/index";
 
 /**
  * 获取用户的所有订单列表
- * @param {Number} userId - 用户ID
+ * @param {Object} params - 参数对象
+ * @param {Number} params.userId - 用户ID
+ * @param {Number} [params.pageNum=1] - 页码，从1开始
+ * @param {Number} [params.pageSize=10] - 每页记录数
  * @returns {Promise} - 返回订单列表数据的Promise
  */
-export function apiGetUserOrders(userId) {
+export function apiGetUserOrders(params) {
   return http.get("/order/getUserOrders", {
-    userId: userId
+    ...params
   });
 }
 
 /**
  * 获取律师的所有订单列表
- * @param {Number} lawyerId - 律师ID
  * @returns {Promise} - 返回订单列表数据的Promise
+ * @param params
  */
-export function apiGetLawyerOrders(lawyerId) {
+export function apiGetLawyerOrders(params) {
   return http.get("/order/getLawyerOrders", {
-    lawyerId: lawyerId
+    ...params
   });
 }
 
@@ -36,10 +39,15 @@ export function apiGetOrderDetail(orderId) {
 /**
  * 按条件搜索订单
  * @param {Object} params - 搜索参数对象
+ * @param {String} params.keyword - 搜索关键词(用户名或律师名)
+ * @param {Number} [params.pageNum=1] - 页码，从1开始
+ * @param {Number} [params.pageSize=10] - 每页记录数
  * @returns {Promise} - 返回搜索结果的Promise
  */
 export function apiSearchOrders(params) {
-  return http.get("/order/searchOrders", params);
+  return http.get("/order/searchOrders", {
+    ...params
+  });
 }
 
 /**

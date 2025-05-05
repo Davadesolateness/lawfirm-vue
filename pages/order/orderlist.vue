@@ -17,12 +17,12 @@
               confirm-type="search"
               v-model="searchKeyword"
               @confirm="handleSearch"
+              @blur="handleSearch"
           />
           <view v-if="searchKeyword" class="clear-icon" @click="clearSearch">
             <uni-icons type="clear" size="14" color="#8696a7"></uni-icons>
           </view>
         </view>
-        <view class="search-btn" @click="handleSearch">搜索</view>
       </view>
 
       <!-- 订单列表 -->
@@ -146,38 +146,54 @@ function getUserInfo() {
 function handleSearch() {
   loading.value = true;
   pageNum.value = 1; // 重置页码
-  debugger
+  
   // 有搜索关键词时使用搜索API
   if (searchKeyword.value) {
-    apiSearchOrders({
-      keyword: searchKeyword.value,
-      pageNum: pageNum.value,
-      pageSize: pageSize.value
-    }).then(res => {
-      if (res) {
-        orderList.value = formatOrders(res || []);
-        hasMore.value = res.hasNextPage || false;
-      } else {
-        orderList.value = [];
-        hasMore.value = false;
-        console.error('搜索订单失败:', res.message);
-      }
-    }).catch(err => {
-      console.error('搜索订单异常:', err);
-      orderList.value = [];
-      hasMore.value = false;
-    }).finally(() => {
-      loading.value = false;
-    });
+    searchOrders();
   } else {
     // 无搜索关键词时加载所有订单
     loadOrders();
   }
 }
 
+// 搜索订单
+function searchOrders() {
+
+  apiSearchOrders({
+    keyword: searchKeyword.value,
+    pageNum: pageNum.value,
+    pageSize: pageSize.value
+  }).then(res => {
+    if (res) {
+      if (pageNum.value === 1) {
+        orderList.value = formatOrders(res || []);
+      } else {
+        // 追加数据到现有列表
+        orderList.value = [...orderList.value, ...formatOrders(res || [])];
+      }
+      
+      // 如果返回的记录数小于页大小，表示没有更多数据
+      hasMore.value = res.length >= pageSize.value;
+    } else {
+      if (pageNum.value === 1) {
+        orderList.value = [];
+      }
+      hasMore.value = false;
+    }
+  }).catch(err => {
+    console.error('搜索订单异常:', err);
+    if (pageNum.value === 1) {
+      orderList.value = [];
+    }
+    hasMore.value = false;
+  }).finally(() => {
+    loading.value = false;
+  });
+}
+
 function clearSearch() {
   searchKeyword.value = '';
-  handleSearch();
+  handleSearch(); // Trigger search with empty keyword to reset
 }
 
 // 格式化订单数据，增加前端展示所需字段
@@ -244,112 +260,98 @@ function loadOrders() {
   }
 
   loading.value = true;
+  let api;
+  let params = {
+    pageNum: pageNum.value,
+    pageSize: pageSize.value
+  };
 
   // 根据用户类型选择不同的API
   if (userType.value === 'lawyer' && lawyerId.value) {
     // 律师用户，使用律师ID查询
-    loadLawyerOrders();
-  } else if (userType.value === 'personal' || userType.value === 'company') {
-    // 个人或法人客户，使用用户ID查询
-    loadUserOrders();
+    api = apiGetLawyerOrders;
+    params.lawyerId = lawyerId.value;
   } else {
-    console.warn('不支持的用户类型或缺少必要ID:', userType.value);
-    loading.value = false;
-  }
-}
-
-// 加载普通用户订单
-function loadUserOrders() {
-  if (!userId.value) {
-    console.warn('无法加载用户订单：用户ID不存在');
-    loading.value = false;
-    return;
+    // 普通用户，使用用户ID查询
+    api = apiGetUserOrders;
+    params.userId = userId.value;
   }
 
-  console.log('加载用户订单:', userId.value);
-
-  apiGetUserOrders(userId.value)
-      .then(res => {
+  api(params)
+    .then(res => {
+      if (res) {
         orderList.value = formatOrders(res || []);
-        hasMore.value = false; // 根据接口返回判断是否有更多数据
-      })
-      .catch(err => {
-        console.error('获取用户订单列表异常:', err);
+        // 如果返回的记录数小于页大小，表示没有更多数据
+        hasMore.value = res.length >= pageSize.value;
+      } else {
         orderList.value = [];
-      })
-      .finally(() => {
-        loading.value = false;
-      });
-}
-
-// 加载律师订单
-function loadLawyerOrders() {
-  if (!lawyerId.value) {
-    console.warn('无法加载律师订单：律师ID不存在');
-    loading.value = false;
-    return;
-  }
-
-  console.log('加载律师订单:', lawyerId.value);
-
-  apiGetLawyerOrders(lawyerId.value)
-      .then(res => {
-        orderList.value = formatOrders(res || []);
         hasMore.value = false;
-      })
-      .catch(err => {
-        console.error('获取律师订单列表异常:', err);
-        orderList.value = [];
-      })
-      .finally(() => {
-        loading.value = false;
-      });
+        console.error('获取订单列表失败');
+      }
+    })
+    .catch(err => {
+      console.error('获取订单列表异常:', err);
+      orderList.value = [];
+      hasMore.value = false;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
 }
 
-// 加载更多订单
+// 加载更多
 function loadMore() {
   if (!hasMore.value || loading.value) return;
-
-  loading.value = true;
+  
   pageNum.value++;
-
-  // 根据是否有搜索关键词决定使用哪个API
+  loading.value = true;
+  
+  // 有搜索关键词时使用搜索API
   if (searchKeyword.value) {
-    // 有搜索关键词，使用搜索API
-    const params = {
-      keyword: searchKeyword.value,
-      pageNum: pageNum.value,
-      pageSize: pageSize.value
-    };
-
-    apiSearchOrders(params)
-        .then(res => {
-          if (res.code === 200 && res.data) {
-            const newOrders = res.data.list || [];
-            const formattedOrders = formatOrders(newOrders);
-
-            // 追加新订单到列表
-            orderList.value = [...orderList.value, ...formattedOrders];
-
-            // 更新是否有更多数据的状态
-            hasMore.value = res.data.hasNextPage || false;
-          } else {
-            console.error('加载更多订单失败:', res.message);
-            hasMore.value = false;
-          }
-        })
-        .catch(err => {
-          console.error('加载更多订单异常:', err);
-          hasMore.value = false;
-        })
-        .finally(() => {
-          loading.value = false;
-        });
+    searchOrders();
   } else {
-    // 无搜索关键词，根据用户类型加载更多
-    loading.value = false; // 目前接口不支持分页，关闭加载状态
-    hasMore.value = false; // 设置没有更多数据
+    // 无搜索关键词时加载所有订单
+    loadMoreOrders();
   }
+}
+
+// 加载更多普通订单
+function loadMoreOrders() {
+  let api;
+  let params = {
+    pageNum: pageNum.value,
+    pageSize: pageSize.value
+  };
+
+  // 根据用户类型选择不同的API
+  if (userType.value === 'lawyer' && lawyerId.value) {
+    // 律师用户，使用律师ID查询
+    api = apiGetLawyerOrders;
+    params.lawyerId = lawyerId.value;
+  } else {
+    // 普通用户，使用用户ID查询
+    api = apiGetUserOrders;
+    params.userId = userId.value;
+  }
+  
+  api(params)
+    .then(res => {
+      if (res) {
+        // 追加数据到现有列表
+        orderList.value = [...orderList.value, ...formatOrders(res || [])];
+        // 如果返回的记录数小于页大小，表示没有更多数据
+        hasMore.value = res.length >= pageSize.value;
+      } else {
+        hasMore.value = false;
+      }
+    })
+    .catch(err => {
+      console.error('加载更多订单异常:', err);
+      hasMore.value = false;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
 }
 
 onMounted(() => {
@@ -429,58 +431,45 @@ const mockOrders = [
 
 /* 搜索区域样式 */
 .search-container {
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 24rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
   display: flex;
-  align-items: center;
+  padding: 15px;
+  background-color: #fff;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .search-box {
   flex: 1;
   display: flex;
   align-items: center;
-  background-color: #f8f9ff;
-  border-radius: 12rpx;
-  padding: 16rpx 24rpx;
-  height: 72rpx;
-  border: 1rpx solid rgba(74, 103, 255, 0.1);
+  background-color: #f5f7f9;
+  border-radius: 20px;
+  padding: 0 15px;
+  height: 40px;
+  transition: all 0.3s ease;
+}
+
+.search-box:focus-within {
+  box-shadow: 0 0 0 2px rgba(74, 103, 255, 0.2);
+  background-color: #ffffff;
 }
 
 .search-input {
   flex: 1;
-  height: 72rpx;
-  font-size: 28rpx;
-  color: #2d3436;
-  margin-left: 16rpx;
+  height: 40px;
+  border: none;
+  background: transparent;
+  margin-left: 10px;
+  font-size: 14px;
 }
 
 .clear-icon {
-  padding: 10rpx;
-}
-
-.search-btn {
-  margin-left: 20rpx;
-  padding: 0 32rpx;
-  height: 72rpx;
-  line-height: 72rpx;
-  background: #4A67FF;
-  color: #fff;
-  font-size: 28rpx;
-  border-radius: 12rpx;
-  text-align: center;
-  font-weight: 500;
-  letter-spacing: 1rpx;
-  transition: all 0.2s;
-  box-shadow: 0 4rpx 12rpx rgba(74, 103, 255, 0.2);
-
-  &:active {
-    opacity: 0.9;
-    transform: scale(0.98);
-    box-shadow: 0 2rpx 8rpx rgba(74, 103, 255, 0.2);
-  }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
 }
 
 /* 订单卡片样式 */
