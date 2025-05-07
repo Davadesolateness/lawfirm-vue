@@ -54,7 +54,7 @@
           @click="handleClick(lawyer)"
       >
         <view class="lawyer-header">
-          <image :src="lawyer.avatar || '/static/avatar-default.png'" class="avatar"/>
+          <image class="avatar" :src="lawyer.avatar" mode="aspectFill" />
           <view class="lawyer-info">
             <view class="name-line">
               <text class="name">{{ lawyer.lawyerName }}</text>
@@ -93,8 +93,8 @@
 
 <script setup>
 import {navigateToUrl} from "@/utils/navigateTo";
-import {computed, ref, watch, onMounted, onBeforeUnmount} from "vue";
-import { apiSearchLawyers} from "@/api/lawyerapi" // 新增搜索接口
+import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
+import {apiSearchLawyers} from "@/api/lawyerapi" // 新增搜索接口
 
 // 分页参数
 const currentPage = ref(1)
@@ -171,15 +171,24 @@ const fetchLawyers = async (loadMore = false) => {
     console.log('请求参数:', JSON.stringify(params));
     const response = await apiSearchLawyers(params)
     console.log('响应数据:', JSON.stringify(response));
-
+    debugger
     if (response && response.data) {
       total.value = response.total || 0
-      const processedData = (response.data || []).map(lawyer => ({
-        ...lawyer,
-        avatar: '/static/avatar-default.png',
-        consultCount: lawyer.consultCount || 0,
-        price: lawyer.price || 48
-      }))
+      const processedData = (response.data || []).map(lawyer => {
+        // 处理头像数据
+        let avatarUrl = '/static/avatar-default.png';
+        if (lawyer.imageData && lawyer.imageType) {
+          const imageType = lawyer.imageType === 'image/jpg' ? 'image/jpeg' : lawyer.imageType;
+          avatarUrl = `data:${imageType};base64,${lawyer.imageData}`;
+        }
+
+        return {
+          ...lawyer,
+          avatar: avatarUrl,
+          consultCount: lawyer.consultCount || 0,
+          price: lawyer.price || 48
+        }
+      })
 
       console.log('处理后的数据:', processedData.length, '条');
 
@@ -193,7 +202,7 @@ const fetchLawyers = async (loadMore = false) => {
       if (!noMore.value) {
         currentPage.value++
       }
-      
+
       console.log('当前列表数据:', lawyerList.value.length, '条，总数:', total.value);
     } else {
       console.error('接口返回异常:', response);
@@ -421,13 +430,23 @@ defineExpose({
   gap: 20rpx;
 }
 
+.avatar-container {
+  position: relative;
+  margin-right: 24rpx;
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
 .avatar {
-  width: 100rpx;
-  height: 100rpx;
+  width: 128rpx;
+  height: 128rpx;
   border-radius: 50%;
   flex-shrink: 0;
-  aspect-ratio: 1/1;
-  background: #f5f5f5 no-repeat center/60%;
+  background-color: #f5f5f5;
+  display: block;
 }
 
 .lawyer-info {
@@ -620,8 +639,8 @@ defineExpose({
   }
 
   .avatar {
-    width: 80rpx;
-    height: 80rpx;
+    width: 100rpx;
+    height: 100rpx;
   }
 
   .name {

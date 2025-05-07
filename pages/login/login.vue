@@ -593,7 +593,6 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss">
-@import '@/uni_modules/theme/index.scss';
 
 .login-container {
   min-height: 100vh;
