@@ -85,47 +85,11 @@
         <text v-if="passwordError" class="error-tip">{{ passwordError }}</text>
       </view>
 
-      <!-- 用户角色选择 -->
-      <view class="role-selection">
-        <view class="role-label">您的身份：</view>
-        <view class="role-options">
-          <view
-              class="role-item"
-              :class="{ active: selectedRole === 'individual' }"
-              @click="selectedRole = 'individual'"
-          >
-            <uni-icons type="person" size="16" :color="selectedRole === 'individual' ? '#2979FF' : '#999'"></uni-icons>
-            <text>个人用户</text>
-          </view>
-          <view
-              class="role-item"
-              :class="{ active: selectedRole === 'corporate' }"
-              @click="selectedRole = 'corporate'"
-          >
-            <uni-icons type="shop" size="16" :color="selectedRole === 'corporate' ? '#2979FF' : '#999'"></uni-icons>
-            <text>法人用户</text>
-          </view>
-          <view
-              class="role-item"
-              :class="{ active: selectedRole === 'lawyer' }"
-              @click="selectedRole = 'lawyer'"
-          >
-            <uni-icons type="staff" size="16" :color="selectedRole === 'lawyer' ? '#2979FF' : '#999'"></uni-icons>
-            <text>我是律师</text>
-          </view>
-          <view
-              class="role-item"
-              :class="{ active: selectedRole === 'admin' }"
-              @click="selectedRole = 'admin'"
-          >
-            <uni-icons type="gear" size="16" :color="selectedRole === 'admin' ? '#2979FF' : '#999'"></uni-icons>
-            <text>管理员</text>
-          </view>
-        </view>
-      </view>
-
       <!-- 登录按钮 -->
       <button class="login-btn" @click="handleLogin">登录</button>
+
+      <!-- 申请成为律师按钮 -->
+      <button class="apply-lawyer-btn" @click="goToApplyLawyer">申请成为律师</button>
 
       <!-- 辅助功能区 -->
       <view class="helper-links">
@@ -548,6 +512,11 @@ function goToResetPassword() {
   navigateToUrl("/pages/login/resetpassword");
 }
 
+// 跳转到申请成为律师页面
+function goToApplyLawyer() {
+  navigateToUrl("/pages/lawyer/addlawyerinfo");
+}
+
 // 退出登录
 function logout() {
   uni.showModal({
@@ -726,61 +695,6 @@ onUnmounted(() => {
   margin: -20rpx 0 20rpx 20rpx;
 }
 
-/* 角色选择 */
-.role-selection {
-  margin: 20rpx 0 40rpx;
-
-  .role-label {
-    font-size: 28rpx;
-    color: var(--text-secondary);
-    margin-bottom: 20rpx;
-  }
-
-  .role-options {
-    display: flex;
-    justify-content: space-between;
-  }
-
-  .role-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20rpx;
-    border-radius: 12rpx;
-    background-color: #f5f7fa;
-    margin: 0 10rpx;
-    transition: all 0.3s;
-
-    &:first-child {
-      margin-left: 0;
-    }
-
-    &:last-child {
-      margin-right: 0;
-    }
-
-    uni-icons {
-      margin-bottom: 10rpx;
-    }
-
-    text {
-      font-size: 26rpx;
-      color: var(--text-secondary);
-    }
-
-    &.active {
-      background-color: rgba(41, 121, 255, 0.1);
-      border: 1rpx solid rgba(41, 121, 255, 0.2);
-
-      text {
-        color: var(--primary-color);
-        font-weight: 500;
-      }
-    }
-  }
-}
-
 /* 登录按钮 */
 .login-btn {
   width: 100%;
@@ -794,6 +708,23 @@ onUnmounted(() => {
   font-weight: 500;
   box-shadow: 0 6rpx 16rpx rgba(41, 121, 255, 0.2);
   letter-spacing: 2rpx;
+  margin-bottom: 30rpx;
+}
+
+/* 申请成为律师按钮 */
+.apply-lawyer-btn {
+  width: 100%;
+  height: 90rpx;
+  line-height: 90rpx;
+  text-align: center;
+  background: #fff;
+  color: var(--primary-color);
+  font-size: 32rpx;
+  border-radius: 45rpx;
+  font-weight: 500;
+  border: 2rpx solid var(--primary-color);
+  letter-spacing: 2rpx;
+  margin-bottom: 30rpx;
 }
 
 /* 辅助链接 */
