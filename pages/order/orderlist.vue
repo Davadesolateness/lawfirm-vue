@@ -199,6 +199,12 @@ function clearSearch() {
 // 格式化订单数据，增加前端展示所需字段
 function formatOrders(orders) {
   return orders.map(order => {
+    // 处理头像
+    let avatarUrl = '/static/avatar-default.png';
+    if (order.lawyerAvatar && order.fileExtension) {
+      const imageType = order.fileExtension === 'image/jpg' ? 'image/jpeg' : order.fileExtension;
+      avatarUrl = `data:${imageType};base64,${order.lawyerAvatar}`;
+    }
     // 计算或转换UI显示数据
     const formattedOrder = {
       ...order,
@@ -211,7 +217,7 @@ function formatOrders(orders) {
       // 处理显示费用
       fee: order.purchaseAmount || 0,
       // 默认头像
-      lawyerAvatar: order.lawyerAvatar || '/static/images/default-avatar.png',
+      lawyerAvatar: avatarUrl,
       // 填充缺失的UI显示字段
       lawyerName: order.lawyerName || '未分配律师',
       lawyerTitle: order.lawyerTitle || '律师',
