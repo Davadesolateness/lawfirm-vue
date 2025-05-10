@@ -145,6 +145,13 @@
         "navigationBarTitleText": "隐私政策",
         "enablePullDownRefresh": false
       }
+    },
+    {
+      "path": "pages/about/meichen",
+      "style": {
+        "navigationBarTitleText": "关于",
+        "enablePullDownRefresh": false
+      }
     }
   ],
   "tabBar": {

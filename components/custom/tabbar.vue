@@ -6,10 +6,6 @@
         <image :src="currentPage === 'index' ? '/static/images/home_active.png' : '/static/images/home.png'"></image>
         <text>首页</text>
       </view>
-      <view class="tab-item" :class="{ active: currentPage === 'consult' }" @click="navTo('/pages/lawyer/lawyerinfo')">
-        <image :src="currentPage === 'consult' ? '/static/images/home_active.png' : '/static/images/home.png'"></image>
-        <text>个人咨询</text>
-      </view>
       <view class="tab-item" :class="{ active: currentPage === 'order' }" @click="navTo('/pages/order/orderlist')">
         <image :src="currentPage === 'order' ? '/static/images/user_active.png' : '/static/images/user.png'"></image>
         <text>我的订单</text>
@@ -26,12 +22,8 @@
         <image :src="currentPage === 'index' ? '/static/images/home_active.png' : '/static/images/home.png'"></image>
         <text>首页</text>
       </view>
-      <view class="tab-item" :class="{ active: currentPage === 'consult' }" @click="navTo('/pages/lawyer/lawyerinfo')">
-        <image :src="currentPage === 'consult' ? '/static/images/home_active.png' : '/static/images/home.png'"></image>
-        <text>企业咨询</text>
-      </view>
       <view class="tab-item" :class="{ active: currentPage === 'order' }" @click="navTo('/pages/order/orderlist')">
-        <image :src="currentPage === 'order' ? '/static/images/user_active.png' : '/static/images/user.png'"></image>
+        <image :src="currentPage === 'order' ? '/static/images/order_active.png' : '/static/images/order.png'"></image>
         <text>企业订单</text>
       </view>
       <view class="tab-item" :class="{ active: currentPage === 'user' }" @click="navTo('/pages/user/user')">
@@ -47,7 +39,7 @@
         <text>首页</text>
       </view>
       <view class="tab-item" :class="{ active: currentPage === 'order' }" @click="navTo('/pages/order/orderlist')">
-        <image :src="currentPage === 'order' ? '/static/images/user_active.png' : '/static/images/user.png'"></image>
+        <image :src="currentPage === 'order' ? '/static/images/order_active.png' : '/static/images/order.png'"></image>
         <text>我的订单</text>
       </view>
       <view class="tab-item" :class="{ active: currentPage === 'lawyer' }" @click="navTo('/pages/lawyer/lawyer')">

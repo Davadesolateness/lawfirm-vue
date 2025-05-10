@@ -17,7 +17,7 @@
   <!-- 搜索框 -->
   <view class="search-container">
     <view class="search-box">
-      <uni-icons type="search" size="18" color="#999"></uni-icons>
+      <uni-icons type="search" size="18" color="#718096"></uni-icons>
       <input
           type="text"
           class="search-input"
@@ -27,7 +27,7 @@
           @input="debounceSearch"
       />
       <view v-if="searchKeyword" class="clear-icon" @click="clearSearch">
-        <uni-icons type="clear" size="14" color="#999"></uni-icons>
+        <uni-icons type="clear" size="14" color="#718096"></uni-icons>
       </view>
     </view>
     <view class="search-btn" @click="searchLawyers">搜索</view>

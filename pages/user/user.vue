@@ -83,26 +83,21 @@
 
       <!-- 功能列表 -->
       <view class="func-list">
-        <view class="func-item" @click="toPage('/pages/share/index')">
-          <text class="func-icon">👀</text>
-          <text class="func-text">推荐给好友</text>
+        <view class="func-item" @click="toPage('/pages/customer-service/index')">
+          <text class="func-icon">📞</text>
+          <text class="func-text">联系客服</text>
           <text class="arrow">›</text>
         </view>
-        <view class="func-item" @click="toPage('/pages/about/index')">
-          <text class="func-icon">💁</text>
+        <view class="func-item" @click="toPage('/pages/about/meichen')">
+          <text class="func-icon">🏢</text>
           <text class="func-text">关于</text>
           <text class="arrow">›</text>
         </view>
-        <view class="func-item" @click="toPage('/pages/feedback/index')">
-          <text class="func-icon">📧</text>
-          <text class="func-text">意见反馈</text>
+        <view class="func-item" @click="logout">
+          <text class="func-icon">🚪</text>
+          <text class="func-text">退出登录</text>
           <text class="arrow">›</text>
         </view>
-      </view>
-
-      <view>
-        <button class="el-button--text" @click="modifyUserInfo">修改用户</button>
-        <button class="el-button--text" @click="adminPage">管理员</button>
       </view>
     </view>
 
@@ -411,6 +406,44 @@ function handleUploadError(error) {
     duration: 3000
   })
 }
+
+// 退出登录
+function logout() {
+  uni.showModal({
+    title: '退出登录',
+    content: '确定要退出当前账号吗？',
+    success: (res) => {
+      if (res.confirm) {
+        // 清除当前用户缓存
+        clearCurrentUserCache();
+        
+        // 跳转到登录页面
+        uni.reLaunch({
+          url: '/pages/login/login'
+        });
+      }
+    }
+  });
+}
+
+// 清除当前用户缓存（复用之前的方法）
+function clearCurrentUserCache(specificUserId = null) {
+  const userId = specificUserId || uni.getStorageSync('current_user_id');
+  
+  if (userId) {
+    // 设置用户前缀
+    cacheManager.setUserPrefix(userId);
+    
+    // 清除该用户的所有缓存
+    cacheManager.clearUserCache();
+  } else {
+    // 如果没有特定用户ID，尝试清除当前活跃用户的token
+    cacheManager.removeToken();
+  }
+  
+  // 移除当前用户ID
+  uni.removeStorageSync('current_user_id');
+}
 </script>
 
 <style lang="scss" scoped>
@@ -624,9 +657,10 @@ function handleUploadError(error) {
     align-items: center;
     border-bottom: 1rpx solid #f0f0f0;
     transition: background 0.2s;
+    color: #4A67FF; // 客服蓝色
 
     &:last-child {
-      border-bottom: none;
+      border-bottom: none !important;
     }
 
     .func-icon {
@@ -650,17 +684,6 @@ function handleUploadError(error) {
       background: #f8f9ff;
     }
   }
-}
-
-/* 按钮样式 */
-.el-button--text {
-  width: 100%;
-  margin-top: 24rpx;
-  padding: 20rpx;
-  background: #f0f4ff;
-  color: #4A67FF;
-  border-radius: 12rpx;
-  font-size: 28rpx;
 }
 
 /* 头像弹窗样式 */
