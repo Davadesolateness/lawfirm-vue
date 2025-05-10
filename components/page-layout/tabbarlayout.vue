@@ -6,7 +6,7 @@
     </view>
     
     <!-- 自定义TabBar -->
-    <cCustomTabBar v-if="showTabBar"></cCustomTabBar>
+    <CustomTabBar v-if="showTabBar"></CustomTabBar>
   </view>
 </template>
 
