@@ -21,22 +21,6 @@
       <scroll-view scroll-y class="lawyer-list">
         <LawyerList ref="lawyerListRef" :search-keyword="searchKeyword"></LawyerList>
       </scroll-view>
-
-      <!-- 测试用户角色切换 -->
-      <view class="role-switcher">
-        <text class="role-title">测试用户角色切换：</text>
-        <view class="role-buttons">
-          <button class="role-btn" @click="switchRole(USER_TYPES.INDIVIDUAL)">个人用户</button>
-          <button class="role-btn" @click="switchRole(USER_TYPES.CORPORATE)">法人用户</button>
-          <button class="role-btn" @click="switchRole(USER_TYPES.LAWYER)">律师用户</button>
-          <button class="role-btn" @click="switchRole(USER_TYPES.ADMIN)">管理员</button>
-        </view>
-        <text class="current-role">当前角色: {{ currentRole }}</text>
-      </view>
-
-      <button class="consult-btn" @click="handleConsult('111')">
-        跳转律师详情
-      </button>
       <button class="consult-btn" @click="login">
         登录
       </button>

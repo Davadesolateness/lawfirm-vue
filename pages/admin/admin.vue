@@ -214,7 +214,7 @@ async function uploadAvatar(adminId, filePath) {
     uni.showLoading({ title: '上传中...', mask: true });
 
     console.log('开始上传管理员头像:', filePath);
-debugger
+
     // 这里调用接口上传头像文件
     // 注意：这里需要替换为实际的管理员头像上传API
     let uploadResult = await apiUploadAdminAvatar('/image/uploadAvatar', filePath, adminId);

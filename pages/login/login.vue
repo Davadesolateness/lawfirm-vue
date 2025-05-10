@@ -109,13 +109,20 @@
         </view>
       </view>
       <view class="agreement">
-        登录即表示同意
-        <text class="link">《用户协议》</text>
-        和
-        <text class="link">《隐私政策》</text>
+        <checkbox-group @change="agreementChange">
+          <label class="checkbox-label">
+            <checkbox :checked="isAgreedPolicy" :value="'agreed'" style="transform:scale(0.7)" />
+            <text>登录即表示同意</text>
+            <text class="link" @click.stop="navigateToUserAgreement">《用户协议》</text>
+            <text>和</text>
+            <text class="link" @click.stop="navigateToPrivacyPolicy">《隐私政策》</text>
+          </label>
+        </checkbox-group>
       </view>
-    </view>
+    </view> 
   </view>
+
+
 </template>
 
 <script setup>
@@ -123,7 +130,8 @@ import {computed, onMounted, onUnmounted, ref} from 'vue';
 import {setUserType, USER_TYPES} from '@/utils/store/userManager';
 import {accountLogin, phoneLogin, sendVerificationCode, wechatLogin} from '@/api/login';
 import {cacheManager} from '@/utils/store';
-import {navigateToUrl} from '@/utils/navigateTo'
+import {navigateToUrl} from '@/utils/navigateTo';
+
 
 // 登录方式
 const loginType = ref('phone'); // 'phone' 或 'account'
@@ -145,6 +153,13 @@ const showPassword = ref(false);
 // 登录状态
 const isLoggedIn = ref(false);
 let userInfo = null;
+
+// 用户协议和隐私政策相关
+const isAgreedPolicy = ref(false);
+
+// 用户协议和隐私政策弹窗控制
+const showAgreementPopup = ref(false);
+const showPrivacyPopup = ref(false);
 
 // 计算手机号是否有效
 const isPhoneValid = computed(() => {
@@ -252,8 +267,7 @@ function restoreUserFromCache() {
   
   // 检查token是否存在（指定该用户ID获取token）
   let token = cacheManager.getToken(userId);
-  debugger
-  token = null;
+
   if (!token) {
     // token不存在，清除可能的无效数据
     clearCurrentUserCache(userId);
@@ -311,6 +325,15 @@ function clearCurrentUserCache(specificUserId = null) {
 
 // 登录处理
 async function handleLogin() {
+  // 验证是否同意用户协议和隐私政策
+  if (!isAgreedPolicy.value) {
+    uni.showToast({
+      title: '请先同意用户协议和隐私政策',
+      icon: 'none'
+    });
+    return;
+  }
+
   // 验证表单
   if (loginType.value === 'phone') {
     if (!validatePhoneNumber()) return;
@@ -397,6 +420,15 @@ async function handleLogin() {
 
 // 微信登录
 async function handleWechatLogin() {
+  // 验证是否同意用户协议和隐私政策
+  if (!isAgreedPolicy.value) {
+    uni.showToast({
+      title: '请先同意用户协议和隐私政策',
+      icon: 'none'
+    });
+    return;
+  }
+  
   uni.showLoading({
     title: '正在登录...'
   });
@@ -559,6 +591,20 @@ onUnmounted(() => {
   uni.$off('app-hide');
   uni.$off('app-unload');
 });
+
+function agreementChange(e) {
+  isAgreedPolicy.value = e.detail.value.includes('agreed');
+}
+
+// 跳转到用户协议页面
+function navigateToUserAgreement() {
+  navigateToUrl('/components/user/agreement');
+}
+
+// 跳转到隐私政策页面
+function navigateToPrivacyPolicy() {
+  navigateToUrl('/components/user/privacy');
+}
 </script>
 
 <style lang="scss">
@@ -796,6 +842,98 @@ onUnmounted(() => {
 
     .link {
       color: var(--primary-color);
+    }
+    
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      
+      checkbox {
+        margin-right: 6rpx;
+      }
+      
+      text {
+        margin: 0 2rpx;
+      }
+    }
+  }
+}
+
+/* 弹窗相关样式 */
+.popup-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.popup-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 600rpx;
+  height: 80%;
+  max-height: 900rpx;
+  background-color: #fff;
+  border-radius: 12rpx;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.popup-header {
+  position: relative;
+  height: 90rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1rpx solid #eee;
+  
+  .popup-title {
+    font-size: 34rpx;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .popup-close {
+    position: absolute;
+    right: 20rpx;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 10rpx;
+  }
+}
+
+.popup-body {
+  flex: 1;
+  padding: 30rpx;
+}
+
+.content-section {
+  margin-bottom: 30rpx;
+  
+  .section-title {
+    font-size: 30rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16rpx;
+  }
+  
+  .section-text {
+    color: #666;
+    font-size: 26rpx;
+    line-height: 1.6;
+    
+    .paragraph {
+      margin-bottom: 12rpx;
     }
   }
 }

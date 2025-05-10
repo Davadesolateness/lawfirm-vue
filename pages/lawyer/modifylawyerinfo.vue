@@ -153,7 +153,7 @@ async function handleSubmit() {
     }
 
     uni.showLoading({title: '保存中...'});
-    debugger
+
     // 调用更新接口
     await apiUpdateLawyerInfo(lawyerInfo);
 

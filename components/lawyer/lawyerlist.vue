@@ -171,7 +171,7 @@ const fetchLawyers = async (loadMore = false) => {
     console.log('请求参数:', JSON.stringify(params));
     const response = await apiSearchLawyers(params)
     console.log('响应数据:', JSON.stringify(response));
-    debugger
+
     if (response && response.data) {
       total.value = response.total || 0
       const processedData = (response.data || []).map(lawyer => {

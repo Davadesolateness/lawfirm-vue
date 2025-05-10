@@ -1,6 +1,13 @@
 {
   "pages": [
     {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "登录页面",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
       "path": "pages/index/index",
       "style": {
         "navigationBarTitleText": "首页"
@@ -17,13 +24,6 @@
       "path": "pages/order/orderlist",
       "style": {
         "navigationBarTitleText": "订单列表",
-        "enablePullDownRefresh": false
-      }
-    },
-    {
-      "path": "pages/login/login",
-      "style": {
-        "navigationBarTitleText": "登录页面",
         "enablePullDownRefresh": false
       }
     },
@@ -129,6 +129,20 @@
       "path": "pages/admin/admin",
       "style": {
         "navigationBarTitleText": "管理员信息",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "components/user/agreement",
+      "style": {
+        "navigationBarTitleText": "用户协议",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "components/user/privacy",
+      "style": {
+        "navigationBarTitleText": "隐私政策",
         "enablePullDownRefresh": false
       }
     }
