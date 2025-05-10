@@ -2,14 +2,14 @@
   <view class="about-container">
     <view class="header">
       <uni-icons type="back" size="24" color="#333" @click="goBack"></uni-icons>
-      <text class="title">关于美辰律师事务所</text>
+      <text class="title">关于某某律师事务所</text>
     </view>
 
     <scroll-view class="content" scroll-y="true" show-scrollbar="true">
       <!-- 公司logo和基本信息 -->
       <view class="logo-section">
         <image class="logo" src="/static/logo.png" mode="aspectFit"></image>
-        <text class="company-name">美辰律师事务所</text>
+        <text class="company-name">某某律师事务所</text>
         <text class="company-slogan">专业 · 诚信 · 卓越</text>
       </view>
 
@@ -17,7 +17,7 @@
       <view class="section">
         <view class="section-title">公司简介</view>
         <view class="section-content">
-          美辰律师事务所成立于2010年，是一家集法律咨询、诉讼服务、法律顾问于一体的综合性律师事务所。我们汇聚了来自全国各地的优秀法律人才，致力于为企业和个人提供全方位、高质量的法律服务。
+          某某律师事务所成立于2010年，是一家集法律咨询、诉讼服务、法律顾问于一体的综合性律师事务所。我们汇聚了来自全国各地的优秀法律人才，致力于为企业和个人提供全方位、高质量的法律服务。
         </view>
       </view>
 
@@ -27,7 +27,7 @@
         <view class="timeline">
           <view class="timeline-item">
             <text class="year">2010</text>
-            <text class="event">美辰律师事务所成立</text>
+            <text class="event">某某律师事务所成立</text>
           </view>
           <view class="timeline-item">
             <text class="year">2015</text>
@@ -119,7 +119,7 @@
     </scroll-view>
 
     <view class="footer">
-      <text>© 2024 美辰律师事务所 版权所有</text>
+      <text>© 2024 某某律师事务所 版权所有</text>
       <text>京ICP备12345678号-1</text>
     </view>
   </view>
