@@ -48,14 +48,14 @@
           <text class="func-text">修改信息</text>
           <text class="arrow">›</text>
         </view>
-        <view class="func-item" @click="viewOrderHistory">
-          <text class="func-icon">📋</text>
-          <text class="func-text">咨询记录</text>
+        <view class="func-item" @click="toPage('/pages/about/meichen')">
+          <text class="func-icon">🏢</text>
+          <text class="func-text">关于</text>
           <text class="arrow">›</text>
         </view>
-        <view class="func-item" @click="toPage('/pages/feedback/index')">
-          <text class="func-icon">📧</text>
-          <text class="func-text">意见反馈</text>
+        <view class="func-item" @click="logout">
+          <text class="func-icon">🚪</text>
+          <text class="func-text">退出登录</text>
           <text class="arrow">›</text>
         </view>
       </view>
@@ -267,6 +267,41 @@ function handleUploadError(error) {
     icon: 'none',
     duration: 3000
   });
+}
+
+// 退出登录
+function logout() {
+  uni.showModal({
+    title: '退出登录',
+    content: '确定要退出当前律师账号吗？',
+    success: (res) => {
+      if (res.confirm) {
+        // 清除当前律师缓存
+        clearCurrentLawyerCache();
+        
+        // 跳转到登录页面
+        uni.reLaunch({
+          url: '/pages/login/login'
+        });
+      }
+    }
+  });
+}
+
+// 清除当前律师缓存
+function clearCurrentLawyerCache() {
+  const lawyerId = uni.getStorageSync('current_user_id');
+  
+  if (lawyerId) {
+    // 设置用户前缀
+    cacheManager.setUserPrefix(lawyerId);
+    
+    // 清除该律师的所有缓存
+    cacheManager.clearUserCache();
+  }
+  
+  // 移除当前律师ID
+  uni.removeStorageSync('current_user_id');
 }
 </script>
 

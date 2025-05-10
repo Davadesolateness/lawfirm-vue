@@ -39,10 +39,11 @@
             <view class="form-item">
               <text class="label">会员等级</text>
               <picker
-                v-model="formData.level"
+                :value="formData.level"
                 :range="memberLevels"
                 class="form-picker"
                 :class="{ error: errors.level }"
+                @change="onLevelChange"
               >
                 <view class="picker-content">
                   {{ memberLevels[formData.level] || '请选择会员等级' }}
@@ -54,9 +55,10 @@
             <view class="form-item">
               <text class="label">是否法人</text>
               <picker
-                v-model="formData.isLegal"
+                :value="formData.isLegal"
                 :range="legalOptions"
                 class="form-picker"
+                @change="onLegalChange"
               >
                 <view class="picker-content">
                   {{ legalOptions[formData.isLegal] || '请选择' }}
@@ -96,12 +98,22 @@
                     <input v-model="item.phone" type="number" placeholder="联系电话" class="batch-input" />
                   </view>
                   <view class="batch-form-item">
-                    <picker v-model="item.level" :range="memberLevels" class="batch-picker">
+                    <picker 
+                      :value="item.level" 
+                      :range="memberLevels" 
+                      class="batch-picker"
+                      @change="(e) => onBatchLevelChange(e, index)"
+                    >
                       <view class="picker-content">{{ memberLevels[item.level] || '会员等级' }}</view>
                     </picker>
                   </view>
                   <view class="batch-form-item">
-                    <picker v-model="item.isLegal" :range="legalOptions" class="batch-picker">
+                    <picker 
+                      :value="item.isLegal" 
+                      :range="legalOptions" 
+                      class="batch-picker"
+                      @change="(e) => onBatchLegalChange(e, index)"
+                    >
                       <view class="picker-content">{{ legalOptions[item.isLegal] || '是否法人' }}</view>
                     </picker>
                   </view>
@@ -284,6 +296,26 @@ const handleSubmit = async () => {
       uni.showToast({ title: '提交失败，请重试', icon: 'none' })
     }
   }
+}
+
+// 会员等级变化处理
+const onLevelChange = (e) => {
+  formData.level = e.detail.value
+}
+
+// 法人变化处理
+const onLegalChange = (e) => {
+  formData.isLegal = e.detail.value
+}
+
+// 批量等级变化处理
+const onBatchLevelChange = (e, index) => {
+  batchFormData.value[index].level = e.detail.value
+}
+
+// 批量法人变化处理
+const onBatchLegalChange = (e, index) => {
+  batchFormData.value[index].isLegal = e.detail.value
 }
 </script>
 

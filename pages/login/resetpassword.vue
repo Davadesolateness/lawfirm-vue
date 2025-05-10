@@ -244,7 +244,7 @@ function goToLogin() {
 </script>
 
 <style lang="scss">
-@import '@/uni_modules/theme/index.scss';
+
 
 .reset-password-container {
   min-height: 100vh;

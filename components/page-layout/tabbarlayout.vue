@@ -6,12 +6,12 @@
     </view>
     
     <!-- 自定义TabBar -->
-    <custom-tab-bar v-if="showTabBar"></custom-tab-bar>
+    <cCustomTabBar v-if="showTabBar"></cCustomTabBar>
   </view>
 </template>
 
 <script>
-import CustomTabBar from '@/components/custom/TabBar.vue';
+import CustomTabBar from '@/components/custom/tabbar.vue';
 
 export default {
   components: {
