@@ -37,11 +37,6 @@
           <text class="func-text">修改信息</text>
           <text class="arrow">›</text>
         </view>
-        <view class="func-item" @click="toPage('/pages/feedback/index')">
-          <text class="func-icon">📧</text>
-          <text class="func-text">意见反馈</text>
-          <text class="arrow">›</text>
-        </view>
         <view class="func-item" @click="toPage('/pages/about/meichen')">
           <text class="func-icon">🏢</text>
           <text class="func-text">关于</text>
@@ -78,6 +73,7 @@ import { onMounted, reactive, ref } from "vue";
 import { navigateTo, navigateToUrl } from "@/utils/navigateTo";
 import PageLayout from "@/components/page-layout/tabbarlayout.vue";
 import { apiUploadAdminAvatar } from "@/api/imageapi";
+import { apiGetAdminById } from "@/api/adminapi";
 import { cacheManager } from "@/utils/store";
 
 // 头像弹窗引用
@@ -101,25 +97,64 @@ onMounted(async () => {
 
 // 初始化管理员信息
 async function initAdminInfo() {
-  // 获取缓存中的管理员信息
-  const userId = uni.getStorageSync('current_user_id');
-  cacheManager.setUserPrefix(userId);
-  const cachedInfo = cacheManager.getCache('adminInfo');
-  
-  if (cachedInfo) {
-    Object.assign(adminInfo, cachedInfo);
-  } else {
-    // 模拟测试数据
+  try {
+    // 获取缓存中的管理员ID
+    const adminId = uni.getStorageSync('current_user_id');
+    
+    if (!adminId) {
+      uni.showToast({
+        title: '请先登录',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
+    debugger
+    // 显示加载中提示
+    uni.showLoading({ title: '加载中...' });
+    const adminResponse = await apiGetAdminById(adminId);
+
+   /* // 获取管理员详细信息
+    const detailsResponse = await apiGetAdminDetails(adminId);
+    
+    // 获取管理员权限信息
+    const permissionsResponse = await apiGetAdminPermissions(adminId);*/
+
+    // 合并管理员信息
+    Object.assign(adminInfo, detailsResponse.data, {
+      adminLevel: permissionsResponse.data.level,
+      lastLoginTime: detailsResponse.data.lastLoginTime || new Date()
+    });
+
+    // 处理头像数据
+    if (detailsResponse.data.imageData && detailsResponse.data.imageType) {
+      const imageType = detailsResponse.data.imageType === 'image/jpg' ? 'image/jpeg' : detailsResponse.data.imageType;
+      adminInfo.avatar = `data:${imageType};base64,${detailsResponse.data.imageData}`;
+    }
+
+    // 存入缓存
+    cacheManager.setCache('adminInfo', adminInfo);
+
+    // 隐藏加载提示
+    uni.hideLoading();
+  } catch (error) {
+    // 错误处理
+    console.error("获取管理员信息失败:", error);
+    uni.hideLoading();
+    uni.showToast({
+      title: '获取管理员信息失败',
+      icon: 'none',
+      duration: 2000
+    });
+
+    // 如果获取失败，使用默认数据
     Object.assign(adminInfo, {
-      adminId: '1',
+      adminId: adminId,
       adminName: '系统管理员',
       adminLevel: 3,
       avatar: '/static/default-avatar.png',
       lastLoginTime: new Date()
     });
-    
-    // 存入缓存
-    cacheManager.setCache('adminInfo', adminInfo);
   }
 }
 
