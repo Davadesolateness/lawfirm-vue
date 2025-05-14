@@ -501,56 +501,108 @@ defineExpose({
   --card-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
 }
 
-/* 筛选器样式 */
+/* 优化后的筛选器样式 */
 .filter-wrapper {
   background: #fff;
-  padding: 24rpx;
-  margin: 0 20rpx 20rpx;
-  border-radius: 12rpx;
+  padding: 24rpx 32rpx;
+  margin-bottom: 24rpx;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  gap: 28rpx;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .filter-item {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 0 10rpx;
+  align-items: center;
+  gap: 16rpx;
   position: relative;
 }
 
-.filter-item:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 10%;
-  height: 80%;
-  width: 1px;
-  background-color: #eaeaea;
+.filter-item:first-child {
+  margin-left: 0;
 }
 
+.filter-item:last-child {
+  margin-right: 0;
+}
+
+/* 标签样式增强 */
 .filter-label {
-  font-size: 24rpx;
-  color: var(--text-tertiary);
-  margin-bottom: 10rpx;
+  font-size: 26rpx;
+  color: var(--text-primary);
   font-weight: 500;
+  white-space: nowrap;
+  position: relative;
+  padding-right: 12rpx;
+}
+/* 添加装饰分隔线 */
+.filter-label::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 24rpx;
+  width: 1px;
+  background: #e5e7eb;
 }
 
 .filter-picker {
-  width: 100%;
+  position: relative;
 }
 
+/* 选择器样式升级 */
 .picker-value {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 28rpx;
+  gap: 8rpx;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 40rpx;
+  padding: 16rpx 32rpx;
   color: var(--text-primary);
-  font-weight: 500;
-  padding: 6rpx 0;
+  font-size: 26rpx;
+  font-weight: 400;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
+}
+
+/* 悬停交互效果 */
+.picker-value:active {
+  transform: scale(0.98);
+  box-shadow: 0 1rpx 4rpx rgba(0,0,0,0.05);
+}
+
+/* 激活状态优化 */
+.picker-value.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+  box-shadow: 0 2rpx 12rpx rgba(0,122,255,0.2);
+}
+
+/* 图标样式调整 */
+.picker-value .uni-icons {
+  color: inherit;
+  opacity: 0.8;
+  transition: transform 0.2s;
+}
+.picker-value.active .uni-icons {
+  transform: rotate(180deg);
+}
+
+/* 选中状态样式 */
+.filter-item.active {
+  background: var(--primary-color);
+}
+
+.filter-item.active .filter-label,
+.filter-item.active .picker-value {
+  color: #fff;
 }
 
 /* 搜索框样式 */
@@ -773,36 +825,37 @@ defineExpose({
 }
 
 /* 响应式处理 */
+/* 移动端适配优化 */
 @media (max-width: 768px) {
   .filter-wrapper {
-    padding: 16rpx 20rpx;
-    gap: 12rpx;
+    padding: 20rpx 24rpx;
+    gap: 20rpx;
   }
 
   .filter-label {
-    font-size: 22rpx;
-    margin-right: 8rpx;
+    font-size: 24rpx;
+    padding-right: 8rpx;
+  }
+
+  .filter-label::after {
+    height: 20rpx;
   }
 
   .picker-value {
-    padding: 10rpx 20rpx;
+    padding: 12rpx 24rpx;
     font-size: 24rpx;
-    border-radius: 28rpx;
+    border-radius: 36rpx;
   }
 }
 
 @media (max-width: 480px) {
-  .lawyer-card {
-    padding: 24rpx;
+  .filter-label {
+    font-size: 22rpx;
   }
 
-  .avatar {
-    width: 100rpx;
-    height: 100rpx;
-  }
-
-  .name {
-    font-size: 28rpx;
+  .picker-value {
+    padding: 10rpx 20rpx;
+    font-size: 22rpx;
   }
 }
 </style>
