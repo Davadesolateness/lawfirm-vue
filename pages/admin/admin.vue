@@ -73,7 +73,7 @@ import { onMounted, reactive, ref } from "vue";
 import { navigateTo, navigateToUrl } from "@/utils/navigateTo";
 import PageLayout from "@/components/page-layout/tabbarlayout.vue";
 import { apiUploadAdminAvatar } from "@/api/imageapi";
-import { apiGetAdminById } from "@/api/adminapi";
+import { apiGetAdministratorById} from "@/api/adminapi";
 import { cacheManager } from "@/utils/store";
 
 // 头像弹窗引用
@@ -99,9 +99,9 @@ onMounted(async () => {
 async function initAdminInfo() {
   try {
     // 获取缓存中的管理员ID
-    const adminId = uni.getStorageSync('current_user_id');
+    const userId = uni.getStorageSync('current_user_id');
     
-    if (!adminId) {
+    if (!userId) {
       uni.showToast({
         title: '请先登录',
         icon: 'none',
@@ -112,28 +112,17 @@ async function initAdminInfo() {
     debugger
     // 显示加载中提示
     uni.showLoading({ title: '加载中...' });
-    const adminResponse = await apiGetAdminById(adminId);
-
-   /* // 获取管理员详细信息
-    const detailsResponse = await apiGetAdminDetails(adminId);
-    
-    // 获取管理员权限信息
-    const permissionsResponse = await apiGetAdminPermissions(adminId);*/
+    const adminResponse = await apiGetAdministratorById(userId);
 
     // 合并管理员信息
-    Object.assign(adminInfo, detailsResponse.data, {
-      adminLevel: permissionsResponse.data.level,
-      lastLoginTime: detailsResponse.data.lastLoginTime || new Date()
-    });
+    Object.assign(adminInfo, adminResponse);
 
     // 处理头像数据
-    if (detailsResponse.data.imageData && detailsResponse.data.imageType) {
-      const imageType = detailsResponse.data.imageType === 'image/jpg' ? 'image/jpeg' : detailsResponse.data.imageType;
-      adminInfo.avatar = `data:${imageType};base64,${detailsResponse.data.imageData}`;
+    if (adminResponse.imageData && adminResponse.mimeType) {
+      const imageType = adminResponse.mimeType === 'image/jpg' ? 'image/jpeg' : adminResponse.mimeType;
+      adminInfo.avatar = `data:${imageType};base64,${adminResponse.imageData}`;
     }
 
-    // 存入缓存
-    cacheManager.setCache('adminInfo', adminInfo);
 
     // 隐藏加载提示
     uni.hideLoading();
@@ -217,8 +206,9 @@ function closeAvatarPopup() {
 // 选择图片
 function chooseImage(sourceType) {
   closeAvatarPopup();
+  debugger
   // 确保已获取管理员ID
-  if (!adminInfo.adminId) {
+  if (!adminInfo.userId) {
     uni.showToast({
       title: '用户信息错误，请重新登录',
       icon: 'none'
@@ -243,7 +233,7 @@ function chooseImage(sourceType) {
           throw new Error('图片大小不能超过4MB');
         }
 
-        await uploadAvatar(adminInfo.adminId, res.tempFilePaths[0]);
+        await uploadAvatar(adminInfo.userId, res.tempFilePaths[0]);
       } catch (error) {
         handleUploadError(error);
       }
