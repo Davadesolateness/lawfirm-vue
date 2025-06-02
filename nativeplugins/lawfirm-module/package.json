@@ -1,0 +1,39 @@
+{
+  "name": "lawfirm",
+  "id": "lawfirm-module",
+  "version": "1.1",
+  "description": "插件描述信息",
+  "_dp_type":"nativeplugin",
+  "_dp_nativeplugin":{
+    "android": {
+      "plugins": [
+         {
+          "type": "module",
+          "name": "CallPlugin",
+          "class": "com.lawfirm.lawfirmplgin.CallPlugin"
+        },
+        {
+          "type": "module",
+          "name": "TimerPlugin",
+          "class": "com.lawfirm.lawfirmplgin.TimerPlugin"
+        }
+      ],
+
+      "integrateType": "aar",
+      "compileOptions": {
+        "sourceCompatibility": "1.8",
+        "targetCompatibility": "1.8"
+      },
+      "minSdkVersion": "21",
+      "useAndroidX": false,
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.MANAGE_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
+      "parameters": {
+
+      }
+    }
+  }
+}

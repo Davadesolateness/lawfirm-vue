@@ -23,9 +23,9 @@ const overrideRequest = () => {
 
 // 加载 Mock 规则
 const loadMocks = () => {
-    import("./modules/user");
+    /*import("./modules/user");
     import("./modules/lawyer");
-    import("./modules/login");
+    import("./modules/login");*/
 };
 
 export const initMock = () => {
