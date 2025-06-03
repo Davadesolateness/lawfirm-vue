@@ -20,8 +20,8 @@ initMock();
 // #endif
 
 // #ifdef MP-WEIXIN
-import { wxRequestInterceptor } from '@/mock/mp-adapter';
-wxRequestInterceptor();
+/*import { wxRequestInterceptor } from '@/mock/mp-adapter';
+wxRequestInterceptor();*/
 // #endif
 
 // #ifdef VUE3

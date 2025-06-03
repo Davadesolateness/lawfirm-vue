@@ -349,7 +349,7 @@ const fetchLawyers = async (loadMore = false) => {
       total.value = response.total || 0;
       const processedData = (response.data || []).map(lawyer => {
         // 处理头像数据
-        let avatarUrl = '/static/avatar-default.png';
+        let avatarUrl = '/static/default-avatar.png';
         if (lawyer.imageData && lawyer.imageType) {
           const imageType = lawyer.imageType === 'image/jpg' ? 'image/jpeg' : lawyer.imageType;
           avatarUrl = `data:${imageType};base64,${lawyer.imageData}`;
@@ -462,12 +462,26 @@ const handleScroll = () => {
 onMounted(async () => {
   await loadProvinces(); // 先加载省份数据
   fetchLawyers(); // 初始加载所有律师数据
+  // #ifdef MP-WEIXIN
+  plus.globalEvent.addEventListener('scroll', handleScroll);
+  // #endif
+
+  // #ifndef MP-WEIXIN
   window.addEventListener('scroll', handleScroll);
+  // #endif
+
 });
 
 // 卸载时移除监听
 onBeforeUnmount(() => {
+  // #ifdef MP-WEIXIN
+  plus.globalEvent.removeEventListener('scroll', handleScroll);
+  // #endif
+
+  // #ifndef MP-WEIXIN
   window.removeEventListener('scroll', handleScroll);
+  // #endif
+
 });
 
 // 计算属性

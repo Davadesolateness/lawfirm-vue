@@ -200,7 +200,7 @@ function clearSearch() {
 function formatOrders(orders) {
   return orders.map(order => {
     // 处理头像
-    let avatarUrl = '/static/avatar-default.png';
+    let avatarUrl = '/static/default-avatar.png';
     if (order.lawyerAvatar && order.fileExtension) {
       const imageType = order.fileExtension === 'image/jpg' ? 'image/jpeg' : order.fileExtension;
       avatarUrl = `data:${imageType};base64,${order.lawyerAvatar}`;

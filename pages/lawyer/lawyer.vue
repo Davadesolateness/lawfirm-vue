@@ -213,9 +213,6 @@ function chooseImage(sourceType) {
       try {
         // 增加文件类型和大小验证
         const file = res.tempFiles[0];
-        if (!file.type.startsWith('image/')) {
-          throw new Error('请选择图片文件');
-        }
         if (file.size > 4 * 1024 * 1024) { // 4MB限制
           throw new Error('图片大小不能超过4MB');
         }
