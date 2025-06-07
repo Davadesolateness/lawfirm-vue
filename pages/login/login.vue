@@ -104,7 +104,7 @@
         <text>其他登录方式</text>
       </view>
       <view class="social-login">
-        <view class="social-icon wechat" @click="handleWechatLogin">
+        <view class="social-icon wechat" bindtap="getInfo" @click="handleWechatLogin">
           <uni-icons type="weixin" size="28" color="#fff"></uni-icons>
         </view>
       </view>
@@ -535,7 +535,7 @@ function redirectAfterLogin() {
 // 跳转到注册页面
 function goToRegister() {
   uni.navigateTo({
-    url: '/pages/login/register'
+    url: '/pages/login/register/register'
   });
 }
 
