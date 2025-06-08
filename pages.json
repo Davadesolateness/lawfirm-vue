@@ -167,12 +167,6 @@
         "selectedIconPath": "static/images/home_active.png"
       },
       {
-        "pagePath": "pages/lawyer/lawyerinfo",
-        "text": "免费咨询",
-        "iconPath": "static/images/home.png",
-        "selectedIconPath": "static/images/home_active.png"
-      },
-      {
         "pagePath": "pages/order/orderlist",
         "text": "订单",
         "iconPath": "static/images/user.png",

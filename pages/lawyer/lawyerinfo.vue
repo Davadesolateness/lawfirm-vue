@@ -72,7 +72,7 @@
 
 <script setup>
 import { ref, computed } from "vue"
-import { onShow } from "@dcloudio/uni-app"
+import { onShow, onLoad } from "@dcloudio/uni-app"
 import PageLayout from "@/components/custom/tabbarlayout"
 import ConsultPopup from "@/components/consult-popup/consult-popup"
 import { apiGetLawyerById } from "@/api/lawyerapi"
@@ -80,21 +80,59 @@ import { apiGetLawyerById } from "@/api/lawyerapi"
 const basePrice = 38 // 基础价格
 const lawyerInfo = ref({})
 const showCallPopup = ref(false)
+const lawyerId = ref('') // 存储律师ID
 
 // 保障标签
 const guaranteeTags = ['隐私保护', '平台认证', '服务保障', '不满意可退款']
 
-
-
 // 初始化律师信息
 const initLawyerInfo = async () => {
+  if (!lawyerId.value) {
+    uni.showToast({ title: '律师ID不能为空', icon: 'none' })
+    return
+  }
+  
   try {
-    const data = await apiGetLawyerById("444")
-    lawyerInfo.value = data
+    uni.showLoading({ title: '加载中...' })
+    const data = await apiGetLawyerById(lawyerId.value)
+    
+    if (data) {
+      // 处理头像数据
+      let avatarUrl = '/static/default-avatar.png'
+      if (data.imageData && data.imageType) {
+        const imageType = data.imageType === 'image/jpg' ? 'image/jpeg' : data.imageType
+        avatarUrl = `data:${imageType};base64,${data.imageData}`
+      }
+      
+      lawyerInfo.value = {
+        ...data,
+        avatar: avatarUrl,
+        lawyername: data.lawyerName || '未知律师',
+        lawyerlicensenumber: data.lawyerLicenseNumber || '暂无',
+        address: data.address || '暂无地址信息',
+        introduction: data.lawyerIntroduction || '该律师暂未填写个人简介'
+      }
+    } else {
+      uni.showToast({ title: '律师信息不存在', icon: 'none' })
+    }
   } catch (error) {
+    console.error('获取律师信息失败:', error)
     uni.showToast({ title: '信息加载失败', icon: 'none' })
+  } finally {
+    uni.hideLoading()
   }
 }
+
+// 页面加载时获取参数
+onLoad((options) => {
+  console.log('页面参数:', options)
+  if (options.lawyerId) {
+    lawyerId.value = options.lawyerId
+    initLawyerInfo()
+  } else {
+    uni.showToast({ title: '缺少律师ID参数', icon: 'none' })
+  }
+})
 
 // 处理弹窗关闭
 const handlePopupClose = () => {
@@ -123,8 +161,6 @@ const handleCallConfirm = async (orderData) => {
 const handleContact = () => {
   uni.showToast({ title: '功能即将上线，敬请期待', icon: 'none' })
 }
-
-onShow(() => initLawyerInfo())
 </script>
 
 <style lang="scss">
