@@ -90,7 +90,11 @@
         </view>
         <view class="price-line">
           <text class="price">¥{{ lawyer.price || 0 }}/30分钟</text>
-          <text class="consult-type">电话咨询</text>
+          <view class="action-buttons">
+            <view class="consult-btn" @click.stop="consultLawyer(lawyer)">
+              电话咨询
+            </view>
+          </view>
         </view>
       </view>
 
@@ -495,6 +499,18 @@ function handleClick(lawyer) {
   navigateToUrl(`/pages/lawyer/lawyerinfo?lawyerId=${lawyer.id}`);
 }
 
+// 电话咨询处理
+const consultLawyer = (lawyer) => {
+  // 这里可以添加电话咨询的逻辑
+  console.log('电话咨询律师:', lawyer.lawyerName);
+  uni.showToast({
+    title: `正在为您连接${lawyer.lawyerName}律师`,
+    icon: 'none',
+    duration: 2000
+  });
+  // 可以在此处添加实际的电话咨询逻辑
+};
+
 // 暴露方法供父组件调用
 defineExpose({
   searchLawyers
@@ -504,118 +520,66 @@ defineExpose({
 <style scoped>
 /* 颜色变量 */
 :root {
-  --primary-color: #007AFF;
+  --primary-color: #1976D2;
   --danger-color: #ff4444;
   --warning-color: #ff9900;
   --success-color: #4CD964;
   --text-primary: #333;
   --text-secondary: #666;
   --text-tertiary: #999;
-  --bg-color: #f9f9f9;
-  --card-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+  --bg-color: #ffffff;
+  --card-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+  --border-color: #e5e5e5;
 }
 
-/* 优化后的筛选器样式 */
+/* 筛选器样式 */
 .filter-wrapper {
   background: #fff;
-  padding: 24rpx 32rpx;
-  margin-bottom: 24rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 16rpx;
   display: flex;
-  gap: 28rpx;
+  gap: 24rpx;
   flex-wrap: nowrap;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  border-bottom: 1rpx solid var(--border-color);
 }
 
 .filter-item {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  position: relative;
+  gap: 12rpx;
 }
 
-.filter-item:first-child {
-  margin-left: 0;
-}
-
-.filter-item:last-child {
-  margin-right: 0;
-}
-
-/* 标签样式增强 */
 .filter-label {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: var(--text-primary);
   font-weight: 500;
   white-space: nowrap;
-  position: relative;
-  padding-right: 12rpx;
-}
-/* 添加装饰分隔线 */
-.filter-label::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 24rpx;
-  width: 1px;
-  background: #e5e7eb;
 }
 
 .filter-picker {
   position: relative;
 }
 
-/* 选择器样式升级 */
 .picker-value {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 40rpx;
-  padding: 16rpx 32rpx;
+  gap: 6rpx;
+  background: #f8f9fa;
+  border: 1px solid var(--border-color);
+  border-radius: 20rpx;
+  padding: 12rpx 20rpx;
   color: var(--text-primary);
-  font-size: 26rpx;
-  font-weight: 400;
+  font-size: 24rpx;
   white-space: nowrap;
   transition: all 0.2s ease;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
 }
 
-/* 悬停交互效果 */
 .picker-value:active {
-  transform: scale(0.98);
-  box-shadow: 0 1rpx 4rpx rgba(0,0,0,0.05);
-}
-
-/* 激活状态优化 */
-.picker-value.active {
   background: var(--primary-color);
   border-color: var(--primary-color);
-  color: #fff;
-  box-shadow: 0 2rpx 12rpx rgba(0,122,255,0.2);
-}
-
-/* 图标样式调整 */
-.picker-value .uni-icons {
-  color: inherit;
-  opacity: 0.8;
-  transition: transform 0.2s;
-}
-.picker-value.active .uni-icons {
-  transform: rotate(180deg);
-}
-
-/* 选中状态样式 */
-.filter-item.active {
-  background: var(--primary-color);
-}
-
-.filter-item.active .filter-label,
-.filter-item.active .picker-value {
   color: #fff;
 }
 
@@ -623,123 +587,135 @@ defineExpose({
 .search-container {
   display: flex;
   align-items: center;
-  padding: 20rpx;
+  padding: 16rpx 24rpx;
   background-color: #fff;
-  margin: 20rpx;
-  border-radius: 12rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  border-bottom: 1rpx solid var(--border-color);
 }
 
 .search-box {
   flex: 1;
   display: flex;
   align-items: center;
-  background-color: #f5f7fa;
-  border-radius: 8rpx;
+  background-color: #f8f9fa;
+  border-radius: 24rpx;
   padding: 12rpx 20rpx;
-  height: 68rpx;
+  height: 64rpx;
+  border: 1rpx solid var(--border-color);
 }
 
 .search-input {
   flex: 1;
-  height: 68rpx;
-  font-size: 28rpx;
+  height: 64rpx;
+  font-size: 26rpx;
   color: #333;
-  margin-left: 16rpx;
+  margin-left: 12rpx;
 }
 
 .clear-icon {
-  padding: 10rpx;
+  padding: 8rpx;
 }
 
 .search-btn {
-  margin-left: 20rpx;
-  padding: 0 30rpx;
-  height: 68rpx;
-  line-height: 68rpx;
-  background: linear-gradient(135deg, #4A90E2, #2979FF);
+  margin-left: 16rpx;
+  padding: 0 24rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  background: var(--primary-color);
   color: #fff;
-  font-size: 28rpx;
-  border-radius: 8rpx;
+  font-size: 26rpx;
+  border-radius: 24rpx;
   text-align: center;
 }
 
 /* 律师列表样式 */
 .lawyer-list {
-  height: calc(100vh - 640rpx);
-  padding: 0 20rpx;
   background-color: var(--bg-color);
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  padding: 16rpx 24rpx;
+  min-height: calc(100vh - 400rpx);
 }
 
 .lawyer-card {
   background: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  margin-bottom: 0;
   box-shadow: var(--card-shadow);
-  transition: transform 0.2s ease;
+  border: 1rpx solid var(--border-color);
+  border-bottom: 2rpx solid #e0e0e0;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.lawyer-card:not(:last-child) {
+  border-bottom: 2rpx solid #e0e0e0;
+}
+
+.lawyer-card:last-child {
+  border-bottom: 1rpx solid var(--border-color);
 }
 
 .lawyer-card:active {
-  transform: translateY(2rpx);
+  transform: translateY(1rpx);
+  box-shadow: 0 1rpx 6rpx rgba(0, 0, 0, 0.1);
 }
 
 .lawyer-header {
   display: flex;
-  gap: 20rpx;
+  gap: 16rpx;
 }
 
 .avatar {
-  width: 128rpx;
-  height: 128rpx;
+  width: 112rpx;
+  height: 112rpx;
   border-radius: 50%;
   flex-shrink: 0;
   background-color: #f5f5f5;
-  display: block;
+  border: 2rpx solid var(--border-color);
 }
 
 .lawyer-info {
   flex: 1;
-  min-width: 0; /* 防止内容溢出 */
+  min-width: 0;
 }
 
 .name-line {
   display: flex;
   align-items: center;
-  gap: 15rpx;
+  gap: 12rpx;
   flex-wrap: wrap;
+  margin-bottom: 12rpx;
 }
 
 .name {
-  font-size: 32rpx;
-  font-weight: bold;
+  font-size: 30rpx;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
 .cert-badge {
-  background: #f0f7ff;
+  background: #e3f2fd;
   color: var(--primary-color);
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
-  font-size: 22rpx;
+  padding: 4rpx 10rpx;
+  border-radius: 12rpx;
+  font-size: 20rpx;
+  font-weight: 500;
 }
 
 .recommend-badge {
   background: #fff3e0;
   color: var(--warning-color);
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
-  font-size: 22rpx;
+  padding: 4rpx 10rpx;
+  border-radius: 12rpx;
+  font-size: 20rpx;
+  font-weight: 500;
 }
 
 .stats {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: var(--text-secondary);
-  margin: 16rpx 0;
+  margin: 12rpx 0;
   display: flex;
-  gap: 20rpx;
+  gap: 16rpx;
 }
 
 .score {
@@ -748,8 +724,9 @@ defineExpose({
 
 .expertise {
   color: var(--text-primary);
-  font-size: 26rpx;
+  font-size: 24rpx;
   margin: 8rpx 0;
+  line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -759,7 +736,7 @@ defineExpose({
 
 .location {
   color: var(--text-tertiary);
-  font-size: 24rpx;
+  font-size: 22rpx;
 }
 
 .price-line {
@@ -767,22 +744,39 @@ defineExpose({
   justify-content: space-between;
   align-items: center;
   margin-top: 20rpx;
-  padding-top: 20rpx;
-  border-top: 1rpx solid #eee;
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--border-color);
 }
 
 .price {
   color: var(--danger-color);
-  font-size: 32rpx;
-  font-weight: bold;
+  font-size: 28rpx;
+  font-weight: 600;
 }
 
-.consult-type {
-  color: var(--text-secondary);
-  font-size: 26rpx;
+.action-buttons {
+  display: flex;
+  gap: 12rpx;
 }
 
-/* 加载状态优化 */
+.consult-btn {
+  background: var(--primary-color);
+  color: #fff;
+  padding: 12rpx 24rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2rpx 8rpx rgba(25, 118, 210, 0.2);
+}
+
+.consult-btn:active {
+  background: #1565C0;
+  transform: scale(0.95);
+}
+
+/* 加载状态 */
 .loading-container {
   display: flex;
   justify-content: center;
@@ -798,22 +792,21 @@ defineExpose({
 .loading,
 .no-more {
   text-align: center;
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: var(--text-tertiary);
   padding: 20rpx 0;
-  position: relative;
 }
 
 .loading::after {
   content: "";
   display: inline-block;
-  width: 20rpx;
-  height: 20rpx;
-  border: 3rpx solid var(--text-tertiary);
+  width: 16rpx;
+  height: 16rpx;
+  border: 2rpx solid var(--text-tertiary);
   border-radius: 50%;
   border-top-color: transparent;
   animation: spin 0.8s linear infinite;
-  margin-left: 12rpx;
+  margin-left: 10rpx;
   vertical-align: middle;
 }
 
@@ -823,13 +816,13 @@ defineExpose({
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 100rpx 0;
+  padding: 80rpx 0;
 }
 
 .empty-text {
-  margin-top: 20rpx;
+  margin-top: 16rpx;
   color: var(--text-tertiary);
-  font-size: 28rpx;
+  font-size: 26rpx;
 }
 
 @keyframes spin {
@@ -838,38 +831,25 @@ defineExpose({
   }
 }
 
-/* 响应式处理 */
-/* 移动端适配优化 */
+/* 移动端适配 */
 @media (max-width: 768px) {
   .filter-wrapper {
-    padding: 20rpx 24rpx;
-    gap: 20rpx;
+    padding: 16rpx 20rpx;
+    gap: 16rpx;
   }
 
-  .filter-label {
-    font-size: 24rpx;
-    padding-right: 8rpx;
+  .lawyer-card {
+    padding: 20rpx;
+    margin-bottom: 12rpx;
   }
 
-  .filter-label::after {
-    height: 20rpx;
+  .avatar {
+    width: 96rpx;
+    height: 96rpx;
   }
 
-  .picker-value {
-    padding: 12rpx 24rpx;
-    font-size: 24rpx;
-    border-radius: 36rpx;
-  }
-}
-
-@media (max-width: 480px) {
-  .filter-label {
-    font-size: 22rpx;
-  }
-
-  .picker-value {
-    padding: 10rpx 20rpx;
-    font-size: 22rpx;
+  .name {
+    font-size: 28rpx;
   }
 }
 </style>

@@ -104,9 +104,14 @@
         <text>其他登录方式</text>
       </view>
       <view class="social-login">
-        <view class="social-icon wechat" bindtap="getInfo" @click="handleWechatLogin">
+        <!-- 使用 button 组件并设置 open-type -->
+        <button
+            class="social-icon wechat"
+            open-type="getPhoneNumber"
+            @getphonenumber="handleGetPhoneNumber"
+        >
           <uni-icons type="weixin" size="28" color="#fff"></uni-icons>
-        </view>
+        </button>
       </view>
       <view class="agreement">
         <checkbox-group @change="agreementChange">
@@ -119,7 +124,7 @@
           </label>
         </checkbox-group>
       </view>
-    </view> 
+    </view>
   </view>
 
 
@@ -149,6 +154,10 @@ const username = ref('');
 const password = ref('');
 const passwordError = ref('');
 const showPassword = ref(false);
+
+// 新增微信登录相关状态
+const wechatLoginLoading = ref(false);
+const wechatUserInfo = ref(null);
 
 // 登录状态
 const isLoggedIn = ref(false);
@@ -244,18 +253,18 @@ async function sendVerificationCodeForUser() {
 // 存储用户信息到缓存
 function storeUserCache(userData, token, role) {
   if (!userData || !userData.userId) return;
-  
+
   const userId = userData.userId;
   // 设置用户前缀
   cacheManager.setUserPrefix(userId);
-  
+
   // 使用cacheManager存储用户信息
   cacheManager.setCache('userInfo', userData);
   cacheManager.setCache('userRole', role);
-  
+
   // 设置token (与用户ID关联)
   cacheManager.setToken(token, userId);
-  
+
   // 记录当前登录用户ID
   uni.setStorageSync('current_user_id', userId);
 }
@@ -264,7 +273,7 @@ function storeUserCache(userData, token, role) {
 function restoreUserFromCache() {
   const userId = uni.getStorageSync('current_user_id');
   if (!userId) return false;
-  
+
   // 检查token是否存在（指定该用户ID获取token）
   let token = cacheManager.getToken(userId);
 
@@ -273,52 +282,52 @@ function restoreUserFromCache() {
     clearCurrentUserCache(userId);
     return false;
   }
-  
+
   // 设置用户前缀
   cacheManager.setUserPrefix(userId);
-  
+
   // 尝试获取缓存数据
   try {
     const cachedUserInfo = cacheManager.getCache('userInfo');
-    
+
     if (cachedUserInfo) {
       userInfo = cachedUserInfo;
       isLoggedIn.value = true;
-      
+
       // 根据缓存中的角色设置selectedRole
       const userRole = cacheManager.getCache('userRole');
       if (userRole) {
         selectedRole.value = userRole;
       }
-      
+
       return true;
     }
   } catch (error) {
     console.error('恢复用户数据失败:', error);
     clearCurrentUserCache(userId);
   }
-  
+
   return false;
 }
 
 // 清除当前用户缓存
 function clearCurrentUserCache(specificUserId = null) {
   const userId = specificUserId || uni.getStorageSync('current_user_id');
-  
+
   if (userId) {
     // 设置用户前缀
     cacheManager.setUserPrefix(userId);
-    
+
     // 清除该用户的所有缓存
     cacheManager.clearUserCache();
   } else {
     // 如果没有特定用户ID，尝试清除当前活跃用户的token
     cacheManager.removeToken();
   }
-  
+
   // 移除当前用户ID
   uni.removeStorageSync('current_user_id');
-  
+
   isLoggedIn.value = false;
   userInfo = null;
 }
@@ -418,33 +427,27 @@ async function handleLogin() {
   }
 }
 
-// 微信登录
-async function handleWechatLogin() {
-  // 验证是否同意用户协议和隐私政策
+// 处理获取手机号事件
+async function handleGetPhoneNumber(e) {
+  // 验证是否同意用户协议
   if (!isAgreedPolicy.value) {
-    uni.showToast({
-      title: '请先同意用户协议和隐私政策',
-      icon: 'none'
-    });
+    uni.showToast({ title: '请先同意用户协议', icon: 'none' });
     return;
   }
-  
-  uni.showLoading({
-    title: '正在登录...'
-  });
 
-  // 检查是否支持微信登录
-  if (!uni.canIUse('getUserProfile')) {
-    uni.hideLoading();
-    uni.showToast({
-      title: '当前版本不支持微信登录',
-      icon: 'none'
-    });
+  // 检查授权结果
+  const { code, errMsg } = e.detail;
+  if (errMsg !== 'getPhoneNumber:ok') {
+    uni.showToast({ title: '需要授权手机号才能登录', icon: 'none' });
     return;
   }
+
+  // 显示加载状态
+  wechatLoginLoading.value = true;
+  uni.showLoading({ title: '微信登录中...', mask: true });
 
   try {
-    // 获取微信用户信息
+    // 1. 获取用户基本信息
     const userProfile = await new Promise((resolve, reject) => {
       uni.getUserProfile({
         desc: '用于完善用户资料',
@@ -454,7 +457,7 @@ async function handleWechatLogin() {
       });
     });
 
-    // 获取微信登录凭证
+    // 2. 获取微信登录凭证
     const loginRes = await new Promise((resolve, reject) => {
       uni.login({
         provider: 'weixin',
@@ -463,54 +466,79 @@ async function handleWechatLogin() {
       });
     });
 
-    // 调用微信登录接口
-    const response = await wechatLogin({
-      code: loginRes.code,
-      userInfo: userProfile.userInfo,
-      role: selectedRole.value
-    });
+    // 3. 存储用户信息用于后续处理
+    wechatUserInfo.value = {
+      ...userProfile.userInfo,
+      phoneCode: code, // 手机号授权码
+      wxCode: loginRes.code // 微信登录凭证
+    };
 
-    const {token, userData} = response.data;
+    // 4. 调用微信登录接口
+    await handleWechatLogin();
 
-    // 设置用户类型
-    let userType;
-    if (selectedRole.value === 'individual') {
-      userType = USER_TYPES.INDIVIDUAL;
-    } else if (selectedRole.value === 'corporate') {
-      userType = USER_TYPES.CORPORATE;
-    } else if (selectedRole.value === 'lawyer') {
-      userType = USER_TYPES.LAWYER;
-    } else if (selectedRole.value === 'admin') {
-      userType = USER_TYPES.ADMIN;
-    }
-
-    setUserType(userType);
-
-    // 存储用户缓存，使用唯一key
-    storeUserCache(userData, token, selectedRole.value);
-
-    // 登录成功状态
-    isLoggedIn.value = true;
-    userInfo = userData;
-
-    uni.hideLoading();
-    uni.showToast({
-      title: '登录成功',
-      icon: 'success'
-    });
-
-    // 登录成功后重定向
-    redirectAfterLogin();
   } catch (error) {
+    console.error('微信登录失败:', error);
     uni.hideLoading();
+    wechatLoginLoading.value = false;
     uni.showToast({
-      title: error.message || '登录失败',
+      title: error.errMsg || '微信登录失败',
       icon: 'none'
     });
-    console.error('微信登录失败:', error);
   }
 }
 
+// 处理微信登录
+async function handleWechatLogin() {
+  if (!wechatUserInfo.value) {
+    uni.showToast({ title: '用户信息获取失败', icon: 'none' });
+    return;
+  }
+
+  try {
+    // 调用微信登录API
+    const response = await wechatLogin({
+      code: wechatUserInfo.value.wxCode,
+      phoneCode: wechatUserInfo.value.phoneCode,
+      userInfo: {
+        nickName: wechatUserInfo.value.nickName,
+        avatarUrl: wechatUserInfo.value.avatarUrl
+      },
+      role: selectedRole.value
+    });
+
+    const { token, userData } = response.data;
+
+    // 设置用户类型
+    let userType;
+    switch (selectedRole.value) {
+      case 'individual': userType = USER_TYPES.INDIVIDUAL; break;
+      case 'corporate': userType = USER_TYPES.CORPORATE; break;
+      case 'lawyer': userType = USER_TYPES.LAWYER; break;
+      case 'admin': userType = USER_TYPES.ADMIN; break;
+    }
+    setUserType(userType);
+
+    // 存储用户缓存
+    storeUserCache(userData, token, selectedRole.value);
+
+    // 登录成功
+    isLoggedIn.value = true;
+    uni.hideLoading();
+    wechatLoginLoading.value = false;
+
+    uni.showToast({ title: '登录成功', icon: 'success' });
+    redirectAfterLogin();
+
+  } catch (error) {
+    console.error('微信登录失败:', error);
+    uni.hideLoading();
+    wechatLoginLoading.value = false;
+    uni.showToast({
+      title: error.message || '微信登录失败',
+      icon: 'none'
+    });
+  }
+}
 // 登录成功后重定向
 function redirectAfterLogin() {
   // 根据用户角色重定向到不同页面
@@ -843,17 +871,17 @@ function navigateToPrivacyPolicy() {
     .link {
       color: var(--primary-color);
     }
-    
+
     .checkbox-label {
       display: flex;
       align-items: center;
       justify-content: center;
       flex-wrap: wrap;
-      
+
       checkbox {
         margin-right: 6rpx;
       }
-      
+
       text {
         margin: 0 2rpx;
       }
@@ -896,13 +924,13 @@ function navigateToPrivacyPolicy() {
   align-items: center;
   justify-content: center;
   border-bottom: 1rpx solid #eee;
-  
+
   .popup-title {
     font-size: 34rpx;
     font-weight: 500;
     color: #333;
   }
-  
+
   .popup-close {
     position: absolute;
     right: 20rpx;
@@ -919,19 +947,19 @@ function navigateToPrivacyPolicy() {
 
 .content-section {
   margin-bottom: 30rpx;
-  
+
   .section-title {
     font-size: 30rpx;
     font-weight: 600;
     color: #333;
     margin-bottom: 16rpx;
   }
-  
+
   .section-text {
     color: #666;
     font-size: 26rpx;
     line-height: 1.6;
-    
+
     .paragraph {
       margin-bottom: 12rpx;
     }
