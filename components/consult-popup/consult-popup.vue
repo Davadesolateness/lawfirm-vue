@@ -81,10 +81,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { createCallOrder } from '@/pages/call/callService'
 import { getUserInfo } from '@/utils/store/userManager'
 import { navigateToUrl } from '@/utils/navigateTo'
-import { wxPay } from '@/utils/pay'
 
 // 定义组件属性
 const props = defineProps({
