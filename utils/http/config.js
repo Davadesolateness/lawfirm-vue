@@ -1,7 +1,7 @@
 // 全局配置
 export const BASE_CONFIG = {
-    baseURL: 'http://localhost:8080', // 从环境变量获取
-    //baseURL: 'http://121.40.67.3:8080',
+    //baseURL: 'http://192.168.1.239:8080', // 从环境变量获取
+    baseURL: 'http://121.40.67.3:8080',
     timeout: 15000, // 默认超时时间
     header: {
         'Content-Type': 'application/json'

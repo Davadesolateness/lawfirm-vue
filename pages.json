@@ -154,32 +154,6 @@
       }
     }
   ],
-  "tabBar": {
-    "color": "#666",
-    "selectedColor": "#007AFF",
-    "borderStyle": "white",
-    "backgroundColor": "#fff",
-    "list": [
-      {
-        "pagePath": "pages/index/index",
-        "text": "首页",
-        "iconPath": "static/images/home.png",
-        "selectedIconPath": "static/images/home_active.png"
-      },
-      {
-        "pagePath": "pages/order/orderlist",
-        "text": "订单",
-        "iconPath": "static/images/user.png",
-        "selectedIconPath": "static/images/user_active.png"
-      },
-      {
-        "pagePath": "pages/user/user",
-        "text": "我的",
-        "iconPath": "static/images/user.png",
-        "selectedIconPath": "static/images/user_active.png"
-      }
-    ]
-  },
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "uni-app",
